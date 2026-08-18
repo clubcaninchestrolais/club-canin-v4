@@ -60,10 +60,11 @@ liste_presence = []
 
 for ins in inscrits:
 
+    # TA BASE → cours_seances_inscriptions utilise membre_id
     membre_res = (
         supabase.table("membres")
         .select("*")
-        .eq("id", ins["id_membre"])
+        .eq("id", ins["membre_id"])
         .execute()
         .data
     )
@@ -86,6 +87,7 @@ for ins in inscrits:
 
     chien = chien_res[0]
 
+    # TA BASE → cours_presences utilise id_membre
     presence_existante = (
         supabase.table("cours_presences")
         .select("*")
@@ -133,6 +135,7 @@ if st.button("Valider les présences"):
     for p in liste_presence:
         if presence_selection[p["inscription_id"]]:
 
+            # TA BASE → cours_presences utilise id_membre
             supabase.table("cours_presences").insert({
                 "cours_id": cours_id,
                 "seance_id": seance_id,
@@ -142,10 +145,11 @@ if st.button("Valider les présences"):
                 "statut": "present"
             }).execute()
 
+            # TA BASE → abonnements utilise id_membre
             abo_res = (
                 supabase.table("abonnements")
                 .select("*")
-                .eq("id_membre", p["membre_id"])   # ✔ TA BASE UTILISE id_membre
+                .eq("id_membre", p["membre_id"])
                 .eq("actif", True)
                 .execute()
                 .data
