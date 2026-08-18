@@ -26,12 +26,15 @@ choix_seance = st.selectbox(
     format_func=lambda s: f"{s['date_seance']} — cours {s['cours_id']} ({s['heure_debut']})"
 )
 
-seance_id = int(choix_seance["id"])  # 🔥 Correction critique
+seance_id = int(choix_seance["id"])  # Correction critique
 cours_id = choix_seance["cours_id"]
 date_seance = choix_seance["date_seance"]
 
-# Conversion en vrai type date
-date_presence = datetime.strptime(date_seance, "%Y-%m-%d").date()
+# Conversion en type date
+try:
+    date_presence = datetime.strptime(date_seance, "%Y-%m-%d").date()
+except:
+    date_presence = date_seance
 
 st.markdown("---")
 
@@ -139,7 +142,7 @@ if st.button("Valider les présences"):
             # Enregistrer la présence
             supabase.table("cours_presences").insert({
                 "cours_id": cours_id,
-                "seance_id": seance_id,  # 🔥 Correction : seance_id est maintenant un int
+                "seance_id": seance_id,
                 "membre_id": p["membre_id"],
                 "chien_id": p["chien_id"],
                 "date_presence": date_presence,
@@ -150,7 +153,7 @@ if st.button("Valider les présences"):
             abo_res = (
                 supabase.table("abonnements")
                 .select("*")
-                .eq("id_membre", p["membre_id"])
+                .eq("membre_id", p["membre_id"])  # Correction essentielle
                 .eq("actif", True)
                 .execute()
                 .data
@@ -165,4 +168,3 @@ if st.button("Valider les présences"):
                     }).eq("id", abo["id"]).execute()
 
     st.success("Présences validées.")
-
