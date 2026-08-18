@@ -1,6 +1,6 @@
 import streamlit as st
 from supabase import create_client
-#version 16082025 10:58
+
 # ---------------------------------------------------------
 # Récupération de l'ID membre via session_state
 # ---------------------------------------------------------
@@ -11,10 +11,15 @@ if not membre_id:
     st.stop()
 
 # ---------------------------------------------------------
-# Connexion Supabase
+# Connexion Supabase (sécurisée)
 # ---------------------------------------------------------
-url = st.secrets["SUPABASE_URL"]
-key = st.secrets["SUPABASE_KEY"]
+url = st.secrets.get("SUPABASE_URL")
+key = st.secrets.get("SUPABASE_KEY")
+
+if not url or not key:
+    st.error("⚠️ Erreur : les secrets SUPABASE ne sont pas disponibles.")
+    st.stop()
+
 supabase = create_client(url, key)
 
 # ---------------------------------------------------------
@@ -33,7 +38,7 @@ m = (
 # ---------------------------------------------------------
 st.title(f"{m['prenom']} {m['nom']}")
 
-# Badge TEMPORAIRE
+# Badge TEMPORAIRE (disparaît automatiquement si temporaire=False)
 if m.get("temporaire", False):
     st.markdown(
         "<div style='background:red;color:white;padding:10px;border-radius:6px;"
@@ -125,11 +130,12 @@ if submit:
 st.markdown("---")
 st.subheader("📌 Actions du préposé")
 
-# Confirmer affiliation
+# Confirmer affiliation (corrigé : retire TEMPORAIRE automatiquement)
 if m.get("temporaire", False):
     if st.button("Confirmer affiliation"):
         supabase.table("membres").update({
             "temporaire": False,
+            "statut": "membre",
             "affilie": True
         }).eq("id", membre_id).execute()
 
