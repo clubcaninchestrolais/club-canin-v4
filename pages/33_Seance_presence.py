@@ -48,12 +48,42 @@ if not inscrits:
     st.info("Aucun inscrit pour cette séance.")
     st.stop()
 
-# Charger les membres et chiens
+# ---------------------------------------------------------
+# 3. Charger membres + chiens + vérifier présence existante
+# ---------------------------------------------------------
 liste_presence = []
+
 for ins in inscrits:
 
-    membre = supabase.table("membres").select("*").eq("id", ins["membre_id"]).execute().data[0]
-    chien = supabase.table("chiens").select("*").eq("id", ins["chien_id"]).execute().data[0]
+    # Charger membre
+    membre_res = (
+        supabase.table("membres")
+        .select("*")
+        .eq("id", ins["membre_id"])
+        .execute()
+        .data
+    )
+
+    if not membre_res:
+        st.error(f"Membre introuvable (id={ins['membre_id']}).")
+        continue
+
+    membre = membre_res[0]
+
+    # Charger chien
+    chien_res = (
+        supabase.table("chiens")
+        .select("*")
+        .eq("id", ins["chien_id"])
+        .execute()
+        .data
+    )
+
+    if not chien_res:
+        st.error(f"Chien introuvable (id={ins['chien_id']}).")
+        continue
+
+    chien = chien_res[0]
 
     # Vérifier si présence déjà enregistrée
     presence_existante = (
@@ -66,7 +96,6 @@ for ins in inscrits:
         .data
     )
 
-    # Si présence déjà enregistrée → ne pas afficher
     if presence_existante:
         continue
 
@@ -79,7 +108,7 @@ for ins in inscrits:
     })
 
 # ---------------------------------------------------------
-# 3. Interface de présence
+# 4. Interface de présence
 # ---------------------------------------------------------
 st.subheader("Présences")
 
@@ -97,7 +126,7 @@ for p in liste_presence:
 st.markdown("---")
 
 # ---------------------------------------------------------
-# 4. Validation des présences
+# 5. Validation des présences
 # ---------------------------------------------------------
 if st.button("Valider les présences"):
 
@@ -115,7 +144,7 @@ if st.button("Valider les présences"):
             }).execute()
 
             # Décrémenter l'abonnement du membre
-            abo = (
+            abo_res = (
                 supabase.table("abonnements")
                 .select("*")
                 .eq("id_membre", p["membre_id"])
@@ -124,8 +153,8 @@ if st.button("Valider les présences"):
                 .data
             )
 
-            if abo:
-                abo = abo[0]
+            if abo_res:
+                abo = abo_res[0]
 
                 if abo["seances_total"] != -1 and abo["seances_restantes"] > 0:
                     supabase.table("abonnements").update({
