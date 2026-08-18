@@ -9,9 +9,9 @@ st.title("📋 Validation des présences")
 # 1. Charger les séances
 # ---------------------------------------------------------
 seances = (
-    supabase.table("cours_dates")
+    supabase.table("cours_seances")
     .select("*")
-    .order("date")
+    .order("date_seance")
     .execute()
     .data
 )
@@ -23,12 +23,12 @@ if not seances:
 choix_seance = st.selectbox(
     "Séance",
     options=seances,
-    format_func=lambda s: f"{s['date']} — cours {s['cours_id']} ({s['heure']})"
+    format_func=lambda s: f"{s['date_seance']} — cours {s['cours_id']} ({s['heure_debut']})"
 )
 
 seance_id = int(choix_seance["id"])
 cours_id = choix_seance["cours_id"]
-date_seance = choix_seance["date"]
+date_seance = choix_seance["date_seance"]
 
 try:
     date_presence = datetime.strptime(date_seance, "%Y-%m-%d").date()
@@ -41,10 +41,10 @@ st.markdown("---")
 # 2. Charger les inscrits actifs
 # ---------------------------------------------------------
 inscrits = (
-    supabase.table("cours_inscriptions")
+    supabase.table("cours_seances_inscriptions")
     .select("*")
-    .eq("cours_id", cours_id)
-    .eq("id_seance", seance_id)
+    .eq("seance_id", seance_id)
+    .eq("actif", True)
     .execute()
     .data
 )
