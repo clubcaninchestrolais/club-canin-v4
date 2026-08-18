@@ -9,9 +9,9 @@ st.title("📋 Validation des présences")
 # 1. Charger les séances
 # ---------------------------------------------------------
 seances = (
-    supabase.table("cours_seances")
+    supabase.table("cours_dates")
     .select("*")
-    .order("date_seance")
+    .order("date")
     .execute()
     .data
 )
@@ -23,14 +23,13 @@ if not seances:
 choix_seance = st.selectbox(
     "Séance",
     options=seances,
-    format_func=lambda s: f"{s['date_seance']} — cours {s['cours_id']} ({s['heure_debut']})"
+    format_func=lambda s: f"{s['date']} — cours {s['cours_id']} ({s['heure']})"
 )
 
-seance_id = int(choix_seance["id"])  # Correction critique
+seance_id = int(choix_seance["id"])
 cours_id = choix_seance["cours_id"]
-date_seance = choix_seance["date_seance"]
+date_seance = choix_seance["date"]
 
-# Conversion en type date
 try:
     date_presence = datetime.strptime(date_seance, "%Y-%m-%d").date()
 except:
@@ -42,10 +41,10 @@ st.markdown("---")
 # 2. Charger les inscrits actifs
 # ---------------------------------------------------------
 inscrits = (
-    supabase.table("cours_seances_inscriptions")
+    supabase.table("cours_inscriptions")
     .select("*")
-    .eq("seance_id", seance_id)
-    .eq("actif", True)
+    .eq("cours_id", cours_id)
+    .eq("id_seance", seance_id)
     .execute()
     .data
 )
@@ -61,22 +60,19 @@ liste_presence = []
 
 for ins in inscrits:
 
-    # Charger membre
     membre_res = (
         supabase.table("membres")
         .select("*")
-        .eq("id", ins["membre_id"])
+        .eq("id", ins["id_membre"])
         .execute()
         .data
     )
 
     if not membre_res:
-        st.error(f"Membre introuvable (id={ins['membre_id']}).")
         continue
 
     membre = membre_res[0]
 
-    # Charger chien
     chien_res = (
         supabase.table("chiens")
         .select("*")
@@ -86,16 +82,14 @@ for ins in inscrits:
     )
 
     if not chien_res:
-        st.error(f"Chien introuvable (id={ins['chien_id']}).")
         continue
 
     chien = chien_res[0]
 
-    # Vérifier si présence déjà enregistrée
     presence_existante = (
         supabase.table("cours_presences")
         .select("*")
-        .eq("membre_id", membre["id"])
+        .eq("id_membre", membre["id"])
         .eq("chien_id", chien["id"])
         .eq("seance_id", seance_id)
         .execute()
@@ -139,21 +133,19 @@ if st.button("Valider les présences"):
     for p in liste_presence:
         if presence_selection[p["inscription_id"]]:
 
-            # Enregistrer la présence
             supabase.table("cours_presences").insert({
                 "cours_id": cours_id,
                 "seance_id": seance_id,
-                "membre_id": p["membre_id"],
+                "id_membre": p["membre_id"],
                 "chien_id": p["chien_id"],
                 "date_presence": date_presence,
                 "statut": "present"
             }).execute()
 
-            # Décrémenter l'abonnement
             abo_res = (
                 supabase.table("abonnements")
                 .select("*")
-                .eq("membre_id", p["membre_id"])  # Correction essentielle
+                .eq("id_membre", p["membre_id"])   # ✔ TA BASE UTILISE id_membre
                 .eq("actif", True)
                 .execute()
                 .data
