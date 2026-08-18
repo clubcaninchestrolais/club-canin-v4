@@ -1,11 +1,12 @@
 import streamlit as st
 from supabase_rest import supabase
+from datetime import datetime
 
-st.set_page_config(page_title="Validation des présences", page_icon="📝")
-st.title("📝 Validation des présences")
+st.set_page_config(page_title="Validation des présences", page_icon="📋")
+st.title("📋 Validation des présences")
 
 # ---------------------------------------------------------
-# Charger les séances disponibles
+# 1. Charger les séances
 # ---------------------------------------------------------
 seances = (
     supabase.table("cours_seances")
@@ -16,29 +17,32 @@ seances = (
 )
 
 if not seances:
-    st.error("Aucune séance disponible.")
+    st.info("Aucune séance disponible.")
     st.stop()
 
-# Choix de la séance
-choix = st.selectbox(
+choix_seance = st.selectbox(
     "Séance",
     options=seances,
     format_func=lambda s: f"{s['date_seance']} — cours {s['cours_id']} ({s['heure_debut']})"
 )
 
-cours_id_selectionne = choix["cours_id"]
-date_seance_selectionnee = choix["date_seance"]
+seance_id = int(choix_seance["id"])  # 🔥 Correction critique
+cours_id = choix_seance["cours_id"]
+date_seance = choix_seance["date_seance"]
+
+# Conversion en vrai type date
+date_presence = datetime.strptime(date_seance, "%Y-%m-%d").date()
 
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Charger les inscrits pour cette séance
+# 2. Charger les inscrits actifs
 # ---------------------------------------------------------
 inscrits = (
-    supabase.table("cours_presences")
-    .select("id, membre_id, chien_id, statut")
-    .eq("cours_id", cours_id_selectionne)
-    .eq("date_presence", date_seance_selectionnee)
+    supabase.table("cours_seances_inscriptions")
+    .select("*")
+    .eq("seance_id", seance_id)
+    .eq("actif", True)
     .execute()
     .data
 )
@@ -47,74 +51,118 @@ if not inscrits:
     st.info("Aucun inscrit pour cette séance.")
     st.stop()
 
-st.success(f"{len(inscrits)} inscrit(s) trouvé(s).")
-
 # ---------------------------------------------------------
-# Affichage des inscrits + validation
+# 3. Charger membres + chiens + vérifier présence existante
 # ---------------------------------------------------------
-for i in inscrits:
-    st.markdown("---")
+liste_presence = []
 
-    # Récupérer infos membre
-    membre = (
+for ins in inscrits:
+
+    # Charger membre
+    membre_res = (
         supabase.table("membres")
-        .select("prenom, nom")
-        .eq("id", i["membre_id"])
+        .select("*")
+        .eq("id", ins["membre_id"])
         .execute()
         .data
-    )[0]
+    )
 
-    st.subheader(f"👤 {membre['prenom']} {membre['nom']}")
+    if not membre_res:
+        st.error(f"Membre introuvable (id={ins['membre_id']}).")
+        continue
 
-    # Récupérer infos chien
-    if i["chien_id"]:
-        chien = (
-            supabase.table("chiens")
-            .select("nom")
-            .eq("id", i["chien_id"])
-            .execute()
-            .data
-        )[0]
-        st.write(f"🐶 Chien : **{chien['nom']}**")
+    membre = membre_res[0]
 
-    # Afficher compteur abonnement
-    abo = (
-        supabase.table("abonnements")
-        .select("id, seances_total, seances_restantes")
-        .eq("id_membre", i["membre_id"])
-        .order("id", desc=True)
+    # Charger chien
+    chien_res = (
+        supabase.table("chiens")
+        .select("*")
+        .eq("id", ins["chien_id"])
         .execute()
         .data
-    )[0]
+    )
 
-    st.write(f"🎫 Séances restantes : **{abo['seances_restantes']}** / {abo['seances_total']}")
+    if not chien_res:
+        st.error(f"Chien introuvable (id={ins['chien_id']}).")
+        continue
 
-    # Statut actuel
-    statut = i.get("statut", "absent")
-    st.write(f"📌 Statut actuel : **{statut}**")
+    chien = chien_res[0]
 
-    col1, col2 = st.columns(2)
+    # Vérifier si présence déjà enregistrée
+    presence_existante = (
+        supabase.table("cours_presences")
+        .select("*")
+        .eq("membre_id", membre["id"])
+        .eq("chien_id", chien["id"])
+        .eq("seance_id", seance_id)
+        .execute()
+        .data
+    )
 
-    # Bouton valider présence
-    if col1.button(f"✔ Présent — {i['id']}", key=f"present_{i['id']}"):
-        supabase.table("cours_presences").update({
-            "statut": "present"
-        }).eq("id", i["id"]).execute()
+    if presence_existante:
+        continue
 
-        # Décrémentation ici
-        if abo["seances_total"] != -1 and abo["seances_restantes"] > 0:
-            supabase.table("abonnements").update({
-                "seances_restantes": abo["seances_restantes"] - 1
-            }).eq("id", abo["id"]).execute()
+    liste_presence.append({
+        "inscription_id": ins["id"],
+        "membre_id": membre["id"],
+        "chien_id": chien["id"],
+        "nom_membre": f"{membre['nom']} {membre['prenom']}",
+        "nom_chien": chien["nom"]
+    })
 
-        st.success("Présence validée et séance consommée.")
-        st.rerun()
+# ---------------------------------------------------------
+# 4. Interface de présence
+# ---------------------------------------------------------
+st.subheader("Présences")
 
-    # Bouton marquer absent
-    if col2.button(f"❌ Absent — {i['id']}", key=f"absent_{i['id']}"):
-        supabase.table("cours_presences").update({
-            "statut": "absent"
-        }).eq("id", i["id"]).execute()
+if not liste_presence:
+    st.success("Toutes les présences ont déjà été validées.")
+    st.stop()
 
-        st.warning("Présence marquée comme absente (aucune séance consommée).")
-        st.rerun()
+presence_selection = {}
+for p in liste_presence:
+    presence_selection[p["inscription_id"]] = st.checkbox(
+        f"{p['nom_membre']} — {p['nom_chien']}",
+        key=f"presence_{p['inscription_id']}"
+    )
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# 5. Validation des présences
+# ---------------------------------------------------------
+if st.button("Valider les présences"):
+
+    for p in liste_presence:
+        if presence_selection[p["inscription_id"]]:
+
+            # Enregistrer la présence
+            supabase.table("cours_presences").insert({
+                "cours_id": cours_id,
+                "seance_id": seance_id,  # 🔥 Correction : seance_id est maintenant un int
+                "membre_id": p["membre_id"],
+                "chien_id": p["chien_id"],
+                "date_presence": date_presence,
+                "statut": "present"
+            }).execute()
+
+            # Décrémenter l'abonnement
+            abo_res = (
+                supabase.table("abonnements")
+                .select("*")
+                .eq("id_membre", p["membre_id"])
+                .eq("actif", True)
+                .execute()
+                .data
+            )
+
+            if abo_res:
+                abo = abo_res[0]
+
+                if abo["seances_total"] != -1 and abo["seances_restantes"] > 0:
+                    supabase.table("abonnements").update({
+                        "seances_restantes": abo["seances_restantes"] - 1
+                    }).eq("id", abo["id"]).execute()
+
+    st.success("Présences validées.")
+
