@@ -45,7 +45,8 @@ for c in cours:
 
     for s in seances:
         st.write(
-            f"- **{s['date_seance']}** à **{s['heure_debut']}** "
+            f"- **{s['date_seance']}**"
+
             f"(ID séance : {s['id']})"
         )
 
