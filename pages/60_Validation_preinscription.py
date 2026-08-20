@@ -1,7 +1,6 @@
 import streamlit as st
 from supabase_rest import supabase
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
+from fpdf import FPDF
 from io import BytesIO
 
 st.set_page_config(page_title="Validation préinscription", page_icon="🐾")
@@ -38,7 +37,7 @@ if filtre:
     ]
 
 # ---------------------------------------------------------
-# 3. Affichage en liste
+# 3. Affichage en liste + validation
 # ---------------------------------------------------------
 st.subheader("📋 Préinscriptions en attente")
 
@@ -92,7 +91,6 @@ for p in preinscriptions:
                 .execute()
                 .data[0]
             )
-
             membre_id = membre["id"]
 
             # Créer le chien
@@ -107,7 +105,6 @@ for p in preinscriptions:
                 .execute()
                 .data[0]
             )
-
             chien_id = chien["id"]
 
             # Inscription réelle
@@ -144,29 +141,27 @@ for p in preinscriptions:
             st.experimental_rerun()
 
 # ---------------------------------------------------------
-# 4. PDF — Un PDF par séance regroupant tous les cours du jour
+# 4. PDF – un PDF pour la journée (toutes les séances / cours)
 # ---------------------------------------------------------
-
 st.subheader("📄 Générer le PDF de la journée")
 
-# On prend la date de la première préinscription affichée
+# On prend la date de la dernière séance chargée (celle du loop)
 if preinscriptions:
     date_du_jour = seance["date_seance"]
 else:
     date_du_jour = None
 
-if st.button("Créer le PDF de la journée"):
+if date_du_jour and st.button("Créer le PDF de la journée"):
 
-    buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=A4)
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
 
-    # Titre principal
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawString(50, 800, f"Séances du {date_du_jour}")
+    # Titre
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, f"Séances du {date_du_jour}", ln=True)
 
-    y = 770
-
-    # 1. Trouver toutes les séances du jour
+    # 1. Toutes les séances de cette date
     toutes_seances = (
         supabase.table("cours_seances")
         .select("*")
@@ -187,12 +182,11 @@ if st.button("Créer le PDF de la journée"):
         )
         cours = cours_data[0]
 
-        # Section du cours
-        pdf.setFont("Helvetica-Bold", 12)
-        pdf.drawString(50, y, f"Cours : {cours['nom']}")
-        y -= 20
+        # Section cours
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, f"Cours : {cours['nom']}", ln=True)
 
-        pdf.setFont("Helvetica", 10)
+        pdf.set_font("Arial", "", 10)
 
         # Préinscriptions extérieures
         preinscriptions_seance = (
@@ -203,7 +197,7 @@ if st.button("Créer le PDF de la journée"):
             .data
         )
 
-        # Inscriptions membres
+        # Membres inscrits
         inscriptions_membres = (
             supabase.table("cours_inscriptions")
             .select("*")
@@ -218,13 +212,7 @@ if st.button("Créer le PDF de la journée"):
                 f"{p['nom']} {p['prenom']} — "
                 f"{p['chien_nom']} — extérieur — {p.get('source', 'portail')}"
             )
-            pdf.drawString(70, y, ligne)
-            y -= 20
-
-            if y < 50:
-                pdf.showPage()
-                pdf.setFont("Helvetica", 10)
-                y = 800
+            pdf.cell(0, 8, ligne, ln=True)
 
         # Membres
         for ins in inscriptions_membres:
@@ -249,25 +237,14 @@ if st.button("Créer le PDF de la journée"):
                 f"{membre['nom']} {membre['prenom']} — "
                 f"{chien['nom']} — membre"
             )
-            pdf.drawString(70, y, ligne)
-            y -= 20
+            pdf.cell(0, 8, ligne, ln=True)
 
-            if y < 50:
-                pdf.showPage()
-                pdf.setFont("Helvetica", 10)
-                y = 800
+        pdf.ln(5)
+        pdf.cell(0, 5, "---------------------------------------------", ln=True)
+        pdf.ln(5)
 
-        # Séparateur
-        y -= 10
-        pdf.drawString(50, y, "---------------------------------------------")
-        y -= 20
-
-        if y < 50:
-            pdf.showPage()
-            pdf.setFont("Helvetica", 10)
-            y = 800
-
-    pdf.save()
+    buffer = BytesIO()
+    pdf.output(buffer)
     buffer.seek(0)
 
     st.download_button(
@@ -276,4 +253,3 @@ if st.button("Créer le PDF de la journée"):
         file_name=f"seances_{date_du_jour}.pdf",
         mime="application/pdf"
     )
-
