@@ -1,249 +1,139 @@
 import streamlit as st
 from supabase_rest import supabase
-from fpdf import FPDF
-from io import BytesIO
+from datetime import datetime
 
-st.set_page_config(page_title="Validation preinscription", page_icon="🐾")
-st.title("🐾 Validation des preinscriptions exterieures")
+st.set_page_config(page_title="Validation préinscription", page_icon="📝")
+st.title("📝 Validation des préinscriptions")
 
 # ---------------------------------------------------------
-# 1. Charger les preinscriptions en attente
+# Charger les préinscriptions
 # ---------------------------------------------------------
 preinscriptions = (
     supabase.table("preinscriptions")
     .select("*")
-    .eq("statut", "En attente")
-    .order("date_preinscription")
+    .order("id", desc=True)
     .execute()
     .data
 )
 
 if not preinscriptions:
-    st.info("Aucune preinscription en attente.")
+    st.info("Aucune préinscription en attente.")
     st.stop()
 
 # ---------------------------------------------------------
-# 2. Filtre
+# Affichage des préinscriptions
 # ---------------------------------------------------------
-filtre = st.text_input("🔍 Rechercher (nom, prenom, chien)")
+st.subheader("📋 Préinscriptions en attente")
 
-if filtre:
-    f = filtre.lower()
-    preinscriptions = [
-        p for p in preinscriptions
-        if f in p["nom"].lower()
-        or f in p["prenom"].lower()
-        or f in p["chien_nom"].lower()
-    ]
+for pre in preinscriptions:
 
-# ---------------------------------------------------------
-# 3. Affichage en liste + validation
-# ---------------------------------------------------------
-st.subheader("📋 Preinscriptions en attente")
-
-for p in preinscriptions:
-
-    # Charger la seance
-    seance_data = (
-        supabase.table("cours_seances")
-        .select("*")
-        .eq("id", p["seance_id"])
-        .execute()
-        .data
-    )
-    if not seance_data:
-        continue
-
-    seance = seance_data[0]
-
-    # Charger le cours
-    cours_data = (
-        supabase.table("cours")
-        .select("*")
-        .eq("id", seance["cours_id"])
-        .execute()
-        .data
-    )
-    cours = cours_data[0]
-
-    col1, col2, col3 = st.columns([4, 3, 2])
+    col1, col2, col3 = st.columns([3, 3, 2])
 
     with col1:
-        st.write(f"**{p['nom']} {p['prenom']}** - {p['chien_nom']}")
+        st.write(f"👤 **{pre['prenom']} {pre['nom']}**")
+        st.write(f"📧 {pre['email']}")
+        st.write(f"📱 {pre['telephone']}")
 
     with col2:
-        st.write(f"{cours['nom']} - {seance['date_seance']}")
+        st.write(f"🐶 **Chien :** {pre['chien_nom']}")
+        st.write(f"📅 **Date :** {pre['date_preinscription']}")
+        st.write(f"📝 **Cours demandé :** {pre['cours_demande']}")
 
     with col3:
-        if st.button("Valider", key=f"valider_{p['id']}"):
-
-            # Creer le membre
-            membre = (
-                supabase.table("membres")
-                .insert({
-                    "nom": p["nom"],
-                    "prenom": p["prenom"],
-                    "email": p["email"],
-                    "telephone": p["telephone"],
-                    "statut": "non_membre",
-                    "actif": False
-                })
-                .execute()
-                .data[0]
-            )
-            membre_id = membre["id"]
-
-            # Creer le chien
-            chien = (
-                supabase.table("chiens")
-                .insert({
-                    "nom": p["chien_nom"],
-                    "race": p["chien_race"],
-                    "membre_id": membre_id,
-                    "actif": True
-                })
-                .execute()
-                .data[0]
-            )
-            chien_id = chien["id"]
-
-            # Inscription reelle (compatible avec ta base)
-            supabase.table("cours_inscriptions").insert({
-                "membre_id": membre_id,
-                "chien_id": chien_id,
-                "seance_id": p["seance_id"],
-                "statut": "inscrit",
-                "type": "exterieur"
-            }).execute()
-
-            # Inscription seance
-            supabase.table("cours_seances_inscriptions").insert({
-                "seance_id": p["seance_id"],
-                "membre_id": membre_id,
-                "chien_id": chien_id
-            }).execute()
-
-            # Mise a jour preinscription
-            supabase.table("preinscriptions").update({
-                "statut": "validee",
-                "membre_id": membre_id,
-                "chien_id": chien_id,
-                "traitee": True,
-                "acceptee": True
-            }).eq("id", p["id"]).execute()
-
-            st.success(f"Preinscription #{p['id']} validee.")
+        if st.button("Valider", key=f"valider_{pre['id']}"):
+            st.session_state["pre_id"] = pre["id"]
+            st.session_state["go_validation"] = True
             st.rerun()
 
+st.markdown("---")
+
 # ---------------------------------------------------------
-# 4. PDF – un PDF pour la journee (toutes les seances / cours)
+# Validation d'une préinscription
 # ---------------------------------------------------------
-st.subheader("📄 Generer le PDF de la journee")
+if st.session_state.get("go_validation", False):
 
-if preinscriptions:
-    date_du_jour = seance["date_seance"]
-else:
-    date_du_jour = None
+    st.session_state["go_validation"] = False
+    pre_id = st.session_state["pre_id"]
 
-if date_du_jour and st.button("Creer le PDF de la journee"):
-
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-
-    pdf.set_font("Arial", "", 16)
-    pdf.cell(0, 10, f"Seances du {date_du_jour}", ln=True)
-
-    # 1. Toutes les seances de cette date
-    toutes_seances = (
-        supabase.table("cours_seances")
+    # Charger la préinscription
+    pre_data = (
+        supabase.table("preinscriptions")
         .select("*")
-        .eq("date_seance", date_du_jour)
+        .eq("id", pre_id)
         .execute()
         .data
     )
 
-    for s in toutes_seances:
+    if not pre_data:
+        st.error("❌ Erreur : préinscription introuvable.")
+        st.stop()
 
-        # Charger le cours
-        cours_data = (
-            supabase.table("cours")
-            .select("*")
-            .eq("id", s["cours_id"])
+    pre = pre_data[0]
+
+    st.subheader("🔍 Validation de la préinscription")
+
+    st.write(f"👤 **{pre['prenom']} {pre['nom']}**")
+    st.write(f"📧 {pre['email']}")
+    st.write(f"📱 {pre['telephone']}")
+    st.write(f"🐶 **Chien :** {pre['chien_nom']}")
+    st.write(f"📝 **Cours demandé :** {pre['cours_demande']}")
+
+    st.markdown("---")
+
+    # ---------------------------------------------------------
+    # Création du membre
+    # ---------------------------------------------------------
+    if st.button("Créer le membre"):
+
+        membre_insert = {
+            "nom": pre["nom"],
+            "prenom": pre["prenom"],
+            "email": pre["email"],
+            "telephone": pre["telephone"],
+            "statut": "exterieur",
+            "actif": False
+        }
+
+        membre_result = (
+            supabase.table("membres")
+            .insert(membre_insert)
             .execute()
             .data
         )
-        cours = cours_data[0]
 
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, f"Cours : {cours['nom']}", ln=True)
+        if not membre_result:
+            st.error("❌ Impossible de créer le membre.")
+            st.stop()
 
-        pdf.set_font("Arial", "", 10)
+        membre = membre_result[0]
+        membre_id = membre["id"]
 
-        # Preinscriptions exterieures
-        preinscriptions_seance = (
-            supabase.table("preinscriptions")
-            .select("*")
-            .eq("seance_id", s["id"])
+        # ---------------------------------------------------------
+        # Création du chien
+        # ---------------------------------------------------------
+        chien_insert = {
+            "nom": pre["chien_nom"],
+            "membre_id": membre_id
+        }
+
+        chien_result = (
+            supabase.table("chiens")
+            .insert(chien_insert)
             .execute()
             .data
         )
 
-        # Membres inscrits
-        inscriptions_membres = (
-            supabase.table("cours_inscriptions")
-            .select("*")
-            .eq("seance_id", s["id"])
-            .execute()
-            .data
-        )
+        if not chien_result:
+            st.error("❌ Impossible de créer le chien.")
+            st.stop()
 
-        # Exterieurs
-        for p in preinscriptions_seance:
-            ligne = (
-                f"{p['nom']} {p['prenom']} - "
-                f"{p['chien_nom']} - exterieur - [ ]"
-            )
-            pdf.cell(0, 8, ligne, ln=True)
+        # ---------------------------------------------------------
+        # Supprimer la préinscription validée
+        # ---------------------------------------------------------
+        supabase.table("preinscriptions").delete().eq("id", pre_id).execute()
 
-        # Membres
-        for ins in inscriptions_membres:
-
-            membre = (
-                supabase.table("membres")
-                .select("*")
-                .eq("id", ins["membre_id"])
-                .execute()
-                .data[0]
-            )
-
-            chien = (
-                supabase.table("chiens")
-                .select("*")
-                .eq("id", ins["chien_id"])
-                .execute()
-                .data[0]
-            )
-
-            ligne = (
-                f"{membre['nom']} {membre['prenom']} - "
-                f"{chien['nom']} - membre - [ ]"
-            )
-            pdf.cell(0, 8, ligne, ln=True)
-
-        pdf.ln(5)
-        pdf.cell(0, 5, "---------------------------------------------", ln=True)
-        pdf.ln(5)
-
-    buffer = BytesIO()
-    pdf.output(buffer)
-    buffer.seek(0)
-
-    st.download_button(
-        label="📥 Telecharger le PDF de la journee",
-        data=buffer,
-        file_name=f"seances_{date_du_jour}.pdf",
-        mime="application/pdf"
-    )
+        st.success("🎉 Membre et chien créés avec succès.")
+        st.info("Ce membre est extérieur. Il doit encore : cotisation → abonnement → présence.")
+        st.rerun()
 
 
