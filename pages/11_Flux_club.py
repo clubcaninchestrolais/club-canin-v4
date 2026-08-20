@@ -248,47 +248,6 @@ Effets :
 🎉 FINI !
 """)
 
-
----
-
-
-""")
-
-
----
-
-## 🔗 Lier le chien au membre (méthode officielle)
-
-La liaison se fait **manuellement** dans la fiche du chien.
-
-### Étapes :
-1. Aller dans **Chiens**  
-2. Cliquer sur **Modifier**  
-3. Sélectionner le chien concerné  
-4. Choisir le membre dans le champ **Propriétaire / membre**  
-5. Enregistrer
-
-🎯 Cette méthode est simple, fiable et évite les erreurs de liaison automatique.
-
----
-
-## 📌 Pourquoi cette liaison n’est pas automatique ?
-
-- Le club préfère **valider manuellement** les informations extérieures  
-- Certains chiens peuvent être associés à un autre membre que celui saisi dans la préinscription  
-- Cela évite les erreurs de saisie ou les doublons  
-- Cela garde un contrôle total sur les données du club
-
----
-
-## 🐶 Résultat final
-
-Une fois la liaison faite :
-- le chien apparaît dans les inscriptions  
-- il peut être inscrit aux séances  
-- il peut être comptabilisé dans les présences  
-- le flux extérieur est entièrement opérationnel
-
 ---
 
 # 🧩 Questions fréquentes
