@@ -150,3 +150,4 @@ if st.button(f"Valider la préinscription #{choix['id']}"):
 
     st.success("La préinscription a été validée.")
     st.info("Le membre, le chien et l'inscription au cours ont été créés.")
+
