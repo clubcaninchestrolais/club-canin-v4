@@ -11,14 +11,11 @@ st.title("📝 Validation des préinscriptions")
 # Fonction pour récupérer le bon champ "cours"
 # ---------------------------------------------------------
 def get_cours(pre):
-    return (
-        pre.get("cours_inscrit")
-        or pre.get("cours_demande")
-        or pre.get("cours_nom")
-        or pre.get("cours")
-        or pre.get("cours_id")
-        or "Non spécifié"
-    )
+    # On prend le premier champ existant
+    for key in ["cours_inscrit", "cours_demande", "cours_nom", "cours", "cours_id"]:
+        if key in pre and pre[key] not in (None, "", "Non spécifié"):
+            return pre[key]
+    return "Non spécifié"
 
 # ---------------------------------------------------------
 # Charger les préinscriptions
