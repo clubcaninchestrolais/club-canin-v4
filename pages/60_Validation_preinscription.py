@@ -7,35 +7,34 @@ st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
 
 # ---------------------------------------------------------
-# Charger les cours (Chiots / Nouvel inscrit / Agility)
+# Charger les cours
 # ---------------------------------------------------------
 cours_table = supabase.table("cours").select("*").execute()
 
-# Sécurisation : vérifier que la réponse est correcte
-if not cours_table or cours_table.get("error"):
-    st.error("❌ Impossible de charger la table 'cours'. Vérifie qu'elle existe.")
+if cours_table.error:
+    st.error("❌ Impossible de charger la table 'cours'.")
     st.stop()
 
-cours_list = cours_table.get("data", [])
+cours_list = cours_table.data or []
 cours_dict = {c["id"]: c for c in cours_list}
 
 # ---------------------------------------------------------
-# Charger TOUTES les préinscriptions (traitées + non traitées)
+# Charger toutes les préinscriptions
 # ---------------------------------------------------------
 pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
 
-if not pre_table or pre_table.get("error"):
+if pre_table.error:
     st.error("❌ Impossible de charger les préinscriptions.")
     st.stop()
 
-preinscriptions = pre_table.get("data", [])
+preinscriptions = pre_table.data or []
 
 if not preinscriptions:
     st.info("Aucune préinscription.")
     st.stop()
 
 # ---------------------------------------------------------
-# PDF — Liste des préinscrits par cours
+# PDF
 # ---------------------------------------------------------
 st.subheader("📄 Export PDF — Préinscrits par cours")
 
@@ -47,10 +46,7 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
         cours_id = pre.get("cours_id")
         cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
 
-        if cours_type not in cours_dict_pdf:
-            cours_dict_pdf[cours_type] = []
-
-        cours_dict_pdf[cours_type].append(pre)
+        cours_dict_pdf.setdefault(cours_type, []).append(pre)
 
     pdf = FPDF()
     pdf.add_page()
@@ -89,7 +85,7 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Affichage compact avec COULEUR
+# Affichage compact avec couleur
 # ---------------------------------------------------------
 st.subheader("📋 Préinscriptions (traitées + en attente)")
 
@@ -104,33 +100,32 @@ for pre in preinscriptions:
     date_seance = pre.get("date_seance", "")
     heure = pre.get("heure_debut", "")
 
-    # 🟩 COULEUR SELON TRAITÉ OU NON
+    # Couleur selon état
     if pre.get("traitee"):
         bg = "background-color: #d4f8d4;"   # vert clair
     else:
         bg = "background-color: #f8e6d4;"   # orange clair
 
-    with st.container():
-        st.markdown(
-            f"""
-            <div style="{bg}; padding:10px; border-radius:8px; margin-bottom:8px;">
-                <b>👤 {nom_complet}</b><br>
-                🐶 {chien}<br>
-                📘 {cours_type}<br>
-                📅 {date_seance} — ⏰ {heure}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    st.markdown(
+        f"""
+        <div style="{bg}; padding:10px; border-radius:8px; margin-bottom:8px;">
+            <b>👤 {nom_complet}</b><br>
+            🐶 {chien}<br>
+            📘 {cours_type}<br>
+            📅 {date_seance} — ⏰ {heure}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-        # 🟥 Bouton seulement si NON traité
-        if not pre.get("traitee"):
-            if st.button("Valider", key=f"val_{pre['id']}"):
-                st.session_state["pre_id"] = pre["id"]
-                st.session_state["go_validation"] = True
-                st.rerun()
-        else:
-            st.write("✔ Déjà validé")
+    # Bouton seulement si NON traité
+    if not pre.get("traitee"):
+        if st.button("Valider", key=f"val_{pre['id']}"):
+            st.session_state["pre_id"] = pre["id"]
+            st.session_state["go_validation"] = True
+            st.rerun()
+    else:
+        st.write("✔ Déjà validé")
 
 st.markdown("---")
 
@@ -142,18 +137,13 @@ if st.session_state.get("go_validation", False):
     st.session_state["go_validation"] = False
     pre_id = st.session_state["pre_id"]
 
-    pre_data = (
-        supabase.table("preinscriptions")
-        .select("*")
-        .eq("id", pre_id)
-        .execute()
-    )
+    pre_data = supabase.table("preinscriptions").select("*").eq("id", pre_id).execute()
 
-    if not pre_data or pre_data.get("error"):
+    if pre_data.error or not pre_data.data:
         st.error("❌ Impossible de charger la préinscription.")
         st.stop()
 
-    pre = pre_data["data"][0]
+    pre = pre_data.data[0]
 
     cours_id = pre.get("cours_id")
     cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
@@ -183,7 +173,7 @@ if st.session_state.get("go_validation", False):
 
         membre_result = supabase.table("membres").insert(membre_insert).execute()
 
-        membre_id = membre_result["data"][0]["id"]
+        membre_id = membre_result.data[0]["id"]
 
         chien_insert = {
             "nom": pre.get("chien_nom", "Chien"),
@@ -192,7 +182,7 @@ if st.session_state.get("go_validation", False):
 
         supabase.table("chiens").insert(chien_insert).execute()
 
-        # 🟩 Marquer comme traitée
+        # Marquer comme traitée
         supabase.table("preinscriptions").update({"traitee": True}).eq("id", pre_id).execute()
 
         st.success("🎉 Membre et chien créés avec succès.")
