@@ -2,13 +2,12 @@ import streamlit as st
 from supabase_rest import supabase
 from fpdf import FPDF
 from io import BytesIO
-import os
 
-st.set_page_config(page_title="Validation préinscription", page_icon="🐾")
-st.title("🐾 Validation des préinscriptions extérieures")
+st.set_page_config(page_title="Validation preinscription", page_icon="🐾")
+st.title("🐾 Validation des preinscriptions exterieures")
 
 # ---------------------------------------------------------
-# 1. Charger les préinscriptions en attente
+# 1. Charger les preinscriptions en attente
 # ---------------------------------------------------------
 preinscriptions = (
     supabase.table("preinscriptions")
@@ -20,13 +19,13 @@ preinscriptions = (
 )
 
 if not preinscriptions:
-    st.info("Aucune préinscription en attente.")
+    st.info("Aucune preinscription en attente.")
     st.stop()
 
 # ---------------------------------------------------------
 # 2. Filtre
 # ---------------------------------------------------------
-filtre = st.text_input("🔍 Rechercher (nom, prénom, chien)")
+filtre = st.text_input("🔍 Rechercher (nom, prenom, chien)")
 
 if filtre:
     f = filtre.lower()
@@ -40,11 +39,11 @@ if filtre:
 # ---------------------------------------------------------
 # 3. Affichage en liste + validation
 # ---------------------------------------------------------
-st.subheader("📋 Préinscriptions en attente")
+st.subheader("📋 Preinscriptions en attente")
 
 for p in preinscriptions:
 
-    # Charger la séance
+    # Charger la seance
     seance_data = (
         supabase.table("cours_seances")
         .select("*")
@@ -70,15 +69,15 @@ for p in preinscriptions:
     col1, col2, col3 = st.columns([4, 3, 2])
 
     with col1:
-        st.write(f"**{p['nom']} {p['prenom']}** — {p['chien_nom']}")
+        st.write(f"**{p['nom']} {p['prenom']}** - {p['chien_nom']}")
 
     with col2:
-        st.write(f"{cours['nom']} — {seance['date_seance']}")
+        st.write(f"{cours['nom']} - {seance['date_seance']}")
 
     with col3:
         if st.button("Valider", key=f"valider_{p['id']}"):
 
-            # Créer le membre
+            # Creer le membre
             membre = (
                 supabase.table("membres")
                 .insert({
@@ -94,7 +93,7 @@ for p in preinscriptions:
             )
             membre_id = membre["id"]
 
-            # Créer le chien
+            # Creer le chien
             chien = (
                 supabase.table("chiens")
                 .insert({
@@ -108,7 +107,7 @@ for p in preinscriptions:
             )
             chien_id = chien["id"]
 
-            # Inscription réelle
+            # Inscription reelle
             supabase.table("cours_inscriptions").insert({
                 "membre_id": membre_id,
                 "chien_id": chien_id,
@@ -120,7 +119,7 @@ for p in preinscriptions:
                 "actif": True
             }).execute()
 
-            # Inscription séance
+            # Inscription seance
             supabase.table("cours_seances_inscriptions").insert({
                 "seance_id": p["seance_id"],
                 "membre_id": membre_id,
@@ -128,7 +127,7 @@ for p in preinscriptions:
                 "actif": True
             }).execute()
 
-            # Mise à jour préinscription
+            # Mise a jour preinscription
             supabase.table("preinscriptions").update({
                 "statut": "validee",
                 "membre_id": membre_id,
@@ -138,34 +137,29 @@ for p in preinscriptions:
                 "type": "exterieur"
             }).eq("id", p["id"]).execute()
 
-            st.success(f"Préinscription #{p['id']} validée.")
+            st.success(f"Preinscription #{p['id']} validee.")
             st.experimental_rerun()
 
 # ---------------------------------------------------------
-# 4. PDF – un PDF pour la journée (toutes les séances / cours)
+# 4. PDF – un PDF pour la journee (toutes les seances / cours)
 # ---------------------------------------------------------
-st.subheader("📄 Générer le PDF de la journée")
+st.subheader("📄 Generer le PDF de la journee")
 
 if preinscriptions:
     date_du_jour = seance["date_seance"]
 else:
     date_du_jour = None
 
-if date_du_jour and st.button("Créer le PDF de la journée"):
+if date_du_jour and st.button("Creer le PDF de la journee"):
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    # Charger la police Unicode
-    font_path = os.path.join("assets", "fonts", "DejaVuSans.ttf")
-    pdf.add_font("DejaVu", "", font_path, uni=True)
-    pdf.set_font("DejaVu", "", 16)
+    pdf.set_font("Arial", "", 16)
+    pdf.cell(0, 10, f"Seances du {date_du_jour}", ln=True)
 
-    # Titre
-    pdf.cell(0, 10, f"Séances du {date_du_jour}", ln=True)
-
-    # 1. Toutes les séances de cette date
+    # 1. Toutes les seances de cette date
     toutes_seances = (
         supabase.table("cours_seances")
         .select("*")
@@ -186,12 +180,12 @@ if date_du_jour and st.button("Créer le PDF de la journée"):
         )
         cours = cours_data[0]
 
-        pdf.set_font("DejaVu", "", 12)
+        pdf.set_font("Arial", "B", 12)
         pdf.cell(0, 10, f"Cours : {cours['nom']}", ln=True)
 
-        pdf.set_font("DejaVu", "", 10)
+        pdf.set_font("Arial", "", 10)
 
-        # Préinscriptions extérieures
+        # Preinscriptions exterieures
         preinscriptions_seance = (
             supabase.table("preinscriptions")
             .select("*")
@@ -209,11 +203,11 @@ if date_du_jour and st.button("Créer le PDF de la journée"):
             .data
         )
 
-        # Extérieurs
+        # Exterieurs
         for p in preinscriptions_seance:
             ligne = (
-                f"{p['nom']} {p['prenom']} — "
-                f"{p['chien_nom']} — extérieur — {p.get('source', 'portail')}"
+                f"{p['nom']} {p['prenom']} - "
+                f"{p['chien_nom']} - exterieur - {p.get('source', 'portail')}"
             )
             pdf.cell(0, 8, ligne, ln=True)
 
@@ -237,8 +231,8 @@ if date_du_jour and st.button("Créer le PDF de la journée"):
             )
 
             ligne = (
-                f"{membre['nom']} {membre['prenom']} — "
-                f"{chien['nom']} — membre"
+                f"{membre['nom']} {membre['prenom']} - "
+                f"{chien['nom']} - membre"
             )
             pdf.cell(0, 8, ligne, ln=True)
 
@@ -251,8 +245,9 @@ if date_du_jour and st.button("Créer le PDF de la journée"):
     buffer.seek(0)
 
     st.download_button(
-        label="📥 Télécharger le PDF de la journée",
+        label="📥 Telecharger le PDF de la journee",
         data=buffer,
         file_name=f"seances_{date_du_jour}.pdf",
         mime="application/pdf"
     )
+
