@@ -7,36 +7,34 @@ st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
 
 # ---------------------------------------------------------
-# Charger les cours (sécurisé supabase_rest)
+# Charger les cours
 # ---------------------------------------------------------
 cours_table = supabase.table("cours").select("*").execute()
 
-# Vérification correcte supabase_rest
 if hasattr(cours_table, "error") and cours_table.error:
-    st.error("❌ Erreur lors du chargement de la table 'cours'.")
+    st.error(f"❌ Erreur chargement cours : {cours_table.error}")
     st.stop()
 
 if cours_table.data is None:
     st.error("❌ La table 'cours' est vide ou introuvable.")
     st.stop()
 
-cours_list = cours_table.data
-cours_dict = {c["id"]: c for c in cours_list}
+cours_dict = {c["id"]: c for c in cours_table.data}
 
 # ---------------------------------------------------------
-# Charger les préinscriptions (sécurisé supabase_rest)
+# Charger les préinscriptions
 # ---------------------------------------------------------
 pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
 
 if hasattr(pre_table, "error") and pre_table.error:
-    st.error("❌ Erreur lors du chargement des préinscriptions.")
+    st.error(f"❌ Erreur chargement préinscriptions : {pre_table.error}")
     st.stop()
 
-if pre_table.data is None:
-    st.error("❌ Aucune préinscription trouvée.")
-    st.stop()
+preinscriptions = pre_table.data or []
 
-preinscriptions = pre_table.data
+if not preinscriptions:
+    st.info("Aucune préinscription.")
+    st.stop()
 
 # ---------------------------------------------------------
 # PDF
@@ -143,7 +141,7 @@ if st.session_state.get("go_validation", False):
     pre_data = supabase.table("preinscriptions").select("*").eq("id", pre_id).execute()
 
     if hasattr(pre_data, "error") and pre_data.error:
-        st.error("❌ Impossible de charger la préinscription.")
+        st.error(f"❌ Erreur chargement préinscription : {pre_data.error}")
         st.stop()
 
     pre = pre_data.data[0]
@@ -165,6 +163,7 @@ if st.session_state.get("go_validation", False):
 
     if st.button("Créer le membre"):
 
+        # 1) Création du membre
         membre_insert = {
             "nom": pre.get("nom", ""),
             "prenom": pre.get("prenom", ""),
@@ -175,17 +174,35 @@ if st.session_state.get("go_validation", False):
         }
 
         membre_result = supabase.table("membres").insert(membre_insert).execute()
+
+        if hasattr(membre_result, "error") and membre_result.error:
+            st.error(f"❌ Erreur création membre : {membre_result.error}")
+            st.stop()
+
+        if membre_result.data is None:
+            st.error("❌ Erreur : membre non créé.")
+            st.stop()
+
         membre_id = membre_result.data[0]["id"]
 
+        # 2) Création du chien
         chien_insert = {
             "nom": pre.get("chien_nom", "Chien"),
             "membre_id": membre_id
         }
 
-        supabase.table("chiens").insert(chien_insert).execute()
+        chien_result = supabase.table("chiens").insert(chien_insert).execute()
 
-        # Marquer comme traitée
-        supabase.table("preinscriptions").update({"traitee": True}).eq("id", pre_id).execute()
+        if hasattr(chien_result, "error") and chien_result.error:
+            st.error(f"❌ Erreur création chien : {chien_result.error}")
+            st.stop()
+
+        # 3) Marquer comme traitée
+        update_result = supabase.table("preinscriptions").update({"traitee": True}).eq("id", pre_id).execute()
+
+        if hasattr(update_result, "error") and update_result.error:
+            st.error(f"❌ Erreur mise à jour préinscription : {update_result.error}")
+            st.stop()
 
         st.success("🎉 Membre et chien créés avec succès.")
         st.rerun()
