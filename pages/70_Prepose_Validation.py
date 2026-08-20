@@ -53,7 +53,7 @@ for p in preinscriptions:
                 "seance_id": p["seance_id"],
                 "membre_id": p["membre_id"],
                 "chien_id": p["chien_id"],
-                "date_presence": p["date_seance"],
+                "date_presence": NONE,
                 "present": False,
                 "statut": "absent",
                 "type": "exterieur"
