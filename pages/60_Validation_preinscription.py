@@ -7,27 +7,35 @@ st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
 
 # ---------------------------------------------------------
-# Charger les cours
+# Charger les cours (Chiots / Nouvel inscrit / Agility)
 # ---------------------------------------------------------
 cours_table = supabase.table("cours").select("*").execute()
-cours_dict = {c["id"]: c for c in cours_table["data"]}
+
+# Sécurisation : vérifier que la réponse est correcte
+if not cours_table or cours_table.get("error"):
+    st.error("❌ Impossible de charger la table 'cours'. Vérifie qu'elle existe.")
+    st.stop()
+
+cours_list = cours_table.get("data", [])
+cours_dict = {c["id"]: c for c in cours_list}
 
 # ---------------------------------------------------------
 # Charger TOUTES les préinscriptions (traitées + non traitées)
 # ---------------------------------------------------------
-preinscriptions = (
-    supabase.table("preinscriptions")
-    .select("*")
-    .order("id", desc=True)
-    .execute()
-)["data"]
+pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
+
+if not pre_table or pre_table.get("error"):
+    st.error("❌ Impossible de charger les préinscriptions.")
+    st.stop()
+
+preinscriptions = pre_table.get("data", [])
 
 if not preinscriptions:
     st.info("Aucune préinscription.")
     st.stop()
 
 # ---------------------------------------------------------
-# PDF
+# PDF — Liste des préinscrits par cours
 # ---------------------------------------------------------
 st.subheader("📄 Export PDF — Préinscrits par cours")
 
@@ -139,9 +147,13 @@ if st.session_state.get("go_validation", False):
         .select("*")
         .eq("id", pre_id)
         .execute()
-    )["data"]
+    )
 
-    pre = pre_data[0]
+    if not pre_data or pre_data.get("error"):
+        st.error("❌ Impossible de charger la préinscription.")
+        st.stop()
+
+    pre = pre_data["data"][0]
 
     cours_id = pre.get("cours_id")
     cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
@@ -170,6 +182,7 @@ if st.session_state.get("go_validation", False):
         }
 
         membre_result = supabase.table("membres").insert(membre_insert).execute()
+
         membre_id = membre_result["data"][0]["id"]
 
         chien_insert = {
