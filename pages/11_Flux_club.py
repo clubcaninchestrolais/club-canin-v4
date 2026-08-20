@@ -143,18 +143,111 @@ Si un élément manque → l’action suivante ne fonctionne pas.
 4. Enregistrer
 
 ---
+st.markdown("""
+# 🐾 Flux extérieur — Mode d’emploi simple et fun pour préposé
 
-# 🐾 Flux extérieur — Préinscription et liaison du chien
+Le flux extérieur explique comment gérer un **non‑membre** qui arrive au club, participe à un cours,  
+et souhaite ensuite devenir membre.  
+Cette version est volontairement **simple**, **visuelle** et **préposé‑proof**.
 
-Le flux extérieur permet à un non‑membre de préinscrire son chien à une séance via la page publique.
+---
 
-Ce flux crée automatiquement :
-- un **non_membre**  
-- un **chien non lié** (membre_id = NULL)  
-- une **préinscription**  
+## 🟢 1. L’extérieur arrive (préinscription publique)
 
-Après validation et transformation, le membre devient actif, mais **le chien n’est pas encore lié automatiquement**.  
-Cette étape est volontaire : elle permet de vérifier que le chien correspond bien au bon membre.
+L’accueil encode :
+- Nom du visiteur  
+- Nom du chien  
+- Cours choisi  
+- Séance du jour  
+
+Cela crée automatiquement :
+- un **membre temporaire**  
+- un **chien temporaire**  
+- une **préinscription**
+
+➡ *L’extérieur existe maintenant dans le système.*
+
+---
+
+## 🔵 2. Avant le cours : valider la préinscription
+
+Page : **Validation des préinscriptions**  
+👉 Cliquer sur **Valider**
+
+Effets automatiques :
+- La **présence du jour** est créée  
+- Le chien temporaire est lié  
+- L’extérieur apparaît dans **Présences du jour**
+
+➡ *Il est prêt pour le cours.*
+
+---
+
+## 🟠 3. Pendant le cours : valider la présence
+
+Page : **Présences du jour**  
+👉 Cocher **Présent** ou **Absent**
+
+➡ *La présence est enregistrée dans l’historique.*
+
+---
+
+## 🟡 4. Après le cours : l’extérieur veut devenir membre
+
+Menu : **Transformer en membre**
+
+Effets automatiques :
+- Cotisation créée  
+- Abonnement créé  
+- Statut membre activé dans la base
+
+➡ *Administrativement, il est membre.*
+
+---
+
+## 🟣 5. Dernière étape : confirmer l’affiliation
+
+Fiche du membre  
+👉 Cliquer sur **Confirmation affiliation**
+
+Effets :
+- Le badge rouge **TEMPORAIRE** disparaît  
+- Le membre devient officiel  
+- Le chien devient officiel  
+- Le bouton disparaît
+
+➡ *La boucle est bouclée.*
+
+---
+
+# 🟩 Résumé SUPER SIMPLE
+
+1️⃣ Préinscription  
+2️⃣ Valider préinscription  
+3️⃣ Valider présence  
+4️⃣ Transformer en membre  
+5️⃣ Confirmer affiliation  
+
+➡ Si tu vois **TEMPORAIRE** → il reste l’étape 5.  
+➡ Si **TEMPORAIRE a disparu** → flux terminé.
+
+---
+
+# 🎨 Version ULTRA FUN (style panneau mural)
+
+🟢 ARRIVÉE EXTÉRIEUR  
+↓  
+🔵 VALIDER PRÉINSCRIPTION  
+↓  
+🟠 VALIDER PRÉSENCE  
+↓  
+🟡 TRANSFORMER EN MEMBRE  
+↓  
+🟣 CONFIRMER AFFILIATION  
+↓  
+🎉 FINI !
+""")
+
 
 ---
 
