@@ -2,6 +2,7 @@ import streamlit as st
 from supabase_rest import supabase
 from datetime import datetime
 from fpdf import FPDF
+from io import BytesIO
 
 st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
@@ -22,7 +23,7 @@ if not preinscriptions:
     st.stop()
 
 # ---------------------------------------------------------
-# PDF — Liste des préinscrits par cours (pour impression)
+# PDF — Liste des préinscrits par cours (version ASCII-safe)
 # ---------------------------------------------------------
 st.subheader("📄 Export PDF — Préinscrits par cours")
 
@@ -36,7 +37,7 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
             pre.get("cours_demande")
             or pre.get("cours")
             or pre.get("cours_id")
-            or "Non spécifié"
+            or "Non specifie"
         )
 
         if cours_txt not in cours_dict:
@@ -44,32 +45,42 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
         cours_dict[cours_txt].append(pre)
 
-    # Création du PDF
+    # Création du PDF (Arial ASCII-safe)
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
 
-    pdf.cell(200, 10, txt="Liste des préinscrits par cours", ln=True, align="C")
-    pdf.ln(10)
+    pdf.cell(0, 10, "Liste des preinscrits par cours", ln=True)
+    pdf.ln(5)
 
     for cours_nom, liste in cours_dict.items():
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(200, 8, txt=f"Cours : {cours_nom}", ln=True)
-        pdf.set_font("Arial", size=12)
+        cours_ascii = cours_nom.encode("ascii", "ignore").decode()
+        pdf.cell(0, 8, f"Cours : {cours_ascii}", ln=True)
+        pdf.set_font("Arial", size=11)
+        pdf.ln(2)
 
         for pre in liste:
             membre_nom = f"{pre.get('prenom', '')} {pre.get('nom', '')}"
             chien_nom = pre.get("chien_nom", "Chien")
-            pdf.cell(200, 8, txt=f"- {membre_nom} — 🐶 {chien_nom}", ln=True)
 
-        pdf.ln(5)
+            # Conversion ASCII-safe (accents supprimés automatiquement)
+            membre_ascii = membre_nom.encode("ascii", "ignore").decode()
+            chien_ascii = chien_nom.encode("ascii", "ignore").decode()
 
-    pdf_output = pdf.output(dest="S").encode("latin-1")
+            pdf.cell(0, 6, f"- {membre_ascii} - Chien : {chien_ascii}", ln=True)
+
+        pdf.ln(4)
+
+    # Export PDF
+    pdf_buffer = BytesIO()
+    pdf.output(pdf_buffer)
+    pdf_buffer.seek(0)
 
     st.download_button(
-        label="📄 Télécharger le PDF",
-        data=pdf_output,
-        file_name="preinscrits_par_cours.pdf",
+        label="📄 Télécharger PDF",
+        data=pdf_buffer,
+        file_name="preinscrits.pdf",
         mime="application/pdf"
     )
 
@@ -203,3 +214,4 @@ if st.session_state.get("go_validation", False):
         st.success("🎉 Membre et chien créés avec succès.")
         st.info("Ce membre est extérieur. Il doit encore : cotisation → abonnement → présence.")
         st.rerun()
+
