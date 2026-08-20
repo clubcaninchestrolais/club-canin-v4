@@ -30,14 +30,22 @@ for pre in preinscriptions:
     col1, col2, col3 = st.columns([3, 3, 2])
 
     with col1:
-        st.write(f"👤 **{pre['prenom']} {pre['nom']}**")
-        st.write(f"📧 {pre['email']}")
-        st.write(f"📱 {pre['telephone']}")
+        st.write(f"👤 **{pre.get('prenom', '')} {pre.get('nom', '')}**")
+        st.write(f"📧 {pre.get('email', 'Non spécifié')}")
+        st.write(f"📱 {pre.get('telephone', 'Non spécifié')}")
 
     with col2:
-        st.write(f"🐶 **Chien :** {pre['chien_nom']}")
-        st.write(f"📅 **Date :** {pre['date_preinscription']}")
-        st.write(f"📝 **Cours demandé :** {pre['cours_demande']}")
+        st.write(f"🐶 **Chien :** {pre.get('chien_nom', 'Non spécifié')}")
+        st.write(f"📅 **Date :** {pre.get('date_preinscription', 'Non spécifié')}")
+
+        # Champ cours demandé (sécurisé)
+        cours_txt = (
+            pre.get("cours_demande")
+            or pre.get("cours")
+            or pre.get("cours_id")
+            or "Non spécifié"
+        )
+        st.write(f"📝 **Cours demandé :** {cours_txt}")
 
     with col3:
         if st.button("Valider", key=f"valider_{pre['id']}"):
@@ -72,11 +80,18 @@ if st.session_state.get("go_validation", False):
 
     st.subheader("🔍 Validation de la préinscription")
 
-    st.write(f"👤 **{pre['prenom']} {pre['nom']}**")
-    st.write(f"📧 {pre['email']}")
-    st.write(f"📱 {pre['telephone']}")
-    st.write(f"🐶 **Chien :** {pre['chien_nom']}")
-    st.write(f"📝 **Cours demandé :** {pre['cours_demande']}")
+    st.write(f"👤 **{pre.get('prenom', '')} {pre.get('nom', '')}**")
+    st.write(f"📧 {pre.get('email', 'Non spécifié')}")
+    st.write(f"📱 {pre.get('telephone', 'Non spécifié')}")
+    st.write(f"🐶 **Chien :** {pre.get('chien_nom', 'Non spécifié')}")
+
+    cours_txt = (
+        pre.get("cours_demande")
+        or pre.get("cours")
+        or pre.get("cours_id")
+        or "Non spécifié"
+    )
+    st.write(f"📝 **Cours demandé :** {cours_txt}")
 
     st.markdown("---")
 
@@ -86,10 +101,10 @@ if st.session_state.get("go_validation", False):
     if st.button("Créer le membre"):
 
         membre_insert = {
-            "nom": pre["nom"],
-            "prenom": pre["prenom"],
-            "email": pre["email"],
-            "telephone": pre["telephone"],
+            "nom": pre.get("nom", ""),
+            "prenom": pre.get("prenom", ""),
+            "email": pre.get("email", ""),
+            "telephone": pre.get("telephone", ""),
             "statut": "exterieur",
             "actif": False
         }
@@ -112,7 +127,7 @@ if st.session_state.get("go_validation", False):
         # Création du chien
         # ---------------------------------------------------------
         chien_insert = {
-            "nom": pre["chien_nom"],
+            "nom": pre.get("chien_nom", "Chien"),
             "membre_id": membre_id
         }
 
@@ -135,5 +150,4 @@ if st.session_state.get("go_validation", False):
         st.success("🎉 Membre et chien créés avec succès.")
         st.info("Ce membre est extérieur. Il doit encore : cotisation → abonnement → présence.")
         st.rerun()
-
 
