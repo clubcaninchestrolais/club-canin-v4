@@ -21,11 +21,12 @@ cours_dict = {
 }
 
 # ---------------------------------------------------------
-# Charger les séances archivées
+# Charger les séances archivées (actif = FALSE)
 # ---------------------------------------------------------
 seances = (
-    supabase.table("cours_seances_i")   # ← version accessible
+    supabase.table("cours_seances")
     .select("*")
+    .eq("actif", False)
     .order("date_seance", desc=True)
     .execute()
     .data
@@ -51,8 +52,7 @@ if seance_detail:
 
     with col1:
         st.write(f"📅 **Date** : {s['date_seance']}")
-        st.write(f"🕒 **Début** : {s['heure_debut']}")
-        st.write(f"🕒 **Fin** : {s['heure_fin']}")
+        st.write(f"📝 **Note** : {s.get('note', 'Aucune note')}")
 
     with col2:
         st.write(f"🐾 **Cours** : {cours.get('nom', 'Cours inconnu')}")
@@ -99,7 +99,7 @@ if seance_detail:
     st.markdown("---")
 
 # ---------------------------------------------------------
-# LISTE DES SÉANCES
+# LISTE DES SÉANCES ARCHIVÉES
 # ---------------------------------------------------------
 st.subheader("📄 Liste des séances archivées")
 
@@ -118,14 +118,14 @@ for s in seances:
         .data
     )
 
-    col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 1])
+    col1, col2, col3, col4 = st.columns([2, 2, 2, 1])
 
     col1.write(f"📅 {s['date_seance']}")
     col2.write(f"🐾 {nom_cours}")
-    col3.write(f"🕒 {s['heure_debut']} → {s['heure_fin']}")
+    col3.write(f"📝 Note : {s.get('note', '—')}")
     col4.write(f"👥 {len(presences)} présents")
 
-    if col5.button("Voir", key=f"voir_{s['id']}"):
+    if col4.button("Voir", key=f"voir_{s['id']}"):
         st.session_state["seance_detail"] = s
 
     st.markdown("---")
