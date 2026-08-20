@@ -1,6 +1,7 @@
 import streamlit as st
 from supabase_rest import supabase
 from datetime import datetime
+from fpdf import FPDF
 
 st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
@@ -21,6 +22,60 @@ if not preinscriptions:
     st.stop()
 
 # ---------------------------------------------------------
+# PDF — Liste des préinscrits par cours (pour impression)
+# ---------------------------------------------------------
+st.subheader("📄 Export PDF — Préinscrits par cours")
+
+if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
+
+    # Regrouper par cours
+    cours_dict = {}
+
+    for pre in preinscriptions:
+        cours_txt = (
+            pre.get("cours_demande")
+            or pre.get("cours")
+            or pre.get("cours_id")
+            or "Non spécifié"
+        )
+
+        if cours_txt not in cours_dict:
+            cours_dict[cours_txt] = []
+
+        cours_dict[cours_txt].append(pre)
+
+    # Création du PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Liste des préinscrits par cours", ln=True, align="C")
+    pdf.ln(10)
+
+    for cours_nom, liste in cours_dict.items():
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(200, 8, txt=f"Cours : {cours_nom}", ln=True)
+        pdf.set_font("Arial", size=12)
+
+        for pre in liste:
+            membre_nom = f"{pre.get('prenom', '')} {pre.get('nom', '')}"
+            chien_nom = pre.get("chien_nom", "Chien")
+            pdf.cell(200, 8, txt=f"- {membre_nom} — 🐶 {chien_nom}", ln=True)
+
+        pdf.ln(5)
+
+    pdf_output = pdf.output(dest="S").encode("latin-1")
+
+    st.download_button(
+        label="📄 Télécharger le PDF",
+        data=pdf_output,
+        file_name="preinscrits_par_cours.pdf",
+        mime="application/pdf"
+    )
+
+st.markdown("---")
+
+# ---------------------------------------------------------
 # Affichage des préinscriptions
 # ---------------------------------------------------------
 st.subheader("📋 Préinscriptions en attente")
@@ -38,7 +93,6 @@ for pre in preinscriptions:
         st.write(f"🐶 **Chien :** {pre.get('chien_nom', 'Non spécifié')}")
         st.write(f"📅 **Date :** {pre.get('date_preinscription', 'Non spécifié')}")
 
-        # Champ cours demandé (sécurisé)
         cours_txt = (
             pre.get("cours_demande")
             or pre.get("cours")
@@ -63,7 +117,6 @@ if st.session_state.get("go_validation", False):
     st.session_state["go_validation"] = False
     pre_id = st.session_state["pre_id"]
 
-    # Charger la préinscription
     pre_data = (
         supabase.table("preinscriptions")
         .select("*")
@@ -150,4 +203,3 @@ if st.session_state.get("go_validation", False):
         st.success("🎉 Membre et chien créés avec succès.")
         st.info("Ce membre est extérieur. Il doit encore : cotisation → abonnement → présence.")
         st.rerun()
-
