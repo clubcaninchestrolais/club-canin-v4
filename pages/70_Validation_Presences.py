@@ -62,7 +62,7 @@ if seance_detail:
         st.write(f"📌 **Niveau** : {cours.get('niveau', 'Non defini')}")
 
     # ---------------------------------------------------------
-    # Charger les preinscrits
+    # Charger les preinscrits / inscriptions
     # ---------------------------------------------------------
     inscriptions = (
         supabase.table("cours_inscriptions")
@@ -73,7 +73,7 @@ if seance_detail:
     )
 
     st.markdown("---")
-    st.subheader("👥 Preinscrits")
+    st.subheader("👥 Preinscrits / participants")
 
     for ins in inscriptions:
         membre = (
@@ -97,7 +97,83 @@ if seance_detail:
         )
         chien_nom = chien[0]["nom"] if chien else "Chien inconnu"
 
-        st.write(f"- **{membre_nom}** — 🐶 {chien_nom}")
+        col_a, col_b, col_c = st.columns([3, 2, 2])
+
+        with col_a:
+            st.write(f"- **{membre_nom}** — 🐶 {chien_nom}")
+
+        with col_b:
+            present_flag = ins.get("present", False)
+            st.write("✅ Present" if present_flag else "⏳ Non present")
+
+        with col_c:
+            if st.button(
+                "Valider presence",
+                key=f"presence_{ins['id']}"
+            ):
+                membre_id = ins["membre_id"]
+
+                # 1) Verifier cotisation active
+                cotisation = (
+                    supabase.table("cotisations")
+                    .select("*")
+                    .eq("membre_id", membre_id)
+                    .eq("actif", True)
+                    .execute()
+                    .data
+                )
+
+                if not cotisation:
+                    st.error(
+                        "Ce membre n'a pas de cotisation active. "
+                        "Validation de presence impossible."
+                    )
+                    st.stop()
+
+                # 2) Verifier abonnement actif
+                abo = (
+                    supabase.table("abonnements")
+                    .select("*")
+                    .eq("membre_id", membre_id)
+                    .eq("actif", True)
+                    .execute()
+                    .data
+                )
+
+                if not abo:
+                    st.error(
+                        "Ce membre n'a pas d'abonnement actif. "
+                        "Validation de presence impossible."
+                    )
+                    st.stop()
+
+                abonnement = abo[0]
+
+                # 3) Verifier compteur > 0
+                if abonnement.get("seances_restantes", 0) <= 0:
+                    st.error(
+                        "Ce membre n'a plus de seances disponibles "
+                        "sur son abonnement."
+                    )
+                    st.stop()
+
+                # 4) Marquer presence dans cours_inscriptions
+                supabase.table("cours_inscriptions").update(
+                    {"present": True}
+                ).eq("id", ins["id"]).execute()
+
+                # 5) Decrementer abonnement
+                supabase.table("abonnements").update(
+                    {
+                        "seances_restantes": abonnement["seances_restantes"] - 1
+                    }
+                ).eq("id", abonnement["id"]).execute()
+
+                st.success(
+                    f"Presence validee pour {membre_nom}. "
+                    "Abonnement decremente."
+                )
+                st.experimental_rerun()
 
     # ---------------------------------------------------------
     # PDF EXPORT (sans accents)
@@ -110,7 +186,7 @@ if seance_detail:
         # Regrouper par cours
         par_cours = {}
         for ins in inscriptions:
-            cid = ins["cours_id"]
+            cid = ins.get("cours_id", s["cours_id"])
             par_cours.setdefault(cid, []).append(ins)
 
         # Creation du PDF
@@ -198,5 +274,6 @@ for s in seances:
 
     if col3.button("Valider", key=f"voir_{s['id']}"):
         st.session_state["seance_detail"] = s
+        st.experimental_rerun()
 
     st.markdown("---")
