@@ -143,7 +143,7 @@ Si un élément manque → l’action suivante ne fonctionne pas.
 4. Enregistrer
 
 ---
-st.markdown("""
+
 # 🐾 Flux extérieur — Mode d’emploi simple et fun pour préposé
 
 Ce flux explique comment gérer un **non‑membre** qui arrive au club, participe à un cours,
@@ -246,7 +246,7 @@ Effets :
 🟣 CONFIRMER AFFILIATION  
 ↓  
 🎉 FINI !
-""")
+
 
 ---
 
