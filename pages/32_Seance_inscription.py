@@ -210,4 +210,3 @@ if st.button("Inscrire le membre à cette séance"):
 
     st.success("Inscription enregistrée !")
     st.rerun()
-
