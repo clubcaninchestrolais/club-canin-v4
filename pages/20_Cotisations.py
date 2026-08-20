@@ -68,30 +68,28 @@ if choix != "-- Tous les membres --":
     ]
 
 # ---------------------------------------------------------
-# Affichage ultra-compact + bouton détail
+# Affichage ultra-compact
 # ---------------------------------------------------------
 st.subheader("📋 Liste des cotisations")
 
 if cotisations:
     for cot in cotisations:
 
-        # Dates sécurisées
         date_pay = safe_date(cot.get("date_paiement"))
         date_exp = safe_date(cot.get("date_expiration"))
 
         # Déterminer la couleur
         if date_exp is None:
-            couleur = "#ffcccc"   # rouge
+            couleur = "#ffcccc"
         else:
             jours_restants = (date_exp - datetime.now()).days
             if jours_restants < 0:
-                couleur = "#ffcccc"   # rouge
+                couleur = "#ffcccc"
             elif jours_restants <= 30:
-                couleur = "#ffe6cc"   # orange
+                couleur = "#ffe6cc"
             else:
-                couleur = "#e6ffe6"   # vert
+                couleur = "#e6ffe6"
 
-        # Colonnes compactes
         col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 2])
 
         with col1:
@@ -139,7 +137,7 @@ else:
     st.info("Aucune cotisation trouvée.")
 
 # ---------------------------------------------------------
-# Navigation vers la fiche détail
+# Navigation vers fiche détail
 # ---------------------------------------------------------
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
@@ -148,7 +146,7 @@ if st.session_state.get("go_detail", False):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Création d’une cotisation (CORRECTION IMPORTANTE)
+# Création d’une cotisation (CORRECTE)
 # ---------------------------------------------------------
 if choix != "-- Tous les membres --":
 
@@ -160,19 +158,19 @@ if choix != "-- Tous les membres --":
     )
 
     montant = st.number_input("Montant (€)", min_value=0, value=45)
+    type_cot = st.selectbox("Type de cotisation", ["annuelle", "gratuite", "speciale"])
     date_paiement = st.date_input("Date de paiement", value=date.today())
     date_expiration = st.date_input("Date d'expiration", value=date.today().replace(year=date.today().year + 1))
+    remarques = st.text_area("Remarques (optionnel)", "")
 
     if st.button("Créer la cotisation"):
 
-        # ---------------------------------------------------------
-        # 🔒 Vérifier si une cotisation active existe déjà
-        # ---------------------------------------------------------
+        # Vérifier cotisation active existante
         cot_active = (
             supabase.table("cotisations")
             .select("*")
             .eq("membre_id", membre_sel["id"])
-            .eq("actif", True)
+            .eq("statut", "active")
             .execute()
             .data
         )
@@ -181,20 +179,18 @@ if choix != "-- Tous les membres --":
             st.error("❌ Ce membre possède déjà une cotisation active.")
             st.stop()
 
-        # ---------------------------------------------------------
-        # ✔ Créer la cotisation
-        # ---------------------------------------------------------
+        # Créer la cotisation
         supabase.table("cotisations").insert({
             "membre_id": membre_sel["id"],
             "montant": montant,
+            "type": type_cot,
             "date_paiement": str(date_paiement),
             "date_expiration": str(date_expiration),
-            "actif": True
+            "remarques": remarques,
+            "statut": "active"
         }).execute()
 
-        # ---------------------------------------------------------
-        # ✔ Activer le membre automatiquement
-        # ---------------------------------------------------------
+        # Activer le membre
         supabase.table("membres").update({
             "statut": "membre",
             "actif": True
