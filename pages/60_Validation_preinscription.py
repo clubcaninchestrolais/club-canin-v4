@@ -28,6 +28,60 @@ if not preinscriptions:
     st.stop()
 
 # ---------------------------------------------------------
+# PDF — Liste des préinscrits par cours
+# ---------------------------------------------------------
+st.subheader("📄 Export PDF — Préinscrits par cours")
+
+if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
+
+    cours_dict_pdf = {}
+
+    for pre in preinscriptions:
+        cours_id = pre.get("cours_id")
+        cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
+
+        if cours_type not in cours_dict_pdf:
+            cours_dict_pdf[cours_type] = []
+
+        cours_dict_pdf[cours_type].append(pre)
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(0, 10, "Liste des preinscrits par cours", ln=True)
+    pdf.ln(5)
+
+    for cours_type, liste in cours_dict_pdf.items():
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 8, f"Cours : {cours_type}", ln=True)
+        pdf.set_font("Arial", size=11)
+        pdf.ln(2)
+
+        for pre in liste:
+            membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}"
+            chien_nom = pre.get("chien_nom", "Chien")
+            date_seance = pre.get("date_seance", "")
+            heure = pre.get("heure_debut", "")
+
+            pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom} - {date_seance} {heure}", ln=True)
+
+        pdf.ln(4)
+
+    pdf_buffer = BytesIO()
+    pdf.output(pdf_buffer)
+    pdf_buffer.seek(0)
+
+    st.download_button(
+        label="📄 Télécharger PDF",
+        data=pdf_buffer,
+        file_name="preinscrits.pdf",
+        mime="application/pdf"
+    )
+
+st.markdown("---")
+
+# ---------------------------------------------------------
 # Affichage compact et parlant
 # ---------------------------------------------------------
 st.subheader("📋 Préinscriptions en attente")
@@ -37,11 +91,11 @@ for pre in preinscriptions:
     nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
     chien = pre.get("chien_nom", "")
 
-    # 🟩 Type de cours (Chiots / Nouvel inscrit / Agility / Obéissance)
+    # Type de cours (Chiots / Nouvel inscrit / Agility / Obéissance)
     cours_id = pre.get("cours_id")
     cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
 
-    # 🟩 Nom interne du cours (si tu veux le garder)
+    # Nom interne du cours (si tu veux le garder)
     cours_nom = pre.get("cours_nom", "")
 
     date_seance = pre.get("date_seance", "")
