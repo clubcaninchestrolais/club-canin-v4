@@ -7,6 +7,12 @@ st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
 
 # ---------------------------------------------------------
+# Charger les cours (pour récupérer Chiots / Nouvel inscrit / Agility)
+# ---------------------------------------------------------
+cours_table = supabase.table("cours").select("*").execute().data
+cours_dict = {c["id"]: c for c in cours_table}
+
+# ---------------------------------------------------------
 # Charger les préinscriptions
 # ---------------------------------------------------------
 preinscriptions = (
@@ -22,56 +28,6 @@ if not preinscriptions:
     st.stop()
 
 # ---------------------------------------------------------
-# PDF — Liste des préinscrits par cours
-# ---------------------------------------------------------
-st.subheader("📄 Export PDF — Préinscrits par cours")
-
-if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
-
-    cours_dict = {}
-
-    for pre in preinscriptions:
-        cours_txt = pre.get("cours_nom", "Cours inconnu")
-
-        if cours_txt not in cours_dict:
-            cours_dict[cours_txt] = []
-
-        cours_dict[cours_txt].append(pre)
-
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    pdf.cell(0, 10, "Liste des preinscrits par cours", ln=True)
-    pdf.ln(5)
-
-    for cours_nom, liste in cours_dict.items():
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 8, f"Cours : {cours_nom}", ln=True)
-        pdf.set_font("Arial", size=11)
-        pdf.ln(2)
-
-        for pre in liste:
-            membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}"
-            chien_nom = pre.get("chien_nom", "Chien")
-            pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom}", ln=True)
-
-        pdf.ln(4)
-
-    pdf_buffer = BytesIO()
-    pdf.output(pdf_buffer)
-    pdf_buffer.seek(0)
-
-    st.download_button(
-        label="📄 Télécharger PDF",
-        data=pdf_buffer,
-        file_name="preinscrits.pdf",
-        mime="application/pdf"
-    )
-
-st.markdown("---")
-
-# ---------------------------------------------------------
 # Affichage compact et parlant
 # ---------------------------------------------------------
 st.subheader("📋 Préinscriptions en attente")
@@ -80,7 +36,14 @@ for pre in preinscriptions:
 
     nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
     chien = pre.get("chien_nom", "")
-    cours = pre.get("cours_nom", "Cours inconnu")
+
+    # 🟩 Type de cours (Chiots / Nouvel inscrit / Agility / Obéissance)
+    cours_id = pre.get("cours_id")
+    cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
+
+    # 🟩 Nom interne du cours (si tu veux le garder)
+    cours_nom = pre.get("cours_nom", "")
+
     date_seance = pre.get("date_seance", "")
     heure = pre.get("heure_debut", "")
     tel = pre.get("telephone", "")
@@ -95,7 +58,7 @@ for pre in preinscriptions:
         st.write(f"🐶 {chien}")
 
     with col3:
-        st.write(f"📘 {cours}")
+        st.write(f"📘 **{cours_type}**")  # Chiots / Nouvel inscrit / Agility
 
     with col4:
         st.write(f"📅 {date_seance}")
@@ -133,6 +96,9 @@ if st.session_state.get("go_validation", False):
 
     pre = pre_data[0]
 
+    cours_id = pre.get("cours_id")
+    cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
+
     st.subheader("🔍 Validation de la préinscription")
 
     st.write(f"👤 **{pre.get('prenom', '')} {pre.get('nom', '')}**")
@@ -140,7 +106,7 @@ if st.session_state.get("go_validation", False):
     st.write(f"📱 {pre.get('telephone', 'Non spécifié')}")
     st.write(f"🐶 **Chien :** {pre.get('chien_nom', 'Non spécifié')}")
 
-    st.write(f"📘 **Cours :** {pre.get('cours_nom', 'Cours inconnu')}")
+    st.write(f"📘 **Cours :** {cours_type}")
     st.write(f"📅 **Date :** {pre.get('date_seance', '')}")
     st.write(f"⏰ **Heure :** {pre.get('heure_debut', '')}")
 
