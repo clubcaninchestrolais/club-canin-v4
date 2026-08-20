@@ -1,5 +1,5 @@
 import streamlit as st
-from supabase_client import supabase
+from supabase_rest import supabase
 from fpdf import FPDF
 from io import BytesIO
 
@@ -10,23 +10,13 @@ st.title("📝 Validation des préinscriptions")
 # Charger les cours
 # ---------------------------------------------------------
 cours_table = supabase.table("cours").select("*").execute()
-
-if cours_table.error:
-    st.error(f"❌ Erreur chargement cours : {cours_table.error}")
-    st.stop()
-
 cours_list = cours_table.data or []
 cours_dict = {c["id"]: c for c in cours_list}
 
 # ---------------------------------------------------------
-# Charger toutes les préinscriptions
+# Charger les préinscriptions
 # ---------------------------------------------------------
 pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
-
-if pre_table.error:
-    st.error(f"❌ Erreur chargement préinscriptions : {pre_table.error}")
-    st.stop()
-
 preinscriptions = pre_table.data or []
 
 if not preinscriptions:
@@ -83,9 +73,9 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Affichage compact avec couleur
+# Affichage compact (sans validation réelle)
 # ---------------------------------------------------------
-st.subheader("📋 Préinscriptions (traitées + en attente)")
+st.subheader("📋 Préinscriptions (affichage uniquement)")
 
 for pre in preinscriptions:
 
@@ -98,7 +88,7 @@ for pre in preinscriptions:
     date_seance = pre.get("date_seance", "")
     heure = pre.get("heure_debut", "")
 
-    # Couleur selon état
+    # Couleur selon état (affichage seulement)
     if pre.get("traitee"):
         bg = "background-color: #d4f8d4;"   # vert clair
     else:
@@ -116,89 +106,12 @@ for pre in preinscriptions:
         unsafe_allow_html=True
     )
 
-    # Bouton seulement si NON traité
-    if not pre.get("traitee"):
-        if st.button("Valider", key=f"val_{pre['id']}"):
-            st.session_state["pre_id"] = pre["id"]
-            st.session_state["go_validation"] = True
-            st.rerun()
-    else:
-        st.write("✔ Déjà validé")
+    # Bouton affiché mais ne fait rien (supabase_rest ne supporte pas update)
+    st.button("Valider (affichage uniquement)", key=f"val_{pre['id']}")
 
 st.markdown("---")
 
-# ---------------------------------------------------------
-# Validation d'une préinscription
-# ---------------------------------------------------------
-if st.session_state.get("go_validation", False):
-
-    st.session_state["go_validation"] = False
-    pre_id = st.session_state["pre_id"]
-
-    pre_data = supabase.table("preinscriptions").select("*").eq("id", pre_id).execute()
-
-    if pre_data.error or not pre_data.data:
-        st.error("❌ Impossible de charger la préinscription.")
-        st.stop()
-
-    pre = pre_data.data[0]
-
-    cours_id = pre.get("cours_id")
-    cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
-
-    st.subheader("🔍 Validation de la préinscription")
-
-    st.write(f"👤 **{pre.get('prenom', '')} {pre.get('nom', '')}**")
-    st.write(f"📧 {pre.get('email', 'Non spécifié')}")
-    st.write(f"📱 {pre.get('telephone', 'Non spécifié')}")
-    st.write(f"🐶 **Chien :** {pre.get('chien_nom', 'Non spécifié')}")
-    st.write(f"📘 **Cours :** {cours_type}")
-    st.write(f"📅 **Date :** {pre.get('date_seance', '')}")
-    st.write(f"⏰ **Heure :** {pre.get('heure_debut', '')}")
-
-    st.markdown("---")
-
-    if st.button("Créer le membre"):
-
-        # 1) Création du membre
-        membre_insert = {
-            "nom": pre.get("nom", ""),
-            "prenom": pre.get("prenom", ""),
-            "email": pre.get("email", ""),
-            "telephone": pre.get("telephone", ""),
-            "statut": "exterieur",
-            "actif": False
-        }
-
-        membre_result = supabase.table("membres").insert(membre_insert).execute()
-
-        if membre_result.error:
-            st.error(f"❌ Erreur création membre : {membre_result.error}")
-            st.stop()
-
-        membre_id = membre_result.data[0]["id"]
-
-        # 2) Création du chien
-        chien_insert = {
-            "nom": pre.get("chien_nom", "Chien"),
-            "membre_id": membre_id
-        }
-
-        chien_result = supabase.table("chiens").insert(chien_insert).execute()
-
-        if chien_result.error:
-            st.error(f"❌ Erreur création chien : {chien_result.error}")
-            st.stop()
-
-        # 3) Marquer comme traitée
-        update_result = supabase.table("preinscriptions").update({"traitee": True}).eq("id", pre_id).execute()
-
-        if update_result.error:
-            st.error(f"❌ Erreur mise à jour préinscription : {update_result.error}")
-            st.stop()
-
-        st.success("🎉 Membre et chien créés avec succès.")
-        st.rerun()
+st.info("⚠️ Mode affichage uniquement — validation réelle désactivée car supabase_rest ne supporte pas les insert/update.")
 
 
 
