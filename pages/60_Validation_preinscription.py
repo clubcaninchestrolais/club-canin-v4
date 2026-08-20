@@ -62,9 +62,10 @@ cours = cours_data[0]
 st.subheader("📘 Cours et séance")
 
 st.write(f"**Cours :** {cours['nom']}")
-st.write(f"**Niveau :** {cours['niveau']}")
 st.write(f"**Séance ID :** {choix['seance_id']}")
 st.write(f"**Date :** {seance['date_seance']}")
+
+# Heures : seulement si elles existent dans ta table
 st.write(f"**Heure :** {seance.get('heure_debut', '—')} → {seance.get('heure_fin', '—')}")
 
 st.subheader("👤 Personne")
@@ -158,4 +159,5 @@ if st.button(f"Valider la préinscription #{choix['id']}"):
 
     st.success("La préinscription a été validée.")
     st.info("Le membre, le chien et l'inscription au cours ont été créés.")
+
 
