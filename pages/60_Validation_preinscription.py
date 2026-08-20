@@ -107,24 +107,21 @@ for p in preinscriptions:
             )
             chien_id = chien["id"]
 
-            # Inscription reelle
+            # Inscription reelle (compatible avec ta table)
             supabase.table("cours_inscriptions").insert({
                 "membre_id": membre_id,
                 "chien_id": chien_id,
                 "cours_id": cours["id"],
                 "seance_id": p["seance_id"],
-                "date_seance": seance["date_seance"],
-                "type": "exterieur",
-                "source": "preinscription",
-                "actif": True
+                "statut": "inscrit",
+                "type": "exterieur"
             }).execute()
 
             # Inscription seance
             supabase.table("cours_seances_inscriptions").insert({
                 "seance_id": p["seance_id"],
                 "membre_id": membre_id,
-                "chien_id": chien_id,
-                "actif": True
+                "chien_id": chien_id
             }).execute()
 
             # Mise a jour preinscription
@@ -133,8 +130,7 @@ for p in preinscriptions:
                 "membre_id": membre_id,
                 "chien_id": chien_id,
                 "traitee": True,
-                "acceptee": True,
-                "type": "exterieur"
+                "acceptee": True
             }).eq("id", p["id"]).execute()
 
             st.success(f"Preinscription #{p['id']} validee.")
