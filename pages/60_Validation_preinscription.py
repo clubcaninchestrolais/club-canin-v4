@@ -8,6 +8,19 @@ st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
 
 # ---------------------------------------------------------
+# Fonction pour récupérer le bon champ "cours"
+# ---------------------------------------------------------
+def get_cours(pre):
+    return (
+        pre.get("cours_inscrit")
+        or pre.get("cours_demande")
+        or pre.get("cours_nom")
+        or pre.get("cours")
+        or pre.get("cours_id")
+        or "Non spécifié"
+    )
+
+# ---------------------------------------------------------
 # Charger les préinscriptions
 # ---------------------------------------------------------
 preinscriptions = (
@@ -32,12 +45,7 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
     cours_dict = {}
 
     for pre in preinscriptions:
-        cours_txt = (
-            pre.get("cours_demande")
-            or pre.get("cours")
-            or pre.get("cours_id")
-            or "Non specifie"
-        )
+        cours_txt = get_cours(pre)
 
         if cours_txt not in cours_dict:
             cours_dict[cours_txt] = []
@@ -89,12 +97,7 @@ st.subheader("📋 Préinscriptions en attente")
 
 for pre in preinscriptions:
 
-    cours_txt = (
-        pre.get("cours_demande")
-        or pre.get("cours")
-        or pre.get("cours_id")
-        or "Non spécifié"
-    )
+    cours_txt = get_cours(pre)
 
     col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 2, 2, 3, 2])
 
@@ -150,12 +153,7 @@ if st.session_state.get("go_validation", False):
     st.write(f"📱 {pre.get('telephone', 'Non spécifié')}")
     st.write(f"🐶 **Chien :** {pre.get('chien_nom', 'Non spécifié')}")
 
-    cours_txt = (
-        pre.get("cours_demande")
-        or pre.get("cours")
-        or pre.get("cours_id")
-        or "Non spécifié"
-    )
+    cours_txt = get_cours(pre)
     st.write(f"📝 **Cours demandé :** {cours_txt}")
 
     st.markdown("---")
