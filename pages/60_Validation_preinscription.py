@@ -7,31 +7,36 @@ st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
 
 # ---------------------------------------------------------
-# Charger les cours
+# Charger les cours (sécurisé supabase_rest)
 # ---------------------------------------------------------
 cours_table = supabase.table("cours").select("*").execute()
 
-if cours_table.error:
-    st.error("❌ Impossible de charger la table 'cours'.")
+# Vérification correcte supabase_rest
+if hasattr(cours_table, "error") and cours_table.error:
+    st.error("❌ Erreur lors du chargement de la table 'cours'.")
     st.stop()
 
-cours_list = cours_table.data or []
+if cours_table.data is None:
+    st.error("❌ La table 'cours' est vide ou introuvable.")
+    st.stop()
+
+cours_list = cours_table.data
 cours_dict = {c["id"]: c for c in cours_list}
 
 # ---------------------------------------------------------
-# Charger toutes les préinscriptions
+# Charger les préinscriptions (sécurisé supabase_rest)
 # ---------------------------------------------------------
 pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
 
-if pre_table.error:
-    st.error("❌ Impossible de charger les préinscriptions.")
+if hasattr(pre_table, "error") and pre_table.error:
+    st.error("❌ Erreur lors du chargement des préinscriptions.")
     st.stop()
 
-preinscriptions = pre_table.data or []
-
-if not preinscriptions:
-    st.info("Aucune préinscription.")
+if pre_table.data is None:
+    st.error("❌ Aucune préinscription trouvée.")
     st.stop()
+
+preinscriptions = pre_table.data
 
 # ---------------------------------------------------------
 # PDF
@@ -137,7 +142,7 @@ if st.session_state.get("go_validation", False):
 
     pre_data = supabase.table("preinscriptions").select("*").eq("id", pre_id).execute()
 
-    if pre_data.error or not pre_data.data:
+    if hasattr(pre_data, "error") and pre_data.error:
         st.error("❌ Impossible de charger la préinscription.")
         st.stop()
 
@@ -170,7 +175,6 @@ if st.session_state.get("go_validation", False):
         }
 
         membre_result = supabase.table("membres").insert(membre_insert).execute()
-
         membre_id = membre_result.data[0]["id"]
 
         chien_insert = {
