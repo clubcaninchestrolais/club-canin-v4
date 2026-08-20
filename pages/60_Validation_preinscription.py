@@ -3,6 +3,7 @@ from supabase_rest import supabase
 from datetime import datetime
 from fpdf import FPDF
 from io import BytesIO
+import pandas as pd
 
 st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
@@ -23,13 +24,12 @@ if not preinscriptions:
     st.stop()
 
 # ---------------------------------------------------------
-# PDF — Liste des préinscrits par cours (version ASCII-safe)
+# PDF — Liste des préinscrits par cours (ASCII-safe)
 # ---------------------------------------------------------
 st.subheader("📄 Export PDF — Préinscrits par cours")
 
 if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
-    # Regrouper par cours
     cours_dict = {}
 
     for pre in preinscriptions:
@@ -45,7 +45,6 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
         cours_dict[cours_txt].append(pre)
 
-    # Création du PDF (Arial ASCII-safe)
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
@@ -61,10 +60,9 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
         pdf.ln(2)
 
         for pre in liste:
-            membre_nom = f"{pre.get('prenom', '')} {pre.get('nom', '')}"
+            membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}"
             chien_nom = pre.get("chien_nom", "Chien")
 
-            # Conversion ASCII-safe (accents supprimés automatiquement)
             membre_ascii = membre_nom.encode("ascii", "ignore").decode()
             chien_ascii = chien_nom.encode("ascii", "ignore").decode()
 
@@ -72,7 +70,6 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
         pdf.ln(4)
 
-    # Export PDF
     pdf_buffer = BytesIO()
     pdf.output(pdf_buffer)
     pdf_buffer.seek(0)
@@ -87,36 +84,42 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Affichage des préinscriptions
+# Affichage compact des préinscriptions
 # ---------------------------------------------------------
 st.subheader("📋 Préinscriptions en attente")
 
+rows = []
 for pre in preinscriptions:
+    cours_txt = (
+        pre.get("cours_demande")
+        or pre.get("cours")
+        or pre.get("cours_id")
+        or "Non spécifié"
+    )
 
-    col1, col2, col3 = st.columns([3, 3, 2])
+    rows.append({
+        "Nom": f"{pre.get('prenom','')} {pre.get('nom','')}",
+        "Chien": pre.get("chien_nom", ""),
+        "Cours": cours_txt,
+        "Téléphone": pre.get("telephone", ""),
+        "Email": pre.get("email", ""),
+        "ID": pre["id"]
+    })
 
-    with col1:
-        st.write(f"👤 **{pre.get('prenom', '')} {pre.get('nom', '')}**")
-        st.write(f"📧 {pre.get('email', 'Non spécifié')}")
-        st.write(f"📱 {pre.get('telephone', 'Non spécifié')}")
+df = pd.DataFrame(rows)
 
-    with col2:
-        st.write(f"🐶 **Chien :** {pre.get('chien_nom', 'Non spécifié')}")
-        st.write(f"📅 **Date :** {pre.get('date_preinscription', 'Non spécifié')}")
+st.dataframe(
+    df[["Nom", "Chien", "Cours", "Téléphone", "Email"]],
+    use_container_width=True,
+    hide_index=True
+)
 
-        cours_txt = (
-            pre.get("cours_demande")
-            or pre.get("cours")
-            or pre.get("cours_id")
-            or "Non spécifié"
-        )
-        st.write(f"📝 **Cours demandé :** {cours_txt}")
-
-    with col3:
-        if st.button("Valider", key=f"valider_{pre['id']}"):
-            st.session_state["pre_id"] = pre["id"]
-            st.session_state["go_validation"] = True
-            st.rerun()
+# Boutons de validation
+for pre in preinscriptions:
+    if st.button(f"Valider {pre.get('prenom','')} {pre.get('nom','')}", key=f"val_{pre['id']}"):
+        st.session_state["pre_id"] = pre["id"]
+        st.session_state["go_validation"] = True
+        st.rerun()
 
 st.markdown("---")
 
@@ -159,9 +162,6 @@ if st.session_state.get("go_validation", False):
 
     st.markdown("---")
 
-    # ---------------------------------------------------------
-    # Création du membre
-    # ---------------------------------------------------------
     if st.button("Créer le membre"):
 
         membre_insert = {
@@ -187,9 +187,6 @@ if st.session_state.get("go_validation", False):
         membre = membre_result[0]
         membre_id = membre["id"]
 
-        # ---------------------------------------------------------
-        # Création du chien
-        # ---------------------------------------------------------
         chien_insert = {
             "nom": pre.get("chien_nom", "Chien"),
             "membre_id": membre_id
@@ -206,9 +203,6 @@ if st.session_state.get("go_validation", False):
             st.error("❌ Impossible de créer le chien.")
             st.stop()
 
-        # ---------------------------------------------------------
-        # Supprimer la préinscription validée
-        # ---------------------------------------------------------
         supabase.table("preinscriptions").delete().eq("id", pre_id).execute()
 
         st.success("🎉 Membre et chien créés avec succès.")
