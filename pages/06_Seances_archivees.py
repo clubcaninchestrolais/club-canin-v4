@@ -24,9 +24,9 @@ cours_dict = {
 # Charger les séances archivées
 # ---------------------------------------------------------
 seances = (
-    supabase.table("cours_seances")
+    supabase.table("cours_dates")
     .select("*")
-    .order("date_seance", desc=True)
+    .order("date", desc=True)
     .execute()
     .data
 )
@@ -50,7 +50,7 @@ if seance_detail:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write(f"📅 **Date** : {s['date_seance']}")
+        st.write(f"📅 **Date** : {s['date']}")
         st.write(f"🕒 **Début** : {s['heure_debut']}")
         st.write(f"🕒 **Fin** : {s['heure_fin']}")
 
@@ -64,7 +64,7 @@ if seance_detail:
         supabase.table("cours_presences")
         .select("*")
         .eq("cours_id", s["cours_id"])
-        .eq("date_presence", s["date_seance"])
+        .eq("date_presence", s["date"])
         .execute()
         .data
     )
@@ -113,14 +113,14 @@ for s in seances:
         supabase.table("cours_presences")
         .select("*")
         .eq("cours_id", s["cours_id"])
-        .eq("date_presence", s["date_seance"])
+        .eq("date_presence", s["date"])
         .execute()
         .data
     )
 
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 1])
 
-    col1.write(f"📅 {s['date_seance']}")
+    col1.write(f"📅 {s['date']}")
     col2.write(f"🐾 {nom_cours}")
     col3.write(f"🕒 {s['heure_debut']} → {s['heure_fin']}")
     col4.write(f"👥 {len(presences)} présents")
@@ -129,3 +129,4 @@ for s in seances:
         st.session_state["seance_detail"] = s
 
     st.markdown("---")
+
