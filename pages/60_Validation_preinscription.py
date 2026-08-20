@@ -192,3 +192,4 @@ if st.session_state.get("go_validation", False):
         st.success("🎉 Membre et chien créés avec succès.")
         st.info("Ce membre est extérieur. Il doit encore : cotisation → abonnement → présence.")
         st.rerun()
+
