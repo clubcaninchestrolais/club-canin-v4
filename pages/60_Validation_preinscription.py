@@ -11,7 +11,7 @@ st.title("📝 Validation des préinscriptions")
 # ---------------------------------------------------------
 cours_table = supabase.table("cours").select("*").execute()
 
-if cours_table.status_code != 200:
+if cours_table.error:
     st.error("❌ Impossible de charger la table 'cours'.")
     st.stop()
 
@@ -23,7 +23,7 @@ cours_dict = {c["id"]: c for c in cours_list}
 # ---------------------------------------------------------
 pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
 
-if pre_table.status_code != 200:
+if pre_table.error:
     st.error("❌ Impossible de charger les préinscriptions.")
     st.stop()
 
@@ -137,7 +137,7 @@ if st.session_state.get("go_validation", False):
 
     pre_data = supabase.table("preinscriptions").select("*").eq("id", pre_id).execute()
 
-    if pre_data.status_code != 200 or not pre_data.data:
+    if pre_data.error or not pre_data.data:
         st.error("❌ Impossible de charger la préinscription.")
         st.stop()
 
@@ -185,5 +185,3 @@ if st.session_state.get("go_validation", False):
 
         st.success("🎉 Membre et chien créés avec succès.")
         st.rerun()
-
-
