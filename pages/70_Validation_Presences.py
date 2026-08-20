@@ -3,9 +3,9 @@ from supabase import create_client
 from fpdf import FPDF
 from io import BytesIO
 
-st.set_page_config(page_title="Validation des présences", page_icon="🟢")
+st.set_page_config(page_title="Validation des presences", page_icon="🟢")
 
-st.title("🟢 Validation des présences")
+st.title("🟢 Validation des presences")
 
 # ---------------------------------------------------------
 # Connexion Supabase
@@ -23,7 +23,7 @@ cours_dict = {
 }
 
 # ---------------------------------------------------------
-# Charger les séances actives
+# Charger les seances actives
 # ---------------------------------------------------------
 seances = (
     supabase.table("cours_seances")
@@ -35,11 +35,11 @@ seances = (
 )
 
 if not seances:
-    st.info("Aucune séance active.")
+    st.info("Aucune seance active.")
     st.stop()
 
 # ---------------------------------------------------------
-# Détail d'une séance
+# Detail d'une seance
 # ---------------------------------------------------------
 seance_detail = st.session_state.get("seance_detail", None)
 
@@ -48,7 +48,7 @@ if seance_detail:
     s = seance_detail
     cours = cours_dict.get(s["cours_id"], {})
 
-    st.subheader("🔍 Détail de la séance")
+    st.subheader("🔍 Detail de la seance")
 
     col1, col2 = st.columns(2)
 
@@ -58,11 +58,11 @@ if seance_detail:
 
     with col2:
         st.write(f"🐾 **Cours** : {cours.get('nom', 'Cours inconnu')}")
-        st.write(f"👤 **Instructeur** : {cours.get('instructeur', 'Non défini')}")
-        st.write(f"📌 **Niveau** : {cours.get('niveau', 'Non défini')}")
+        st.write(f"👤 **Instructeur** : {cours.get('instructeur', 'Non defini')}")
+        st.write(f"📌 **Niveau** : {cours.get('niveau', 'Non defini')}")
 
     # ---------------------------------------------------------
-    # Charger les préinscrits
+    # Charger les preinscrits
     # ---------------------------------------------------------
     inscriptions = (
         supabase.table("cours_inscriptions")
@@ -73,7 +73,7 @@ if seance_detail:
     )
 
     st.markdown("---")
-    st.subheader("👥 Préinscrits")
+    st.subheader("👥 Preinscrits")
 
     for ins in inscriptions:
         membre = (
@@ -100,12 +100,12 @@ if seance_detail:
         st.write(f"- **{membre_nom}** — 🐶 {chien_nom}")
 
     # ---------------------------------------------------------
-    # PDF EXPORT
+    # PDF EXPORT (sans accents)
     # ---------------------------------------------------------
     st.markdown("---")
     st.subheader("📄 Export PDF")
 
-    if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
+    if st.button("📄 Telecharger la liste des preinscrits (PDF)"):
 
         # Regrouper par cours
         par_cours = {}
@@ -113,22 +113,27 @@ if seance_detail:
             cid = ins["cours_id"]
             par_cours.setdefault(cid, []).append(ins)
 
-        # Création du PDF
+        # Creation du PDF
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
 
+        # Titre SANS accents
         pdf.set_font("Arial", "B", 14)
-        pdf.cell(0, 10, f"Préinscrits – Séance du {s['date_seance']}", ln=True)
+        pdf.cell(0, 10, f"Preinscrits - Seance du {s['date_seance']}", ln=True)
         pdf.ln(5)
 
+        # Contenu par cours
         for cid, liste in par_cours.items():
 
             cours_info = cours_dict.get(cid, {})
             nom_cours = cours_info.get("nom", "Cours inconnu")
 
+            # Enlever accents du nom du cours
+            nom_cours_sans_accents = nom_cours.encode("ascii", "ignore").decode()
+
             pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 8, f"Cours : {nom_cours}", ln=True)
+            pdf.cell(0, 8, f"Cours : {nom_cours_sans_accents}", ln=True)
 
             pdf.set_font("Arial", size=11)
 
@@ -154,7 +159,11 @@ if seance_detail:
                 )
                 chien_nom = chien[0]["nom"] if chien else "Chien inconnu"
 
-                pdf.cell(0, 6, f"- {membre_nom} — Chien : {chien_nom}", ln=True)
+                # Enlever accents
+                membre_nom = membre_nom.encode("ascii", "ignore").decode()
+                chien_nom = chien_nom.encode("ascii", "ignore").decode()
+
+                pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom}", ln=True)
 
             pdf.ln(4)
 
@@ -164,7 +173,7 @@ if seance_detail:
         pdf_buffer.seek(0)
 
         st.download_button(
-            label="📄 Télécharger le PDF",
+            label="📄 Telecharger le PDF",
             data=pdf_buffer,
             file_name=f"preinscrits_{s['date_seance']}.pdf",
             mime="application/pdf"
@@ -173,9 +182,9 @@ if seance_detail:
     st.markdown("---")
 
 # ---------------------------------------------------------
-# LISTE DES SÉANCES ACTIVES
+# LISTE DES SEANCES ACTIVES
 # ---------------------------------------------------------
-st.subheader("📅 Séances actives")
+st.subheader("📅 Seances actives")
 
 for s in seances:
 
