@@ -146,7 +146,7 @@ if st.session_state.get("go_detail", False):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Création d’une cotisation (CORRECTE)
+# Création d’une cotisation (VERSION STABLE)
 # ---------------------------------------------------------
 if choix != "-- Tous les membres --":
 
@@ -165,15 +165,19 @@ if choix != "-- Tous les membres --":
 
     if st.button("Créer la cotisation"):
 
-        # Vérifier cotisation active existante
+        # Vérifier cotisation active existante (expiration > aujourd’hui)
         cot_active = (
             supabase.table("cotisations")
             .select("*")
             .eq("membre_id", membre_sel["id"])
-            .eq("statut", "active")
             .execute()
             .data
         )
+
+        cot_active = [
+            c for c in cot_active
+            if safe_date(c["date_expiration"]) and safe_date(c["date_expiration"]) > datetime.now()
+        ]
 
         if cot_active:
             st.error("❌ Ce membre possède déjà une cotisation active.")
