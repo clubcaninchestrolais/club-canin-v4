@@ -1,13 +1,15 @@
 import streamlit as st
-from supabase_rest import supabase
-from datetime import datetime
+from supabase import create_client
+
+# 🔗 Connexion Supabase
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+supabase = create_client(url, key)
 
 st.set_page_config(page_title="Validation des présences", page_icon="📋")
 st.title("📋 Validation des présences")
 
-# ---------------------------------------------------------
-# 1. Charger les séances
-# ---------------------------------------------------------
+# 1️⃣ Charger les séances
 seances = (
     supabase.table("cours_seances")
     .select("*")
@@ -17,150 +19,114 @@ seances = (
 )
 
 if not seances:
-    st.info("Aucune séance disponible.")
+    st.error("Aucune séance trouvée.")
     st.stop()
 
-choix_seance = st.selectbox(
-    "Séance",
-    options=seances,
-    format_func=lambda s: f"{s['date_seance']} — cours {s['cours_id']} ({s['heure_debut']})"
-)
+# Selectbox robuste (évite les KeyError)
+liste = {
+    f"{s.get('id', '?')} — {s.get('date_seance', '?')}": s["id"]
+    for s in seances
+}
+choix = st.selectbox("Séance :", list(liste.keys()), key="select_seance_70")
+seance_id = liste[choix]
 
-seance_id = int(choix_seance["id"])
-cours_id = choix_seance["cours_id"]
-date_seance = choix_seance["date_seance"]
-
-try:
-    date_presence = datetime.strptime(date_seance, "%Y-%m-%d").date()
-except:
-    date_presence = date_seance
-
-st.markdown("---")
-
-# ---------------------------------------------------------
-# 2. Charger les inscrits actifs
-# ---------------------------------------------------------
-inscrits = (
-    supabase.table("cours_seances_inscriptions")
+# 2️⃣ Charger les présences de la séance
+presences = (
+    supabase.table("cours_presences")
     .select("*")
     .eq("seance_id", seance_id)
-    .eq("actif", True)
     .execute()
     .data
 )
 
-if not inscrits:
-    st.info("Aucun inscrit pour cette séance.")
+st.subheader("Présences à valider")
+
+if not presences:
+    st.info("Aucune présence pour cette séance.")
     st.stop()
 
-# ---------------------------------------------------------
-# 3. Charger membres + chiens + vérifier présence existante
-# ---------------------------------------------------------
-liste_presence = []
+for index, p in enumerate(presences):
 
-for ins in inscrits:
+    presence_id = p["id"]
+    membre_id = p["membre_id"]
+    chien_id = p["chien_id"]
+    present = p["present"]
 
-    # TA BASE → cours_seances_inscriptions utilise membre_id
-    membre_res = (
-        supabase.table("membres")
-        .select("*")
-        .eq("id", ins["membre_id"])
-        .execute()
-        .data
-    )
+    # 3️⃣ Charger le membre (robuste pour extérieurs)
+    nom = "Extérieur"
 
-    if not membre_res:
-        continue
+    if membre_id is not None:
+        membre_data = (
+            supabase.table("membres")
+            .select("*")
+            .eq("id", membre_id)
+            .execute()
+            .data
+        )
+        if membre_data:
+            membre = membre_data[0]
+            nom = f"{membre.get('prenom', '')} {membre.get('nom', '')}".strip()
 
-    membre = membre_res[0]
+    st.write(f"**{nom}** — ID présence {presence_id}")
 
-    chien_res = (
-        supabase.table("chiens")
-        .select("*")
-        .eq("id", ins["chien_id"])
-        .execute()
-        .data
-    )
+    bouton_key = f"btn_{presence_id}_{index}"
 
-    if not chien_res:
-        continue
+    if not present:
+        if st.button(f"Présent n° {presence_id}", key=bouton_key):
 
-    chien = chien_res[0]
+            # 4️⃣ Marquer la présence comme validée
+            supabase.table("cours_presences").update(
+                {
+                    "present": True,
+                    "date_presence": p.get("date_presence"),
+                }
+            ).eq("id", presence_id).execute()
 
-    # TA BASE → cours_presences utilise id_membre
-    presence_existante = (
-        supabase.table("cours_presences")
-        .select("*")
-        .eq("id_membre", membre["id"])
-        .eq("chien_id", chien["id"])
-        .eq("seance_id", seance_id)
-        .execute()
-        .data
-    )
+            # 5️⃣ Si c'est un vrai membre → gestion abonnement + inscription
+            if membre_id is not None:
+                inscription_existante = (
+                    supabase.table("cours_seances_inscriptions")
+                    .select("*")
+                    .eq("membre_id", membre_id)
+                    .eq("seance_id", seance_id)
+                    .execute()
+                    .data
+                )
 
-    if presence_existante:
-        continue
+                if not inscription_existante:
+                    abo = (
+                        supabase.table("abonnements")
+                        .select("*")
+                        .eq("membre_id", membre_id)
+                        .eq("actif", True)
+                        .execute()
+                        .data
+                    )
 
-    liste_presence.append({
-        "inscription_id": ins["id"],
-        "membre_id": membre["id"],
-        "chien_id": chien["id"],
-        "nom_membre": f"{membre['nom']} {membre['prenom']}",
-        "nom_chien": chien["nom"]
-    })
+                    if abo:
+                        abonnement = abo[0]
+                        reste = abonnement.get("seances_restantes")
 
-# ---------------------------------------------------------
-# 4. Interface de présence
-# ---------------------------------------------------------
-st.subheader("Présences")
+                        if reste is not None and reste > 0:
+                            supabase.table("abonnements").update(
+                                {"seances_restantes": reste - 1}
+                            ).eq("id", abonnement["id"]).execute()
 
-if not liste_presence:
-    st.success("Toutes les présences ont déjà été validées.")
-    st.stop()
+                    data_inscription = {
+                        "membre_id": membre_id,
+                        "seance_id": seance_id,
+                    }
+                    if chien_id is not None:
+                        data_inscription["chien_id"] = chien_id
 
-presence_selection = {}
-for p in liste_presence:
-    presence_selection[p["inscription_id"]] = st.checkbox(
-        f"{p['nom_membre']} — {p['nom_chien']}",
-        key=f"presence_{p['inscription_id']}"
-    )
+                    supabase.table("cours_seances_inscriptions").insert(
+                        data_inscription
+                    ).execute()
 
-st.markdown("---")
+            # 6️⃣ Extérieurs : pas de décrémentation, mais présence validée
+            st.success("Présence validée ✔")
+            st.rerun()
 
-# ---------------------------------------------------------
-# 5. Validation des présences
-# ---------------------------------------------------------
-if st.button("Valider les présences"):
+    else:
+        st.write("✔ Déjà validé")
 
-    for p in liste_presence:
-        if presence_selection[p["inscription_id"]]:
-
-            # TA BASE → cours_presences utilise id_membre
-            supabase.table("cours_presences").insert({
-                "cours_id": cours_id,
-                "seance_id": seance_id,
-                "id_membre": p["membre_id"],
-                "chien_id": p["chien_id"],
-                "date_presence": date_presence,
-                "statut": "present"
-            }).execute()
-
-            # TA BASE → abonnements utilise id_membre
-            abo_res = (
-                supabase.table("abonnements")
-                .select("*")
-                .eq("id_membre", p["membre_id"])
-                .eq("actif", True)
-                .execute()
-                .data
-            )
-
-            if abo_res:
-                abo = abo_res[0]
-
-                if abo["seances_total"] != -1 and abo["seances_restantes"] > 0:
-                    supabase.table("abonnements").update({
-                        "seances_restantes": abo["seances_restantes"] - 1
-                    }).eq("id", abo["id"]).execute()
-
-    st.success("Présences validées.")
