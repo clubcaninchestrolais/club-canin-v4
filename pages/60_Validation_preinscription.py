@@ -20,144 +20,128 @@ if not preinscriptions:
     st.info("Aucune préinscription en attente.")
     st.stop()
 
-choix = st.selectbox(
-    "Sélectionner une préinscription",
-    options=preinscriptions,
-    format_func=lambda p: f"{p['nom']} {p['prenom']} — {p['chien_nom']}"
-)
+# ---------------------------------------------------------
+# 2. Filtre
+# ---------------------------------------------------------
+filtre = st.text_input("🔍 Rechercher (nom, prénom, chien)")
+
+if filtre:
+    f = filtre.lower()
+    preinscriptions = [
+        p for p in preinscriptions
+        if f in p["nom"].lower()
+        or f in p["prenom"].lower()
+        or f in p["chien_nom"].lower()
+    ]
 
 # ---------------------------------------------------------
-# 2. Charger la séance complète
+# 3. Affichage en liste
 # ---------------------------------------------------------
-seance_data = (
-    supabase.table("cours_seances")
-    .select("*")
-    .eq("id", choix["seance_id"])
-    .execute()
-    .data
-)
+st.subheader("📋 Préinscriptions en attente")
 
-if not seance_data:
-    st.error(f"⚠ La séance {choix['seance_id']} n'existe pas dans cours_seances.")
-    st.stop()
+for p in preinscriptions:
 
-seance = seance_data[0]
-
-# ---------------------------------------------------------
-# 3. Charger le cours
-# ---------------------------------------------------------
-cours_data = (
-    supabase.table("cours")
-    .select("*")
-    .eq("id", seance["cours_id"])
-    .execute()
-    .data
-)
-
-cours = cours_data[0]
-
-# ---------------------------------------------------------
-# 4. Affichage enrichi
-# ---------------------------------------------------------
-st.subheader("📘 Cours et séance")
-
-st.write(f"**Cours :** {cours['nom']}")
-st.write(f"**Séance ID :** {choix['seance_id']}")
-st.write(f"**Date :** {seance['date_seance']}")
-
-# Heures : seulement si elles existent dans ta table
-st.write(f"**Heure :** {seance.get('heure_debut', '—')} → {seance.get('heure_fin', '—')}")
-
-st.subheader("👤 Personne")
-st.write(f"**Nom :** {choix['nom']}")
-st.write(f"**Prénom :** {choix['prenom']}")
-st.write(f"**Email :** {choix['email']}")
-st.write(f"**Téléphone :** {choix['telephone']}")
-st.write(f"**Type :** {choix.get('type', 'exterieur')}")
-st.write(f"**Source :** {choix.get('source', 'portail')}")
-
-st.subheader("🐶 Chien")
-st.write(f"**Nom :** {choix['chien_nom']}")
-st.write(f"**Race :** {choix['chien_race']}")
-
-# ---------------------------------------------------------
-# 5. Validation
-# ---------------------------------------------------------
-if st.button(f"Valider la préinscription #{choix['id']}"):
-
-    # -----------------------------------------------------
-    # 5.1 Créer le membre non_membre
-    # -----------------------------------------------------
-    membre = (
-        supabase.table("membres")
-        .insert({
-            "nom": choix["nom"],
-            "prenom": choix["prenom"],
-            "email": choix["email"],
-            "telephone": choix["telephone"],
-            "statut": "non_membre",
-            "actif": False
-        })
+    # Charger la séance
+    seance_data = (
+        supabase.table("cours_seances")
+        .select("*")
+        .eq("id", p["seance_id"])
         .execute()
-        .data[0]
+        .data
     )
 
-    membre_id = membre["id"]
+    if not seance_data:
+        continue
 
-    # -----------------------------------------------------
-    # 5.2 Créer le chien
-    # -----------------------------------------------------
-    chien = (
-        supabase.table("chiens")
-        .insert({
-            "nom": choix["chien_nom"],
-            "race": choix["chien_race"],
-            "membre_id": membre_id,
-            "actif": True
-        })
+    seance = seance_data[0]
+
+    # Charger le cours
+    cours_data = (
+        supabase.table("cours")
+        .select("*")
+        .eq("id", seance["cours_id"])
         .execute()
-        .data[0]
+        .data
     )
 
-    chien_id = chien["id"]
+    cours = cours_data[0]
 
-    # -----------------------------------------------------
-    # 5.3 Inscription réelle dans cours_inscriptions
-    # -----------------------------------------------------
-    supabase.table("cours_inscriptions").insert({
-        "membre_id": membre_id,
-        "chien_id": chien_id,
-        "cours_id": cours["id"],
-        "seance_id": choix["seance_id"],
-        "date_seance": seance["date_seance"],
-        "type": "exterieur",
-        "source": "preinscription",
-        "actif": True
-    }).execute()
+    # Ligne compacte
+    col1, col2, col3 = st.columns([4, 3, 2])
 
-    # -----------------------------------------------------
-    # 5.4 Inscription dans cours_seances_inscriptions
-    # -----------------------------------------------------
-    supabase.table("cours_seances_inscriptions").insert({
-        "seance_id": choix["seance_id"],
-        "membre_id": membre_id,
-        "chien_id": chien_id,
-        "actif": True
-    }).execute()
+    with col1:
+        st.write(f"**{p['nom']} {p['prenom']}** — {p['chien_nom']}")
 
-    # -----------------------------------------------------
-    # 5.5 Mettre à jour la préinscription
-    # -----------------------------------------------------
-    supabase.table("preinscriptions").update({
-        "statut": "validee",
-        "membre_id": membre_id,
-        "chien_id": chien_id,
-        "traitee": True,
-        "acceptee": True,
-        "type": "exterieur"
-    }).eq("id", choix["id"]).execute()
+    with col2:
+        st.write(f"{cours['nom']} — {seance['date_seance']}")
 
-    st.success("La préinscription a été validée.")
-    st.info("Le membre, le chien et l'inscription au cours ont été créés.")
+    with col3:
+        if st.button("Valider", key=f"valider_{p['id']}"):
+
+            # Créer le membre
+            membre = (
+                supabase.table("membres")
+                .insert({
+                    "nom": p["nom"],
+                    "prenom": p["prenom"],
+                    "email": p["email"],
+                    "telephone": p["telephone"],
+                    "statut": "non_membre",
+                    "actif": False
+                })
+                .execute()
+                .data[0]
+            )
+
+            membre_id = membre["id"]
+
+            # Créer le chien
+            chien = (
+                supabase.table("chiens")
+                .insert({
+                    "nom": p["chien_nom"],
+                    "race": p["chien_race"],
+                    "membre_id": membre_id,
+                    "actif": True
+                })
+                .execute()
+                .data[0]
+            )
+
+            chien_id = chien["id"]
+
+            # Inscription réelle
+            supabase.table("cours_inscriptions").insert({
+                "membre_id": membre_id,
+                "chien_id": chien_id,
+                "cours_id": cours["id"],
+                "seance_id": p["seance_id"],
+                "date_seance": seance["date_seance"],
+                "type": "exterieur",
+                "source": "preinscription",
+                "actif": True
+            }).execute()
+
+            # Inscription séance
+            supabase.table("cours_seances_inscriptions").insert({
+                "seance_id": p["seance_id"],
+                "membre_id": membre_id,
+                "chien_id": chien_id,
+                "actif": True
+            }).execute()
+
+            # Mise à jour préinscription
+            supabase.table("preinscriptions").update({
+                "statut": "validee",
+                "membre_id": membre_id,
+                "chien_id": chien_id,
+                "traitee": True,
+                "acceptee": True,
+                "type": "exterieur"
+            }).eq("id", p["id"]).execute()
+
+            st.success(f"Préinscription #{p['id']} validée.")
+            st.experimental_rerun()
+
 
 
