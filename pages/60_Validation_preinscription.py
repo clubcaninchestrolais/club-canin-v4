@@ -3,7 +3,6 @@ from supabase_rest import supabase
 from datetime import datetime
 from fpdf import FPDF
 from io import BytesIO
-import pandas as pd
 
 st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
@@ -84,12 +83,12 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Affichage compact des préinscriptions
+# Affichage compact avec bouton dans la ligne
 # ---------------------------------------------------------
 st.subheader("📋 Préinscriptions en attente")
 
-rows = []
 for pre in preinscriptions:
+
     cours_txt = (
         pre.get("cours_demande")
         or pre.get("cours")
@@ -97,29 +96,28 @@ for pre in preinscriptions:
         or "Non spécifié"
     )
 
-    rows.append({
-        "Nom": f"{pre.get('prenom','')} {pre.get('nom','')}",
-        "Chien": pre.get("chien_nom", ""),
-        "Cours": cours_txt,
-        "Téléphone": pre.get("telephone", ""),
-        "Email": pre.get("email", ""),
-        "ID": pre["id"]
-    })
+    col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 2, 2, 3, 2])
 
-df = pd.DataFrame(rows)
+    with col1:
+        st.write(f"👤 **{pre.get('prenom','')} {pre.get('nom','')}**")
 
-st.dataframe(
-    df[["Nom", "Chien", "Cours", "Téléphone", "Email"]],
-    use_container_width=True,
-    hide_index=True
-)
+    with col2:
+        st.write(f"🐶 {pre.get('chien_nom','')}")
 
-# Boutons de validation
-for pre in preinscriptions:
-    if st.button(f"Valider {pre.get('prenom','')} {pre.get('nom','')}", key=f"val_{pre['id']}"):
-        st.session_state["pre_id"] = pre["id"]
-        st.session_state["go_validation"] = True
-        st.rerun()
+    with col3:
+        st.write(f"📘 {cours_txt}")
+
+    with col4:
+        st.write(f"📱 {pre.get('telephone','')}")
+
+    with col5:
+        st.write(f"📧 {pre.get('email','')}")
+
+    with col6:
+        if st.button("Valider", key=f"val_{pre['id']}"):
+            st.session_state["pre_id"] = pre["id"]
+            st.session_state["go_validation"] = True
+            st.rerun()
 
 st.markdown("---")
 
@@ -208,4 +206,3 @@ if st.session_state.get("go_validation", False):
         st.success("🎉 Membre et chien créés avec succès.")
         st.info("Ce membre est extérieur. Il doit encore : cotisation → abonnement → présence.")
         st.rerun()
-
