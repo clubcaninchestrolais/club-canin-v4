@@ -1,29 +1,24 @@
 import streamlit as st
-from supabase import create_client
-from fpdf import FPDF
-from io import BytesIO
+from supabase_rest import supabase
+from datetime import datetime
 
-st.set_page_config(page_title="Validation des presences", page_icon="🟢")
-
-st.title("🟢 Validation des presences")
-
-# ---------------------------------------------------------
-# Connexion Supabase
-# ---------------------------------------------------------
-url = st.secrets["SUPABASE_URL"]
-key = st.secrets["SUPABASE_KEY"]
-supabase = create_client(url, key)
+st.set_page_config(page_title="Validation des présences", page_icon="🟢")
+st.title("🟢 Validation des présences")
 
 # ---------------------------------------------------------
 # Charger les cours
 # ---------------------------------------------------------
-cours_dict = {
-    c["id"]: c
-    for c in supabase.table("cours").select("*").execute().data
-}
+cours = (
+    supabase.table("cours")
+    .select("*")
+    .execute()
+    .data
+)
+
+cours_dict = {c["id"]: c for c in cours}
 
 # ---------------------------------------------------------
-# Charger les seances actives
+# Charger les séances actives
 # ---------------------------------------------------------
 seances = (
     supabase.table("cours_seances")
@@ -35,20 +30,20 @@ seances = (
 )
 
 if not seances:
-    st.info("Aucune seance active.")
+    st.info("Aucune séance active.")
     st.stop()
 
 # ---------------------------------------------------------
-# Detail d'une seance
+# Détail d'une séance
 # ---------------------------------------------------------
 seance_detail = st.session_state.get("seance_detail", None)
 
 if seance_detail:
 
     s = seance_detail
-    cours = cours_dict.get(s["cours_id"], {})
+    cours_info = cours_dict.get(s["cours_id"], {})
 
-    st.subheader("🔍 Detail de la seance")
+    st.subheader("🔍 Détail de la séance")
 
     col1, col2 = st.columns(2)
 
@@ -57,12 +52,12 @@ if seance_detail:
         st.write(f"📝 **Note** : {s.get('note', 'Aucune note')}")
 
     with col2:
-        st.write(f"🐾 **Cours** : {cours.get('nom', 'Cours inconnu')}")
-        st.write(f"👤 **Instructeur** : {cours.get('instructeur', 'Non defini')}")
-        st.write(f"📌 **Niveau** : {cours.get('niveau', 'Non defini')}")
+        st.write(f"🐾 **Cours** : {cours_info.get('nom', 'Cours inconnu')}")
+        st.write(f"👤 **Instructeur** : {cours_info.get('instructeur', 'Non défini')}")
+        st.write(f"📌 **Niveau** : {cours_info.get('niveau', 'Non défini')}")
 
     # ---------------------------------------------------------
-    # Charger les preinscrits / inscriptions
+    # Charger les préinscrits
     # ---------------------------------------------------------
     inscriptions = (
         supabase.table("cours_inscriptions")
@@ -73,9 +68,10 @@ if seance_detail:
     )
 
     st.markdown("---")
-    st.subheader("👥 Preinscrits / participants")
+    st.subheader("👥 Préinscrits")
 
     for ins in inscriptions:
+
         membre = (
             supabase.table("membres")
             .select("*")
@@ -83,6 +79,7 @@ if seance_detail:
             .execute()
             .data
         )
+
         chien = (
             supabase.table("chiens")
             .select("*")
@@ -91,46 +88,46 @@ if seance_detail:
             .data
         )
 
-        membre_nom = (
-            f"{membre[0]['prenom']} {membre[0]['nom']}"
-            if membre else "Membre inconnu"
-        )
+        membre_nom = f"{membre[0]['prenom']} {membre[0]['nom']}" if membre else "Membre inconnu"
         chien_nom = chien[0]["nom"] if chien else "Chien inconnu"
 
-        col_a, col_b, col_c = st.columns([3, 2, 2])
+        colA, colB, colC = st.columns([3, 2, 2])
 
-        with col_a:
+        with colA:
             st.write(f"- **{membre_nom}** — 🐶 {chien_nom}")
 
-        with col_b:
+        with colB:
             present_flag = ins.get("present", False)
-            st.write("✅ Present" if present_flag else "⏳ Non present")
+            st.write("✅ Présent" if present_flag else "⏳ Non présent")
 
-        with col_c:
-            if st.button(
-                "Valider presence",
-                key=f"presence_{ins['id']}"
-            ):
+        with colC:
+            if st.button("Valider présence", key=f"presence_{ins['id']}"):
+
                 membre_id = ins["membre_id"]
 
-                # 1) Verifier cotisation active
-                cotisation = (
+                # ---------------------------------------------------------
+                # Vérifier cotisation active via date_expiration
+                # ---------------------------------------------------------
+                cotisations = (
                     supabase.table("cotisations")
                     .select("*")
                     .eq("membre_id", membre_id)
-                    .eq("actif", True)
                     .execute()
                     .data
                 )
 
-                if not cotisation:
-                    st.error(
-                        "Ce membre n'a pas de cotisation active. "
-                        "Validation de presence impossible."
-                    )
+                cot_active = [
+                    c for c in cotisations
+                    if c["date_expiration"] and datetime.fromisoformat(c["date_expiration"]) > datetime.now()
+                ]
+
+                if not cot_active:
+                    st.error("❌ Ce membre n'a pas de cotisation active.")
                     st.stop()
 
-                # 2) Verifier abonnement actif
+                # ---------------------------------------------------------
+                # Vérifier abonnement actif
+                # ---------------------------------------------------------
                 abo = (
                     supabase.table("abonnements")
                     .select("*")
@@ -141,131 +138,46 @@ if seance_detail:
                 )
 
                 if not abo:
-                    st.error(
-                        "Ce membre n'a pas d'abonnement actif. "
-                        "Validation de presence impossible."
-                    )
+                    st.error("❌ Ce membre n'a pas d'abonnement actif.")
                     st.stop()
 
                 abonnement = abo[0]
 
-                # 3) Verifier compteur > 0
-                if abonnement.get("seances_restantes", 0) <= 0:
-                    st.error(
-                        "Ce membre n'a plus de seances disponibles "
-                        "sur son abonnement."
-                    )
+                # ---------------------------------------------------------
+                # Vérifier séances restantes
+                # ---------------------------------------------------------
+                if abonnement["seances_restantes"] <= 0:
+                    st.error("❌ Ce membre n'a plus de séances disponibles.")
                     st.stop()
 
-                # 4) Marquer presence dans cours_inscriptions
+                # ---------------------------------------------------------
+                # Marquer présence
+                # ---------------------------------------------------------
                 supabase.table("cours_inscriptions").update(
                     {"present": True}
                 ).eq("id", ins["id"]).execute()
 
-                # 5) Decrementer abonnement
-                supabase.table("abonnements").update(
-                    {
-                        "seances_restantes": abonnement["seances_restantes"] - 1
-                    }
-                ).eq("id", abonnement["id"]).execute()
+                # ---------------------------------------------------------
+                # Décrémenter abonnement
+                # ---------------------------------------------------------
+                supabase.table("abonnements").update({
+                    "seances_restantes": abonnement["seances_restantes"] - 1
+                }).eq("id", abonnement["id"]).execute()
 
-                st.success(
-                    f"Presence validee pour {membre_nom}. "
-                    "Abonnement decremente."
-                )
-                st.experimental_rerun()
-
-    # ---------------------------------------------------------
-    # PDF EXPORT (sans accents)
-    # ---------------------------------------------------------
-    st.markdown("---")
-    st.subheader("📄 Export PDF")
-
-    if st.button("📄 Telecharger la liste des preinscrits (PDF)"):
-
-        # Regrouper par cours
-        par_cours = {}
-        for ins in inscriptions:
-            cid = ins.get("cours_id", s["cours_id"])
-            par_cours.setdefault(cid, []).append(ins)
-
-        # Creation du PDF
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-
-        # Titre SANS accents
-        pdf.set_font("Arial", "B", 14)
-        pdf.cell(0, 10, f"Preinscrits - Seance du {s['date_seance']}", ln=True)
-        pdf.ln(5)
-
-        # Contenu par cours
-        for cid, liste in par_cours.items():
-
-            cours_info = cours_dict.get(cid, {})
-            nom_cours = cours_info.get("nom", "Cours inconnu")
-
-            # Enlever accents du nom du cours
-            nom_cours_sans_accents = nom_cours.encode("ascii", "ignore").decode()
-
-            pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 8, f"Cours : {nom_cours_sans_accents}", ln=True)
-
-            pdf.set_font("Arial", size=11)
-
-            for ins in liste:
-                membre = (
-                    supabase.table("membres")
-                    .select("*")
-                    .eq("id", ins["membre_id"])
-                    .execute()
-                    .data
-                )
-                chien = (
-                    supabase.table("chiens")
-                    .select("*")
-                    .eq("id", ins["chien_id"])
-                    .execute()
-                    .data
-                )
-
-                membre_nom = (
-                    f"{membre[0]['prenom']} {membre[0]['nom']}"
-                    if membre else "Membre inconnu"
-                )
-                chien_nom = chien[0]["nom"] if chien else "Chien inconnu"
-
-                # Enlever accents
-                membre_nom = membre_nom.encode("ascii", "ignore").decode()
-                chien_nom = chien_nom.encode("ascii", "ignore").decode()
-
-                pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom}", ln=True)
-
-            pdf.ln(4)
-
-        # Export PDF
-        pdf_buffer = BytesIO()
-        pdf.output(pdf_buffer)
-        pdf_buffer.seek(0)
-
-        st.download_button(
-            label="📄 Telecharger le PDF",
-            data=pdf_buffer,
-            file_name=f"preinscrits_{s['date_seance']}.pdf",
-            mime="application/pdf"
-        )
+                st.success(f"Présence validée pour {membre_nom}.")
+                st.rerun()
 
     st.markdown("---")
 
 # ---------------------------------------------------------
-# LISTE DES SEANCES ACTIVES
+# Liste des séances actives
 # ---------------------------------------------------------
-st.subheader("📅 Seances actives")
+st.subheader("📅 Séances actives")
 
 for s in seances:
 
-    cours = cours_dict.get(s["cours_id"], {})
-    nom_cours = cours.get("nom", "Cours inconnu")
+    cours_info = cours_dict.get(s["cours_id"], {})
+    nom_cours = cours_info.get("nom", "Cours inconnu")
 
     col1, col2, col3 = st.columns([2, 2, 1])
 
@@ -274,6 +186,6 @@ for s in seances:
 
     if col3.button("Valider", key=f"voir_{s['id']}"):
         st.session_state["seance_detail"] = s
-        st.experimental_rerun()
+        st.rerun()
 
     st.markdown("---")
