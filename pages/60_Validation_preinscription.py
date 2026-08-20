@@ -29,24 +29,32 @@ choix = st.selectbox(
 # ---------------------------------------------------------
 # 2. Charger la séance complète
 # ---------------------------------------------------------
-seance = (
+seance_data = (
     supabase.table("cours_seances")
     .select("*")
     .eq("id", choix["seance_id"])
     .execute()
-    .data[0]
+    .data
 )
+
+if not seance_data:
+    st.error(f"⚠ La séance {choix['seance_id']} n'existe pas dans cours_seances.")
+    st.stop()
+
+seance = seance_data[0]
 
 # ---------------------------------------------------------
 # 3. Charger le cours
 # ---------------------------------------------------------
-cours = (
+cours_data = (
     supabase.table("cours")
     .select("*")
     .eq("id", seance["cours_id"])
     .execute()
-    .data[0]
+    .data
 )
+
+cours = cours_data[0]
 
 # ---------------------------------------------------------
 # 4. Affichage enrichi
@@ -57,7 +65,7 @@ st.write(f"**Cours :** {cours['nom']}")
 st.write(f"**Niveau :** {cours['niveau']}")
 st.write(f"**Séance ID :** {choix['seance_id']}")
 st.write(f"**Date :** {seance['date_seance']}")
-st.write(f"**Heure :** {seance['heure_debut']} → {seance['heure_fin']}")
+st.write(f"**Heure :** {seance.get('heure_debut', '—')} → {seance.get('heure_fin', '—')}")
 
 st.subheader("👤 Personne")
 st.write(f"**Nom :** {choix['nom']}")
@@ -127,7 +135,7 @@ if st.button(f"Valider la préinscription #{choix['id']}"):
     }).execute()
 
     # -----------------------------------------------------
-    # 5.4 (Optionnel) Inscription dans cours_seances_inscriptions
+    # 5.4 Inscription dans cours_seances_inscriptions
     # -----------------------------------------------------
     supabase.table("cours_seances_inscriptions").insert({
         "seance_id": choix["seance_id"],
