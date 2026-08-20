@@ -49,7 +49,7 @@ if st.button("Valider la préinscription"):
             "email": choix["email"],
             "telephone": choix["telephone"],
             "statut": "non_membre",
-            "actif": False          # ❗ CORRECTION IMPORTANTE
+            "actif": False
         })
         .execute()
         .data[0]
@@ -58,14 +58,14 @@ if st.button("Valider la préinscription"):
     membre_id = membre["id"]
 
     # -----------------------------------------------------
-    # 2.2 Créer le chien (sans liaison)
+    # 2.2 Créer le chien
     # -----------------------------------------------------
     chien = (
         supabase.table("chiens")
         .insert({
             "nom": choix["chien_nom"],
             "race": choix["chien_race"],
-            "membre_id": None,      # ❗ CORRECTION IMPORTANTE
+            "membre_id": membre_id,   # ✔ liaison correcte
             "actif": True
         })
         .execute()
@@ -75,7 +75,21 @@ if st.button("Valider la préinscription"):
     chien_id = chien["id"]
 
     # -----------------------------------------------------
-    # 2.3 Inscrire à la séance
+    # 2.3 Inscrire dans cours_inscriptions (clé du système)
+    # -----------------------------------------------------
+    supabase.table("cours_inscriptions").insert({
+        "membre_id": membre_id,
+        "chien_id": chien_id,
+        "cours_id": choix["cours_id"],
+        "seance_id": choix["seance_id"],
+        "date_seance": choix["date_preinscription"],
+        "type": "exterieur",
+        "source": "preinscription",
+        "actif": True
+    }).execute()
+
+    # -----------------------------------------------------
+    # 2.4 Inscrire dans cours_seances_inscriptions (si tu veux garder)
     # -----------------------------------------------------
     supabase.table("cours_seances_inscriptions").insert({
         "seance_id": choix["seance_id"],
@@ -85,7 +99,7 @@ if st.button("Valider la préinscription"):
     }).execute()
 
     # -----------------------------------------------------
-    # 2.4 Mettre à jour la préinscription
+    # 2.5 Mettre à jour la préinscription
     # -----------------------------------------------------
     supabase.table("preinscriptions").update({
         "statut": "validee",
@@ -97,4 +111,5 @@ if st.button("Valider la préinscription"):
     }).eq("id", choix["id"]).execute()
 
     st.success("La préinscription a été validée.")
-    st.info("Le membre non_membre et le chien ont été créés.")
+    st.info("Le membre non_membre, le chien et l'inscription au cours ont été créés.")
+
