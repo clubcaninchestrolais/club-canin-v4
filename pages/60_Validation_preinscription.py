@@ -207,7 +207,7 @@ if date_du_jour and st.button("Creer le PDF de la journee"):
         for p in preinscriptions_seance:
             ligne = (
                 f"{p['nom']} {p['prenom']} - "
-                f"{p['chien_nom']} - exterieur - {p.get('source', 'portail')}"
+                f"{p['chien_nom']} - exterieur - {p.get('source', 'portail')} - [ ]"
             )
             pdf.cell(0, 8, ligne, ln=True)
 
@@ -232,7 +232,7 @@ if date_du_jour and st.button("Creer le PDF de la journee"):
 
             ligne = (
                 f"{membre['nom']} {membre['prenom']} - "
-                f"{chien['nom']} - membre"
+                f"{chien['nom']} - membre - [ ]"
             )
             pdf.cell(0, 8, ligne, ln=True)
 
@@ -250,4 +250,3 @@ if date_du_jour and st.button("Creer le PDF de la journee"):
         file_name=f"seances_{date_du_jour}.pdf",
         mime="application/pdf"
     )
-
