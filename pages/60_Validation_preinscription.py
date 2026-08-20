@@ -2,6 +2,7 @@ import streamlit as st
 from supabase_rest import supabase
 from fpdf import FPDF
 from io import BytesIO
+import os
 
 st.set_page_config(page_title="Validation préinscription", page_icon="🐾")
 st.title("🐾 Validation des préinscriptions extérieures")
@@ -145,7 +146,6 @@ for p in preinscriptions:
 # ---------------------------------------------------------
 st.subheader("📄 Générer le PDF de la journée")
 
-# On prend la date de la dernière séance chargée (celle du loop)
 if preinscriptions:
     date_du_jour = seance["date_seance"]
 else:
@@ -157,8 +157,12 @@ if date_du_jour and st.button("Créer le PDF de la journée"):
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
+    # Charger la police Unicode
+    font_path = os.path.join("assets", "fonts", "DejaVuSans.ttf")
+    pdf.add_font("DejaVu", "", font_path, uni=True)
+    pdf.set_font("DejaVu", "", 16)
+
     # Titre
-    pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, f"Séances du {date_du_jour}", ln=True)
 
     # 1. Toutes les séances de cette date
@@ -182,11 +186,10 @@ if date_du_jour and st.button("Créer le PDF de la journée"):
         )
         cours = cours_data[0]
 
-        # Section cours
-        pdf.set_font("Arial", "B", 12)
+        pdf.set_font("DejaVu", "", 12)
         pdf.cell(0, 10, f"Cours : {cours['nom']}", ln=True)
 
-        pdf.set_font("Arial", "", 10)
+        pdf.set_font("DejaVu", "", 10)
 
         # Préinscriptions extérieures
         preinscriptions_seance = (
