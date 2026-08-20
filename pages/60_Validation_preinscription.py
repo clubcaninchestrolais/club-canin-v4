@@ -11,7 +11,7 @@ st.title("📝 Validation des préinscriptions")
 # ---------------------------------------------------------
 cours_table = supabase.table("cours").select("*").execute()
 
-if cours_table.error:
+if cours_table.status_code != 200:
     st.error("❌ Impossible de charger la table 'cours'.")
     st.stop()
 
@@ -23,7 +23,7 @@ cours_dict = {c["id"]: c for c in cours_list}
 # ---------------------------------------------------------
 pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
 
-if pre_table.error:
+if pre_table.status_code != 200:
     st.error("❌ Impossible de charger les préinscriptions.")
     st.stop()
 
@@ -45,7 +45,6 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
     for pre in preinscriptions:
         cours_id = pre.get("cours_id")
         cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
-
         cours_dict_pdf.setdefault(cours_type, []).append(pre)
 
     pdf = FPDF()
@@ -66,7 +65,6 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
             chien_nom = pre.get("chien_nom", "Chien")
             date_seance = pre.get("date_seance", "")
             heure = pre.get("heure_debut", "")
-
             pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom} - {date_seance} {heure}", ln=True)
 
         pdf.ln(4)
@@ -139,7 +137,7 @@ if st.session_state.get("go_validation", False):
 
     pre_data = supabase.table("preinscriptions").select("*").eq("id", pre_id).execute()
 
-    if pre_data.error or not pre_data.data:
+    if pre_data.status_code != 200 or not pre_data.data:
         st.error("❌ Impossible de charger la préinscription.")
         st.stop()
 
@@ -187,4 +185,5 @@ if st.session_state.get("go_validation", False):
 
         st.success("🎉 Membre et chien créés avec succès.")
         st.rerun()
+
 
