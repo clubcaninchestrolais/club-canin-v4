@@ -107,7 +107,7 @@ for p in preinscriptions:
             )
             chien_id = chien["id"]
 
-            # Inscription reelle (compatible avec ta table)
+            # Inscription reelle (compatible avec ta base)
             supabase.table("cours_inscriptions").insert({
                 "membre_id": membre_id,
                 "chien_id": chien_id,
@@ -133,7 +133,7 @@ for p in preinscriptions:
             }).eq("id", p["id"]).execute()
 
             st.success(f"Preinscription #{p['id']} validee.")
-            st.experimental_rerun()
+            st.rerun()
 
 # ---------------------------------------------------------
 # 4. PDF – un PDF pour la journee (toutes les seances / cours)
@@ -245,4 +245,5 @@ if date_du_jour and st.button("Creer le PDF de la journee"):
         file_name=f"seances_{date_du_jour}.pdf",
         mime="application/pdf"
     )
+
 
