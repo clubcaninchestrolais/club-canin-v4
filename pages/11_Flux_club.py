@@ -146,7 +146,7 @@ Si un élément manque → l’action suivante ne fonctionne pas.
 st.markdown("""
 # 🐾 Flux extérieur — Mode d’emploi simple et fun pour préposé
 
-Le flux extérieur explique comment gérer un **non‑membre** qui arrive au club, participe à un cours,  
+Ce flux explique comment gérer un **non‑membre** qui arrive au club, participe à un cours,
 et souhaite ensuite devenir membre.  
 Cette version est volontairement **simple**, **visuelle** et **préposé‑proof**.
 
@@ -246,6 +246,12 @@ Effets :
 🟣 CONFIRMER AFFILIATION  
 ↓  
 🎉 FINI !
+""")
+
+
+---
+
+
 """)
 
 
