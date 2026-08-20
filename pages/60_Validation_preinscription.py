@@ -1,21 +1,10 @@
 import streamlit as st
 from supabase_rest import supabase
-from datetime import datetime
 from fpdf import FPDF
 from io import BytesIO
 
 st.set_page_config(page_title="Validation préinscription", page_icon="📝")
 st.title("📝 Validation des préinscriptions")
-
-# ---------------------------------------------------------
-# Fonction pour récupérer le bon champ "cours"
-# ---------------------------------------------------------
-def get_cours(pre):
-    # On prend le premier champ existant
-    for key in ["cours_inscrit", "cours_demande", "cours_nom", "cours", "cours_id"]:
-        if key in pre and pre[key] not in (None, "", "Non spécifié"):
-            return pre[key]
-    return "Non spécifié"
 
 # ---------------------------------------------------------
 # Charger les préinscriptions
@@ -33,7 +22,7 @@ if not preinscriptions:
     st.stop()
 
 # ---------------------------------------------------------
-# PDF — Liste des préinscrits par cours (ASCII-safe)
+# PDF — Liste des préinscrits par cours
 # ---------------------------------------------------------
 st.subheader("📄 Export PDF — Préinscrits par cours")
 
@@ -42,7 +31,7 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
     cours_dict = {}
 
     for pre in preinscriptions:
-        cours_txt = get_cours(pre)
+        cours_txt = pre.get("cours_nom", "Cours inconnu")
 
         if cours_txt not in cours_dict:
             cours_dict[cours_txt] = []
@@ -58,19 +47,14 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
     for cours_nom, liste in cours_dict.items():
         pdf.set_font("Arial", "B", 12)
-        cours_ascii = cours_nom.encode("ascii", "ignore").decode()
-        pdf.cell(0, 8, f"Cours : {cours_ascii}", ln=True)
+        pdf.cell(0, 8, f"Cours : {cours_nom}", ln=True)
         pdf.set_font("Arial", size=11)
         pdf.ln(2)
 
         for pre in liste:
             membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}"
             chien_nom = pre.get("chien_nom", "Chien")
-
-            membre_ascii = membre_nom.encode("ascii", "ignore").decode()
-            chien_ascii = chien_nom.encode("ascii", "ignore").decode()
-
-            pdf.cell(0, 6, f"- {membre_ascii} - Chien : {chien_ascii}", ln=True)
+            pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom}", ln=True)
 
         pdf.ln(4)
 
@@ -88,30 +72,36 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Affichage compact avec bouton dans la ligne
+# Affichage compact et parlant
 # ---------------------------------------------------------
 st.subheader("📋 Préinscriptions en attente")
 
 for pre in preinscriptions:
 
-    cours_txt = get_cours(pre)
+    nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
+    chien = pre.get("chien_nom", "")
+    cours = pre.get("cours_nom", "Cours inconnu")
+    date_seance = pre.get("date_seance", "")
+    heure = pre.get("heure_debut", "")
+    tel = pre.get("telephone", "")
+    email = pre.get("email", "")
 
-    col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 2, 2, 3, 2])
+    col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 4, 2, 3, 2])
 
     with col1:
-        st.write(f"👤 **{pre.get('prenom','')} {pre.get('nom','')}**")
+        st.write(f"👤 **{nom_complet}**")
 
     with col2:
-        st.write(f"🐶 {pre.get('chien_nom','')}")
+        st.write(f"🐶 {chien}")
 
     with col3:
-        st.write(f"📘 {cours_txt}")
+        st.write(f"📘 {cours}")
 
     with col4:
-        st.write(f"📱 {pre.get('telephone','')}")
+        st.write(f"📅 {date_seance}")
 
     with col5:
-        st.write(f"📧 {pre.get('email','')}")
+        st.write(f"⏰ {heure}")
 
     with col6:
         if st.button("Valider", key=f"val_{pre['id']}"):
@@ -150,8 +140,9 @@ if st.session_state.get("go_validation", False):
     st.write(f"📱 {pre.get('telephone', 'Non spécifié')}")
     st.write(f"🐶 **Chien :** {pre.get('chien_nom', 'Non spécifié')}")
 
-    cours_txt = get_cours(pre)
-    st.write(f"📝 **Cours demandé :** {cours_txt}")
+    st.write(f"📘 **Cours :** {pre.get('cours_nom', 'Cours inconnu')}")
+    st.write(f"📅 **Date :** {pre.get('date_seance', '')}")
+    st.write(f"⏰ **Heure :** {pre.get('heure_debut', '')}")
 
     st.markdown("---")
 
