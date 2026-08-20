@@ -48,15 +48,13 @@ for p in preinscriptions:
         # 2️⃣ CAS EXTERIEUR → création présence automatique
         elif p["type"] == "exterieur":
 
-            # Création de la présence dans cours_presences
             supabase.table("cours_presences").insert({
                 "seance_id": p["seance_id"],
                 "membre_id": p["membre_id"],
                 "chien_id": p["chien_id"],
-                "date_presence": None,
                 "present": False,
-                "statut": "absent",
-                "type": "exterieur"
+                "commentaire": "",
+                "actif": True
             }).execute()
 
             st.success(
