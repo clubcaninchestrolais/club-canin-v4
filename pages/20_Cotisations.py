@@ -33,7 +33,10 @@ membres = (
     .data
 )
 
-options = ["-- Tous les membres --"] + [f"{m['nom']} {m['prenom']}" for m in membres]
+options = ["-- Tous les membres --"] + [
+    f"{m['nom']} {m['prenom']}" for m in membres
+]
+
 choix = st.selectbox("Sélectionner un membre", options)
 
 st.markdown("---")
@@ -59,7 +62,10 @@ for cot in cotisations:
 # Filtrer si un membre est sélectionné
 if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
-    cotisations = [c for c in cotisations if c["nom"] == nom_sel and c["prenom"] == prenom_sel]
+    cotisations = [
+        c for c in cotisations
+        if c["nom"] == nom_sel and c["prenom"] == prenom_sel
+    ]
 
 # ---------------------------------------------------------
 # Affichage ultra-compact + bouton détail
@@ -133,8 +139,69 @@ else:
     st.info("Aucune cotisation trouvée.")
 
 # ---------------------------------------------------------
-# Navigation vers la fiche détail (PLACÉ TOUT EN BAS)
+# Navigation vers la fiche détail
 # ---------------------------------------------------------
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
     st.switch_page("pages/32_Fiche_Cotisation.py")
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# Création d’une cotisation (CORRECTION IMPORTANTE)
+# ---------------------------------------------------------
+if choix != "-- Tous les membres --":
+
+    st.subheader("➕ Créer une cotisation")
+
+    membre_sel = next(
+        (m for m in membres if f"{m['nom']} {m['prenom']}" == choix),
+        None
+    )
+
+    montant = st.number_input("Montant (€)", min_value=0, value=45)
+    date_paiement = st.date_input("Date de paiement", value=date.today())
+    date_expiration = st.date_input("Date d'expiration", value=date.today().replace(year=date.today().year + 1))
+
+    if st.button("Créer la cotisation"):
+
+        # ---------------------------------------------------------
+        # 🔒 Vérifier si une cotisation active existe déjà
+        # ---------------------------------------------------------
+        cot_active = (
+            supabase.table("cotisations")
+            .select("*")
+            .eq("membre_id", membre_sel["id"])
+            .eq("actif", True)
+            .execute()
+            .data
+        )
+
+        if cot_active:
+            st.error("❌ Ce membre possède déjà une cotisation active.")
+            st.stop()
+
+        # ---------------------------------------------------------
+        # ✔ Créer la cotisation
+        # ---------------------------------------------------------
+        supabase.table("cotisations").insert({
+            "membre_id": membre_sel["id"],
+            "montant": montant,
+            "date_paiement": str(date_paiement),
+            "date_expiration": str(date_expiration),
+            "actif": True
+        }).execute()
+
+        # ---------------------------------------------------------
+        # ✔ Activer le membre automatiquement
+        # ---------------------------------------------------------
+        supabase.table("membres").update({
+            "statut": "membre",
+            "actif": True
+        }).eq("id", membre_sel["id"]).execute()
+
+        st.success("🎉 Cotisation créée et membre activé.")
+        st.rerun()
+
+else:
+    st.info("Sélectionnez un membre pour créer une cotisation.")
