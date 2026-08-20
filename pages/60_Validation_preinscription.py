@@ -111,7 +111,6 @@ for p in preinscriptions:
             supabase.table("cours_inscriptions").insert({
                 "membre_id": membre_id,
                 "chien_id": chien_id,
-                "cours_id": cours["id"],
                 "seance_id": p["seance_id"],
                 "statut": "inscrit",
                 "type": "exterieur"
@@ -203,7 +202,7 @@ if date_du_jour and st.button("Creer le PDF de la journee"):
         for p in preinscriptions_seance:
             ligne = (
                 f"{p['nom']} {p['prenom']} - "
-                f"{p['chien_nom']} - exterieur - {p.get('source', 'portail')} - [ ]"
+                f"{p['chien_nom']} - exterieur - [ ]"
             )
             pdf.cell(0, 8, ligne, ln=True)
 
@@ -246,3 +245,4 @@ if date_du_jour and st.button("Creer le PDF de la journee"):
         file_name=f"seances_{date_du_jour}.pdf",
         mime="application/pdf"
     )
+
