@@ -1,5 +1,8 @@
 import streamlit as st
 from supabase_rest import supabase
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from io import BytesIO
 
 st.set_page_config(page_title="Validation préinscription", page_icon="🐾")
 st.title("🐾 Validation des préinscriptions extérieures")
@@ -49,7 +52,6 @@ for p in preinscriptions:
         .execute()
         .data
     )
-
     if not seance_data:
         continue
 
@@ -63,10 +65,8 @@ for p in preinscriptions:
         .execute()
         .data
     )
-
     cours = cours_data[0]
 
-    # Ligne compacte
     col1, col2, col3 = st.columns([4, 3, 2])
 
     with col1:
@@ -143,5 +143,137 @@ for p in preinscriptions:
             st.success(f"Préinscription #{p['id']} validée.")
             st.experimental_rerun()
 
+# ---------------------------------------------------------
+# 4. PDF — Un PDF par séance regroupant tous les cours du jour
+# ---------------------------------------------------------
 
+st.subheader("📄 Générer le PDF de la journée")
+
+# On prend la date de la première préinscription affichée
+if preinscriptions:
+    date_du_jour = seance["date_seance"]
+else:
+    date_du_jour = None
+
+if st.button("Créer le PDF de la journée"):
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+
+    # Titre principal
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(50, 800, f"Séances du {date_du_jour}")
+
+    y = 770
+
+    # 1. Trouver toutes les séances du jour
+    toutes_seances = (
+        supabase.table("cours_seances")
+        .select("*")
+        .eq("date_seance", date_du_jour)
+        .execute()
+        .data
+    )
+
+    for s in toutes_seances:
+
+        # Charger le cours
+        cours_data = (
+            supabase.table("cours")
+            .select("*")
+            .eq("id", s["cours_id"])
+            .execute()
+            .data
+        )
+        cours = cours_data[0]
+
+        # Section du cours
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawString(50, y, f"Cours : {cours['nom']}")
+        y -= 20
+
+        pdf.setFont("Helvetica", 10)
+
+        # Préinscriptions extérieures
+        preinscriptions_seance = (
+            supabase.table("preinscriptions")
+            .select("*")
+            .eq("seance_id", s["id"])
+            .execute()
+            .data
+        )
+
+        # Inscriptions membres
+        inscriptions_membres = (
+            supabase.table("cours_inscriptions")
+            .select("*")
+            .eq("seance_id", s["id"])
+            .execute()
+            .data
+        )
+
+        # Extérieurs
+        for p in preinscriptions_seance:
+            ligne = (
+                f"{p['nom']} {p['prenom']} — "
+                f"{p['chien_nom']} — extérieur — {p.get('source', 'portail')}"
+            )
+            pdf.drawString(70, y, ligne)
+            y -= 20
+
+            if y < 50:
+                pdf.showPage()
+                pdf.setFont("Helvetica", 10)
+                y = 800
+
+        # Membres
+        for ins in inscriptions_membres:
+
+            membre = (
+                supabase.table("membres")
+                .select("*")
+                .eq("id", ins["membre_id"])
+                .execute()
+                .data[0]
+            )
+
+            chien = (
+                supabase.table("chiens")
+                .select("*")
+                .eq("id", ins["chien_id"])
+                .execute()
+                .data[0]
+            )
+
+            ligne = (
+                f"{membre['nom']} {membre['prenom']} — "
+                f"{chien['nom']} — membre"
+            )
+            pdf.drawString(70, y, ligne)
+            y -= 20
+
+            if y < 50:
+                pdf.showPage()
+                pdf.setFont("Helvetica", 10)
+                y = 800
+
+        # Séparateur
+        y -= 10
+        pdf.drawString(50, y, "---------------------------------------------")
+        y -= 20
+
+        if y < 50:
+            pdf.showPage()
+            pdf.setFont("Helvetica", 10)
+            y = 800
+
+    pdf.save()
+    buffer.seek(0)
+
+    st.download_button(
+        label="📥 Télécharger le PDF de la journée",
+        data=buffer,
+        file_name=f"seances_{date_du_jour}.pdf",
+        mime="application/pdf"
+    )
 
