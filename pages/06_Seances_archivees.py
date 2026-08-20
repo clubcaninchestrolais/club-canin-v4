@@ -13,15 +13,15 @@ key = st.secrets["SUPABASE_KEY"]
 supabase = create_client(url, key)
 
 # ---------------------------------------------------------
-# Charger les cours
+# Charger les cours (cours_types)
 # ---------------------------------------------------------
 cours_dict = {
     c["id"]: c
-    for c in supabase.table("cours").select("*").execute().data
+    for c in supabase.table("cours_types").select("*").execute().data
 }
 
 # ---------------------------------------------------------
-# Charger les séances archivées
+# Charger les séances archivées (cours_dates)
 # ---------------------------------------------------------
 seances = (
     supabase.table("cours_dates")
