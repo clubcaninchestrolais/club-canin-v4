@@ -63,8 +63,7 @@ if seance_detail:
     presences = (
         supabase.table("cours_presences")
         .select("*")
-        .eq("cours_id", s["cours_id"])
-        .eq("date_presence", s["date_seance"])
+        .eq("seance_id", s["id"])
         .execute()
         .data
     )
@@ -112,8 +111,7 @@ for s in seances:
     presences = (
         supabase.table("cours_presences")
         .select("*")
-        .eq("cours_id", s["cours_id"])
-        .eq("date_presence", s["date_seance"])
+        .eq("seance_id", s["id"])
         .execute()
         .data
     )
