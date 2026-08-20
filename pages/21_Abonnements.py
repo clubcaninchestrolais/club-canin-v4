@@ -131,7 +131,7 @@ else:
 st.markdown("---")
 
 # ---------------------------------------------------------
-# 4. Création d’un abonnement manuel
+# 4. Création d’un abonnement manuel (avec contrôle cotisation)
 # ---------------------------------------------------------
 if choix != "-- Tous les membres --":
     st.subheader("➕ Créer un abonnement")
@@ -148,15 +148,36 @@ if choix != "-- Tous les membres --":
     membre_sel = next((m for m in membres if f"{m['nom']} {m['prenom']}" == choix), None)
 
     if st.button("Créer l’abonnement"):
+
+        # ---------------------------------------------------------
+        # 🔒 Vérification cotisation active
+        # ---------------------------------------------------------
+        cotisation = (
+            supabase.table("cotisations")
+            .select("*")
+            .eq("membre_id", membre_sel["id"])
+            .eq("actif", True)
+            .execute()
+            .data
+        )
+
+        if not cotisation:
+            st.error("❌ Impossible de créer un abonnement : ce membre n'a pas de cotisation active.")
+            st.stop()
+
+        # ---------------------------------------------------------
+        # ✔ Création de l’abonnement
+        # ---------------------------------------------------------
         supabase.table("abonnements").insert({
-            "membre_id": membre_sel["id"],   # ✔ CORRECTION ICI
+            "membre_id": membre_sel["id"],
             "seances_total": total,
             "seances_restantes": total,
             "date_achat": datetime.now().date().isoformat(),
             "actif": True
         }).execute()
 
-        st.success("Abonnement créé avec succès.")
+        st.success("🎉 Abonnement créé avec succès.")
         st.rerun()
+
 else:
     st.info("Sélectionnez un membre pour créer un abonnement.")
