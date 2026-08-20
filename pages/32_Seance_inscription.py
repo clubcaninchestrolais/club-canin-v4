@@ -103,7 +103,7 @@ st.subheader("📅 Séances déjà inscrites")
 
 presences = (
     supabase.table("cours_presences")
-    .select("id, cours_id, date_presence, chien_id")
+    .select("id, seance_id, date_presence, chien_id")
     .eq("membre_id", membre_id)
     .order("date_presence")
     .execute()
@@ -115,27 +115,24 @@ if not presences:
 else:
     for p in presences:
 
-        # Récupérer infos du cours
-        cours = (
+        # Charger infos séance
+        seance_info = (
             supabase.table("cours_seances")
-            .select("date_seance, heure_debut")
-            .eq("cours_id", p["cours_id"])
-            .eq("date_seance", p["date_presence"])
+            .select("date_seance, heure_debut, cours_id")
+            .eq("id", p["seance_id"])
             .execute()
             .data
         )
 
-        if cours:
-            c = cours[0]
+        if seance_info:
+            s = seance_info[0]
             st.write(
-                f"🗓 **{c['date_seance']} — {c['heure_debut']}** (cours {p['cours_id']})"
+                f"🗓 **{s['date_seance']} — {s.get('heure_debut', '??:??')}** (cours {s['cours_id']})"
             )
         else:
-            st.write(
-                f"🗓 {p['date_presence']} (cours {p['cours_id']})"
-            )
+            st.write(f"🗓 {p['date_presence']} (séance inconnue)")
 
-        # Récupérer le chien
+        # Charger chien
         if p["chien_id"]:
             chien = (
                 supabase.table("chiens")
@@ -171,7 +168,7 @@ if not seances:
 choix = st.selectbox(
     "Séance à inscrire",
     options=seances,
-    format_func=lambda s: f"{s['date_seance']} — {s['heure_debut']} (cours {s['cours_id']})"
+    format_func=lambda s: f"{s['date_seance']} — {s.get('heure_debut', '??:??')} (cours {s['cours_id']})"
 )
 
 # ---------------------------------------------------------
@@ -192,8 +189,7 @@ if st.button("Inscrire le membre à cette séance"):
         supabase.table("cours_presences")
         .select("*")
         .eq("membre_id", membre_id)
-        .eq("cours_id", choix["cours_id"])
-        .eq("date_presence", date_iso)
+        .eq("seance_id", choix["id"])
         .execute()
         .data
     )
@@ -202,13 +198,16 @@ if st.button("Inscrire le membre à cette séance"):
         st.warning("Ce membre est déjà inscrit à cette séance.")
         st.stop()
 
-    # Inscription (sans décrémentation)
+    # Inscription correcte
     supabase.table("cours_presences").insert({
         "membre_id": membre_id,
-        "cours_id": choix["cours_id"],
         "chien_id": chien_id,
+        "seance_id": choix["id"],     # ✔ obligatoire
         "date_presence": date_iso,
+        "present": False,             # ✔ cohérent avec ton modèle
         "statut": "absent"
     }).execute()
 
     st.success("Inscription enregistrée !")
+    st.rerun()
+
