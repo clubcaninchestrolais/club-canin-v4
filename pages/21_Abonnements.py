@@ -1,12 +1,12 @@
 import streamlit as st
 from supabase_rest import supabase
-from datetime import datetime
+from datetime import datetime, date
 
 st.set_page_config(page_title="Abonnements", page_icon="🎫")
 st.title("🎫 Gestion des abonnements")
 
 # ---------------------------------------------------------
-# 1. Charger les membres
+# Charger les membres
 # ---------------------------------------------------------
 membres = (
     supabase.table("membres")
@@ -16,13 +16,16 @@ membres = (
     .data
 )
 
-options = ["-- Tous les membres --"] + [f"{m['nom']} {m['prenom']}" for m in membres]
+options = ["-- Tous les membres --"] + [
+    f"{m['nom']} {m['prenom']}" for m in membres
+]
+
 choix = st.selectbox("Sélectionner un membre", options)
 
 st.markdown("---")
 
 # ---------------------------------------------------------
-# 2. Charger les abonnements
+# Charger les abonnements
 # ---------------------------------------------------------
 abos = (
     supabase.table("abonnements")
@@ -35,7 +38,6 @@ abos = (
 # Ajouter nom + prénom
 for abo in abos:
     membre = next((m for m in membres if m["id"] == abo["membre_id"]), None)
-
     if membre:
         abo["nom"] = membre["nom"]
         abo["prenom"] = membre["prenom"]
@@ -43,10 +45,13 @@ for abo in abos:
 # Filtrer si un membre est sélectionné
 if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
-    abos = [a for a in abos if a["nom"] == nom_sel and a["prenom"] == prenom_sel]
+    abos = [
+        a for a in abos
+        if a["nom"] == nom_sel and a["prenom"] == prenom_sel
+    ]
 
 # ---------------------------------------------------------
-# 3. Affichage ultra-compact + bouton détail
+# Affichage ultra-compact
 # ---------------------------------------------------------
 st.subheader("📋 Liste des abonnements")
 
@@ -63,7 +68,9 @@ if abos:
         else:
             couleur = "#e6ffe6"   # vert
 
-        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 2, 2, 2, 2, 1, 1, 2])
+        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(
+            [1, 2, 2, 2, 2, 1, 1, 2]
+        )
 
         with col1:
             st.markdown(
@@ -131,10 +138,16 @@ else:
 st.markdown("---")
 
 # ---------------------------------------------------------
-# 4. Création d’un abonnement manuel (avec contrôle cotisation)
+# Création d’un abonnement (VERSION STABLE)
 # ---------------------------------------------------------
 if choix != "-- Tous les membres --":
+
     st.subheader("➕ Créer un abonnement")
+
+    membre_sel = next(
+        (m for m in membres if f"{m['nom']} {m['prenom']}" == choix),
+        None
+    )
 
     types_abonnements = {
         "Abonnement 12 séances": 12,
@@ -145,28 +158,30 @@ if choix != "-- Tous les membres --":
     type_abo = st.selectbox("Type d’abonnement", list(types_abonnements.keys()))
     total = types_abonnements[type_abo]
 
-    membre_sel = next((m for m in membres if f"{m['nom']} {m['prenom']}" == choix), None)
-
     if st.button("Créer l’abonnement"):
 
         # ---------------------------------------------------------
-        # 🔒 Vérification cotisation active
+        # Vérifier cotisation active via date_expiration
         # ---------------------------------------------------------
-        cotisation = (
+        cotisations = (
             supabase.table("cotisations")
             .select("*")
             .eq("membre_id", membre_sel["id"])
-            .eq("actif", True)
             .execute()
             .data
         )
 
-        if not cotisation:
-            st.error("❌ Impossible de créer un abonnement : ce membre n'a pas de cotisation active.")
+        cot_active = [
+            c for c in cotisations
+            if c["date_expiration"] and datetime.fromisoformat(c["date_expiration"]) > datetime.now()
+        ]
+
+        if not cot_active:
+            st.error("❌ Impossible : ce membre n'a pas de cotisation active.")
             st.stop()
 
         # ---------------------------------------------------------
-        # ✔ Création de l’abonnement
+        # Créer l’abonnement
         # ---------------------------------------------------------
         supabase.table("abonnements").insert({
             "membre_id": membre_sel["id"],
