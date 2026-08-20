@@ -30,7 +30,7 @@ for p in preinscriptions:
     # Bouton de validation
     if st.button(f"Valider préinscription #{p['id']}", key=f"val_{p['id']}"):
 
-        # 1. Cas MEMBRE → inscription automatique
+        # 1️⃣ CAS MEMBRE → inscription automatique
         if p["type"] == "membre" and p["membre_id"] and p["chien_id"] and p["seance_id"]:
             supabase.table("cours_seances_inscriptions").insert({
                 "seance_id": p["seance_id"],
@@ -45,17 +45,29 @@ for p in preinscriptions:
                 f"Membre validé — inscrit automatiquement à la séance {p['seance_id']}."
             )
 
-        # 2. Cas EXTERIEUR → pas d'inscription automatique
+        # 2️⃣ CAS EXTERIEUR → création présence automatique
         elif p["type"] == "exterieur":
-            st.warning(
-                "Extérieur validé — création du membre à l’accueil."
+
+            # Création de la présence dans cours_presences
+            supabase.table("cours_presences").insert({
+                "seance_id": p["seance_id"],
+                "membre_id": p["membre_id"],
+                "chien_id": p["chien_id"],
+                "date_presence": p["date_seance"],
+                "present": False,
+                "statut": "absent",
+                "type": "exterieur"
+            }).execute()
+
+            st.success(
+                f"Extérieur validé — présence créée pour la séance {p['seance_id']}."
             )
 
         else:
             st.error("Préinscription invalide ou incomplète.")
             st.stop()
 
-        # 3. Supprimer la préinscription validée
+        # 3️⃣ Suppression de la préinscription validée
         supabase.table("preinscriptions").delete().eq("id", p["id"]).execute()
 
         st.info("Préinscription supprimée.")
