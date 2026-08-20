@@ -1,132 +1,193 @@
 import streamlit as st
 from supabase import create_client
+from fpdf import FPDF
+from io import BytesIO
 
-# 🔗 Connexion Supabase
+st.set_page_config(page_title="Validation des présences", page_icon="🟢")
+
+st.title("🟢 Validation des présences")
+
+# ---------------------------------------------------------
+# Connexion Supabase
+# ---------------------------------------------------------
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase = create_client(url, key)
 
-st.set_page_config(page_title="Validation des présences", page_icon="📋")
-st.title("📋 Validation des présences")
+# ---------------------------------------------------------
+# Charger les cours
+# ---------------------------------------------------------
+cours_dict = {
+    c["id"]: c
+    for c in supabase.table("cours").select("*").execute().data
+}
 
-# 1️⃣ Charger les séances
+# ---------------------------------------------------------
+# Charger les séances actives
+# ---------------------------------------------------------
 seances = (
     supabase.table("cours_seances")
     .select("*")
-    .order("date_seance")
+    .eq("actif", True)
+    .order("date_seance", desc=False)
     .execute()
     .data
 )
 
 if not seances:
-    st.error("Aucune séance trouvée.")
+    st.info("Aucune séance active.")
     st.stop()
 
-# Selectbox robuste (évite les KeyError)
-liste = {
-    f"{s.get('id', '?')} — {s.get('date_seance', '?')}": s["id"]
-    for s in seances
-}
-choix = st.selectbox("Séance :", list(liste.keys()), key="select_seance_70")
-seance_id = liste[choix]
+# ---------------------------------------------------------
+# Détail d'une séance
+# ---------------------------------------------------------
+seance_detail = st.session_state.get("seance_detail", None)
 
-# 2️⃣ Charger les présences de la séance
-presences = (
-    supabase.table("cours_presences")
-    .select("*")
-    .eq("seance_id", seance_id)
-    .execute()
-    .data
-)
+if seance_detail:
 
-st.subheader("Présences à valider")
+    s = seance_detail
+    cours = cours_dict.get(s["cours_id"], {})
 
-if not presences:
-    st.info("Aucune présence pour cette séance.")
-    st.stop()
+    st.subheader("🔍 Détail de la séance")
 
-for index, p in enumerate(presences):
+    col1, col2 = st.columns(2)
 
-    presence_id = p["id"]
-    membre_id = p["membre_id"]
-    chien_id = p["chien_id"]
-    present = p["present"]
+    with col1:
+        st.write(f"📅 **Date** : {s['date_seance']}")
+        st.write(f"📝 **Note** : {s.get('note', 'Aucune note')}")
 
-    # 3️⃣ Charger le membre (robuste pour extérieurs)
-    nom = "Extérieur"
+    with col2:
+        st.write(f"🐾 **Cours** : {cours.get('nom', 'Cours inconnu')}")
+        st.write(f"👤 **Instructeur** : {cours.get('instructeur', 'Non défini')}")
+        st.write(f"📌 **Niveau** : {cours.get('niveau', 'Non défini')}")
 
-    if membre_id is not None:
-        membre_data = (
+    # ---------------------------------------------------------
+    # Charger les préinscrits
+    # ---------------------------------------------------------
+    inscriptions = (
+        supabase.table("cours_inscriptions")
+        .select("*")
+        .eq("seance_id", s["id"])
+        .execute()
+        .data
+    )
+
+    st.markdown("---")
+    st.subheader("👥 Préinscrits")
+
+    for ins in inscriptions:
+        membre = (
             supabase.table("membres")
             .select("*")
-            .eq("id", membre_id)
+            .eq("id", ins["membre_id"])
             .execute()
             .data
         )
-        if membre_data:
-            membre = membre_data[0]
-            nom = f"{membre.get('prenom', '')} {membre.get('nom', '')}".strip()
+        chien = (
+            supabase.table("chiens")
+            .select("*")
+            .eq("id", ins["chien_id"])
+            .execute()
+            .data
+        )
 
-    st.write(f"**{nom}** — ID présence {presence_id}")
+        membre_nom = (
+            f"{membre[0]['prenom']} {membre[0]['nom']}"
+            if membre else "Membre inconnu"
+        )
+        chien_nom = chien[0]["nom"] if chien else "Chien inconnu"
 
-    bouton_key = f"btn_{presence_id}_{index}"
+        st.write(f"- **{membre_nom}** — 🐶 {chien_nom}")
 
-    if not present:
-        if st.button(f"Présent n° {presence_id}", key=bouton_key):
+    # ---------------------------------------------------------
+    # PDF EXPORT
+    # ---------------------------------------------------------
+    st.markdown("---")
+    st.subheader("📄 Export PDF")
 
-            # 4️⃣ Marquer la présence comme validée
-            supabase.table("cours_presences").update(
-                {
-                    "present": True,
-                    "date_presence": p.get("date_presence"),
-                }
-            ).eq("id", presence_id).execute()
+    if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
-            # 5️⃣ Si c'est un vrai membre → gestion abonnement + inscription
-            if membre_id is not None:
-                inscription_existante = (
-                    supabase.table("cours_seances_inscriptions")
+        # Regrouper par cours
+        par_cours = {}
+        for ins in inscriptions:
+            cid = ins["cours_id"]
+            par_cours.setdefault(cid, []).append(ins)
+
+        # Création du PDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 10, f"Préinscrits – Séance du {s['date_seance']}", ln=True)
+        pdf.ln(5)
+
+        for cid, liste in par_cours.items():
+
+            cours_info = cours_dict.get(cid, {})
+            nom_cours = cours_info.get("nom", "Cours inconnu")
+
+            pdf.set_font("Arial", "B", 12)
+            pdf.cell(0, 8, f"Cours : {nom_cours}", ln=True)
+
+            pdf.set_font("Arial", size=11)
+
+            for ins in liste:
+                membre = (
+                    supabase.table("membres")
                     .select("*")
-                    .eq("membre_id", membre_id)
-                    .eq("seance_id", seance_id)
+                    .eq("id", ins["membre_id"])
+                    .execute()
+                    .data
+                )
+                chien = (
+                    supabase.table("chiens")
+                    .select("*")
+                    .eq("id", ins["chien_id"])
                     .execute()
                     .data
                 )
 
-                if not inscription_existante:
-                    abo = (
-                        supabase.table("abonnements")
-                        .select("*")
-                        .eq("membre_id", membre_id)
-                        .eq("actif", True)
-                        .execute()
-                        .data
-                    )
+                membre_nom = (
+                    f"{membre[0]['prenom']} {membre[0]['nom']}"
+                    if membre else "Membre inconnu"
+                )
+                chien_nom = chien[0]["nom"] if chien else "Chien inconnu"
 
-                    if abo:
-                        abonnement = abo[0]
-                        reste = abonnement.get("seances_restantes")
+                pdf.cell(0, 6, f"- {membre_nom} — Chien : {chien_nom}", ln=True)
 
-                        if reste is not None and reste > 0:
-                            supabase.table("abonnements").update(
-                                {"seances_restantes": reste - 1}
-                            ).eq("id", abonnement["id"]).execute()
+            pdf.ln(4)
 
-                    data_inscription = {
-                        "membre_id": membre_id,
-                        "seance_id": seance_id,
-                    }
-                    if chien_id is not None:
-                        data_inscription["chien_id"] = chien_id
+        # Export PDF
+        pdf_buffer = BytesIO()
+        pdf.output(pdf_buffer)
+        pdf_buffer.seek(0)
 
-                    supabase.table("cours_seances_inscriptions").insert(
-                        data_inscription
-                    ).execute()
+        st.download_button(
+            label="📄 Télécharger le PDF",
+            data=pdf_buffer,
+            file_name=f"preinscrits_{s['date_seance']}.pdf",
+            mime="application/pdf"
+        )
 
-            # 6️⃣ Extérieurs : pas de décrémentation, mais présence validée
-            st.success("Présence validée ✔")
-            st.rerun()
+    st.markdown("---")
 
-    else:
-        st.write("✔ Déjà validé")
+# ---------------------------------------------------------
+# LISTE DES SÉANCES ACTIVES
+# ---------------------------------------------------------
+st.subheader("📅 Séances actives")
 
+for s in seances:
+
+    cours = cours_dict.get(s["cours_id"], {})
+    nom_cours = cours.get("nom", "Cours inconnu")
+
+    col1, col2, col3 = st.columns([2, 2, 1])
+
+    col1.write(f"📅 {s['date_seance']}")
+    col2.write(f"🐾 {nom_cours}")
+
+    if col3.button("Valider", key=f"voir_{s['id']}"):
+        st.session_state["seance_detail"] = s
+
+    st.markdown("---")
