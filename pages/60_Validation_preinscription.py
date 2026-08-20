@@ -26,20 +26,58 @@ choix = st.selectbox(
     format_func=lambda p: f"{p['nom']} {p['prenom']} — {p['chien_nom']}"
 )
 
-st.subheader("Détails")
+# ---------------------------------------------------------
+# 2. Charger la séance complète
+# ---------------------------------------------------------
+seance = (
+    supabase.table("cours_seances")
+    .select("*")
+    .eq("id", choix["seance_id"])
+    .execute()
+    .data[0]
+)
+
+# ---------------------------------------------------------
+# 3. Charger le cours
+# ---------------------------------------------------------
+cours = (
+    supabase.table("cours")
+    .select("*")
+    .eq("id", seance["cours_id"])
+    .execute()
+    .data[0]
+)
+
+# ---------------------------------------------------------
+# 4. Affichage enrichi
+# ---------------------------------------------------------
+st.subheader("📘 Cours et séance")
+
+st.write(f"**Cours :** {cours['nom']}")
+st.write(f"**Niveau :** {cours['niveau']}")
+st.write(f"**Séance ID :** {choix['seance_id']}")
+st.write(f"**Date :** {seance['date_seance']}")
+st.write(f"**Heure :** {seance['heure_debut']} → {seance['heure_fin']}")
+
+st.subheader("👤 Personne")
 st.write(f"**Nom :** {choix['nom']}")
 st.write(f"**Prénom :** {choix['prenom']}")
 st.write(f"**Email :** {choix['email']}")
 st.write(f"**Téléphone :** {choix['telephone']}")
-st.write(f"**Chien :** {choix['chien_nom']} ({choix['chien_race']})")
+st.write(f"**Type :** {choix.get('type', 'exterieur')}")
+st.write(f"**Source :** {choix.get('source', 'portail')}")
+
+st.subheader("🐶 Chien")
+st.write(f"**Nom :** {choix['chien_nom']}")
+st.write(f"**Race :** {choix['chien_race']}")
 
 # ---------------------------------------------------------
-# 2. Validation
+# 5. Validation
 # ---------------------------------------------------------
-if st.button("Valider la préinscription"):
+if st.button(f"Valider la préinscription #{choix['id']}"):
 
     # -----------------------------------------------------
-    # 2.1 Créer le membre non_membre
+    # 5.1 Créer le membre non_membre
     # -----------------------------------------------------
     membre = (
         supabase.table("membres")
@@ -58,14 +96,14 @@ if st.button("Valider la préinscription"):
     membre_id = membre["id"]
 
     # -----------------------------------------------------
-    # 2.2 Créer le chien
+    # 5.2 Créer le chien
     # -----------------------------------------------------
     chien = (
         supabase.table("chiens")
         .insert({
             "nom": choix["chien_nom"],
             "race": choix["chien_race"],
-            "membre_id": membre_id,   # ✔ liaison correcte
+            "membre_id": membre_id,
             "actif": True
         })
         .execute()
@@ -75,21 +113,21 @@ if st.button("Valider la préinscription"):
     chien_id = chien["id"]
 
     # -----------------------------------------------------
-    # 2.3 Inscrire dans cours_inscriptions (clé du système)
+    # 5.3 Inscription réelle dans cours_inscriptions
     # -----------------------------------------------------
     supabase.table("cours_inscriptions").insert({
         "membre_id": membre_id,
         "chien_id": chien_id,
-        "cours_id": choix["cours_id"],
+        "cours_id": cours["id"],
         "seance_id": choix["seance_id"],
-        "date_seance": choix["date_preinscription"],
+        "date_seance": seance["date_seance"],
         "type": "exterieur",
         "source": "preinscription",
         "actif": True
     }).execute()
 
     # -----------------------------------------------------
-    # 2.4 Inscrire dans cours_seances_inscriptions (si tu veux garder)
+    # 5.4 (Optionnel) Inscription dans cours_seances_inscriptions
     # -----------------------------------------------------
     supabase.table("cours_seances_inscriptions").insert({
         "seance_id": choix["seance_id"],
@@ -99,7 +137,7 @@ if st.button("Valider la préinscription"):
     }).execute()
 
     # -----------------------------------------------------
-    # 2.5 Mettre à jour la préinscription
+    # 5.5 Mettre à jour la préinscription
     # -----------------------------------------------------
     supabase.table("preinscriptions").update({
         "statut": "validee",
@@ -111,5 +149,4 @@ if st.button("Valider la préinscription"):
     }).eq("id", choix["id"]).execute()
 
     st.success("La préinscription a été validée.")
-    st.info("Le membre non_membre, le chien et l'inscription au cours ont été créés.")
-
+    st.info("Le membre, le chien et l'inscription au cours ont été créés.")
