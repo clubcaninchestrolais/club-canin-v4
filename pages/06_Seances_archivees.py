@@ -13,12 +13,20 @@ key = st.secrets["SUPABASE_KEY"]
 supabase = create_client(url, key)
 
 # ---------------------------------------------------------
+# Charger les cours
+# ---------------------------------------------------------
+cours_dict = {
+    c["id"]: c
+    for c in supabase.table("cours").select("*").execute().data
+}
+
+# ---------------------------------------------------------
 # Charger les séances archivées
 # ---------------------------------------------------------
 seances = (
-    supabase.table("cours_dates")
+    supabase.table("cours_seances_i")   # ← version accessible
     .select("*")
-    .order("date", desc=True)
+    .order("date_seance", desc=True)
     .execute()
     .data
 )
@@ -35,27 +43,28 @@ seance_detail = st.session_state.get("seance_detail", None)
 if seance_detail:
 
     s = seance_detail
+    cours = cours_dict.get(s["cours_id"], {})
 
     st.subheader("🔍 Détail de la séance")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write(f"📅 **Date** : {s['date']}")
+        st.write(f"📅 **Date** : {s['date_seance']}")
         st.write(f"🕒 **Début** : {s['heure_debut']}")
         st.write(f"🕒 **Fin** : {s['heure_fin']}")
 
     with col2:
-        st.write(f"🐾 **Cours** : {s.get('nom_cours', 'Cours inconnu')}")
-        st.write(f"👤 **Instructeur** : {s.get('moniteur', 'Non défini')}")
-        st.write(f"📌 **Niveau** : {s.get('niveau', 'Non défini')}")
+        st.write(f"🐾 **Cours** : {cours.get('nom', 'Cours inconnu')}")
+        st.write(f"👤 **Instructeur** : {cours.get('instructeur', 'Non défini')}")
+        st.write(f"📌 **Niveau** : {cours.get('niveau', 'Non défini')}")
 
     # Présences
     presences = (
         supabase.table("cours_presences")
         .select("*")
         .eq("cours_id", s["cours_id"])
-        .eq("date_presence", s["date"])
+        .eq("date_presence", s["date_seance"])
         .execute()
         .data
     )
@@ -96,21 +105,22 @@ st.subheader("📄 Liste des séances archivées")
 
 for s in seances:
 
-    nom_cours = s.get("nom_cours", "Cours inconnu")
+    cours = cours_dict.get(s["cours_id"], {})
+    nom_cours = cours.get("nom", "Cours inconnu")
 
     # Présences
     presences = (
         supabase.table("cours_presences")
         .select("*")
         .eq("cours_id", s["cours_id"])
-        .eq("date_presence", s["date"])
+        .eq("date_presence", s["date_seance"])
         .execute()
         .data
     )
 
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 1])
 
-    col1.write(f"📅 {s['date']}")
+    col1.write(f"📅 {s['date_seance']}")
     col2.write(f"🐾 {nom_cours}")
     col3.write(f"🕒 {s['heure_debut']} → {s['heure_fin']}")
     col4.write(f"👥 {len(presences)} présents")
@@ -119,4 +129,3 @@ for s in seances:
         st.session_state["seance_detail"] = s
 
     st.markdown("---")
-
