@@ -42,7 +42,7 @@ def ligne_style(index):
         else "padding: 6px;"
     )
 
-header = st.columns([2, 2, 2, 2, 1])
+header = st.columns([3, 3, 3, 4, 1])
 header[0].markdown("**Nom**")
 header[1].markdown("**Prénom**")
 header[2].markdown("**Téléphone**")
