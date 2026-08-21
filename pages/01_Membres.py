@@ -71,9 +71,7 @@ for index, membre in enumerate(membres):
 
 st.markdown("---")
 
-# ---------------------------------------------------------
-# BOUTON AJOUT MEMBRE — CORRIGÉ
-# ---------------------------------------------------------
 if st.button("➕ Ajouter un membre"):
-    st.switch_page("pages/01_Ajout_Membre.py")
+    st.session_state["membre_id"] = None
+    st.switch_page("pages/21_Fiche_Membre.py")
 
