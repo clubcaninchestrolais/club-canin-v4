@@ -40,8 +40,8 @@ def ligne_style(index):
     )
 
 header = st.columns([2, 2, 2, 2, 1])
-header[0].markdown("**Prénom**")
-header[1].markdown("**Nom**")
+header[0].markdown("**Nom**")          # ← inversé
+header[1].markdown("**Prénom**")       # ← inversé
 header[2].markdown("**Téléphone**")
 header[3].markdown("**Email**")
 header[4].markdown("**Fiche**")
@@ -57,8 +57,9 @@ for index, membre in enumerate(membres):
 
     cols = st.columns([2, 2, 2, 2, 1])
 
-    cols[0].markdown(f"<div style='{ligne_style(index)}'>{prenom}</div>", unsafe_allow_html=True)
-    cols[1].markdown(f"<div style='{ligne_style(index)}'>{nom}</div>", unsafe_allow_html=True)
+    # Affichage inversé : NOM puis PRÉNOM
+    cols[0].markdown(f"<div style='{ligne_style(index)}'>{nom}</div>", unsafe_allow_html=True)
+    cols[1].markdown(f"<div style='{ligne_style(index)}'>{prenom}</div>", unsafe_allow_html=True)
     cols[2].markdown(f"<div style='{ligne_style(index)}'>📞 {telephone}</div>", unsafe_allow_html=True)
     cols[3].markdown(f"<div style='{ligne_style(index)}'>📧 {email}</div>", unsafe_allow_html=True)
 
@@ -67,7 +68,7 @@ for index, membre in enumerate(membres):
     # ---------------------------------------------------------
     if cols[4].button("🔍", key=f"fiche_membre_{membre['id']}"):
         st.session_state["membre_id"] = membre["id"]
-        st.switch_page("pages/21_Fiche_Membre.py")   # ✅ CORRECTIF FINAL
+        st.switch_page("pages/21_Fiche_Membre.py")
 
 st.markdown("---")
 
@@ -76,4 +77,4 @@ st.markdown("---")
 # ---------------------------------------------------------
 if st.button("➕ Ajouter un membre"):
     st.session_state["membre_id"] = None
-    st.switch_page("pages/21_Fiche_Membre.py")       # ✅ CORRECTIF FINAL
+    st.switch_page("pages/21_Fiche_Membre.py")
