@@ -1,7 +1,8 @@
 import streamlit as st
 from supabase_rest import supabase
 
-st.set_page_config(page_title="Membres", page_icon="👥")
+# Page en mode large
+st.set_page_config(page_title="Membres", page_icon="👥", layout="wide")
 
 st.title("Liste des membres")
 
@@ -37,11 +38,12 @@ if search:
 
 def ligne_style(index):
     return (
-        "background-color: #f7f7f7; padding: 6px; border-radius: 4px;"
+        "background-color: #f7f7f7; padding: 8px; border-radius: 4px;"
         if index % 2 == 0
-        else "padding: 6px;"
+        else "padding: 8px;"
     )
 
+# Colonnes élargies
 header = st.columns([3, 3, 3, 4, 1])
 header[0].markdown("**Nom**")
 header[1].markdown("**Prénom**")
@@ -71,9 +73,8 @@ for index, membre in enumerate(membres):
 
 st.markdown("---")
 
-# Bouton ajouter membre — version d’origine
+# Bouton ajouter membre — version correcte
 if st.button("➕ Ajouter un membre"):
     st.session_state["membre_id"] = None
     st.switch_page("pages/01_Ajout_Membre.py")
-
 
