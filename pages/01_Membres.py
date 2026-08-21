@@ -75,6 +75,5 @@ st.markdown("---")
 # BOUTON AJOUT MEMBRE — CORRIGÉ
 # ---------------------------------------------------------
 if st.button("➕ Ajouter un membre"):
-    st.switch_page("pages/ajout_membre.py")
-
+    st.switch_page("pages/01_ajouter_membre.py")
 
