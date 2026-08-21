@@ -71,7 +71,10 @@ for index, membre in enumerate(membres):
 
 st.markdown("---")
 
-# Bouton ajouter membre (corrigé)
+# ---------------------------------------------------------
+# BOUTON AJOUT MEMBRE — CORRIGÉ
+# ---------------------------------------------------------
 if st.button("➕ Ajouter un membre"):
     st.switch_page("pages/ajout_membre.py")
+
 
