@@ -145,10 +145,10 @@ if m.get("temporaire", False):
 # Supprimer membre
 #if st.button("Supprimer membre"):
 
-    supabase.table("cours_presences").delete().eq("membre_id", membre_id).execute()
-    supabase.table("cours_inscriptions").delete().eq("membre_id", membre_id).execute()
-    supabase.table("chiens").delete().eq("id_membre", membre_id).execute()
-    supabase.table("membres").delete().eq("id", membre_id).execute()
+    #supabase.table("cours_presences").delete().eq("membre_id", membre_id).execute()
+    #supabase.table("cours_inscriptions").delete().eq("membre_id", membre_id).execute()
+    #supabase.table("chiens").delete().eq("id_membre", membre_id).execute()
+    #supabase.table("membres").delete().eq("id", membre_id).execute()
 
-    st.success("Membre supprimé ✔")
-    st.stop()
+    #st.success("Membre supprimé ✔")
+    #st.stop()
