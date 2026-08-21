@@ -7,8 +7,8 @@ st.title("👤 Ajouter un membre")
 # ---------------------------------------------------------
 # Formulaire simple
 # ---------------------------------------------------------
-prenom = st.text_input("Prénom")
-nom = st.text_input("Nom")
+nom = st.text_input("Nom")          # ← inversé
+prenom = st.text_input("Prénom")    # ← inversé
 email = st.text_input("Email")
 telephone = st.text_input("Téléphone")
 
