@@ -74,7 +74,14 @@ ville = st.text_input("Ville", membre.get("ville", ""))
 assurance = st.text_input("Assurance", membre.get("assurance", ""))
 police_assurance = st.text_input("Police d’assurance", membre.get("police_assurance", ""))
 statut = st.text_input("Statut", membre.get("statut", "membre"))
-date_inscription = st.date_input("Date d'inscription", date_raw)
+
+# 👉 Format JJ/MM/AAAA dans le widget
+date_inscription = st.date_input(
+    "Date d'inscription",
+    date_raw,
+    format="DD/MM/YYYY"
+)
+
 remarques = st.text_area("Remarques", membre.get("remarques", ""))
 
 actif = st.checkbox("Actif", membre.get("actif", True))
@@ -146,7 +153,7 @@ st.markdown("---")
 st.markdown("## Cotisations")
 
 if not mode_creation:
-    cotisations = supabase.table("cotisations").select("*").eq("id_membre", membre_id).execute().data
+    cotisations = supabase.table("cotisations").select("*").eq("membre_id", membre_id).execute().data
 
     st.write(f"📊 **Nombre de cotisations : {len(cotisations)}**")
 
@@ -171,7 +178,7 @@ st.markdown("---")
 st.markdown("## Abonnements")
 
 if not mode_creation:
-    abonnements = supabase.table("abonnements").select("*").eq("id_membre", membre_id).execute().data
+    abonnements = supabase.table("abonnements").select("*").eq("membre_id", membre_id).execute().data
 
     st.write(f"📊 **Nombre d’abonnements : {len(abonnements)}**")
 
