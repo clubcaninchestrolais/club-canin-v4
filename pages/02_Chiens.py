@@ -105,8 +105,6 @@ for index, chien in enumerate(chiens):
     cols[2].markdown(
         f"<div style='{ligne_style(index)}'>📅 {format_date(naissance)} — 🎂 {age}</div>",
         unsafe_allow_html=True
-)
-
     )
     cols[3].markdown(f"<div style='{ligne_style(index)}'>👤 {membre_nom}</div>", unsafe_allow_html=True)
 
