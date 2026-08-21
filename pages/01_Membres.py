@@ -58,7 +58,7 @@ for index, membre in enumerate(membres):
     telephone = membre.get("telephone", "")
     email = membre.get("email", "")
 
-    cols = st.columns([2, 2, 2, 2, 1])
+    cols = st.columns([3, 3, 3, 4, 1])
 
     cols[0].markdown(f"<div style='{ligne_style(index)}'>{nom}</div>", unsafe_allow_html=True)
     cols[1].markdown(f"<div style='{ligne_style(index)}'>{prenom}</div>", unsafe_allow_html=True)
