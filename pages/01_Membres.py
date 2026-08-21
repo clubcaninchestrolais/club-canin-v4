@@ -71,7 +71,7 @@ for index, membre in enumerate(membres):
 
 st.markdown("---")
 
-# Bouton ajouter membre (version stable)
+# Bouton ajouter membre — version d’origine
 if st.button("➕ Ajouter un membre"):
     st.session_state["membre_id"] = None
     st.switch_page("pages/21_Fiche_Membre.py")
