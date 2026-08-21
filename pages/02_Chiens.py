@@ -66,8 +66,8 @@ def ligne_style(index):
         else "padding: 8px;"
     )
 
-# Colonnes élargies comme Membres
-header = st.columns([3, 3, 3, 4, 1])
+# Colonnes rééquilibrées
+header = st.columns([3, 2, 4, 4, 1])
 header[0].markdown("**Nom**")
 header[1].markdown("**Race**")
 header[2].markdown("**Naissance / Âge**")
@@ -98,7 +98,7 @@ for index, chien in enumerate(chiens):
         if membre:
             membre_nom = f"{membre[0]['prenom']} {membre[0]['nom']}"
 
-    cols = st.columns([3, 3, 3, 4, 1])
+    cols = st.columns([3, 2, 4, 4, 1])
 
     cols[0].markdown(f"<div style='{ligne_style(index)}'>{nom}</div>", unsafe_allow_html=True)
     cols[1].markdown(f"<div style='{ligne_style(index)}'>{race}</div>", unsafe_allow_html=True)
