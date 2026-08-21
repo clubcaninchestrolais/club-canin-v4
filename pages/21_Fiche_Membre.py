@@ -143,7 +143,7 @@ if m.get("temporaire", False):
         st.rerun()
 
 # Supprimer membre
-if st.button("Supprimer membre"):
+#if st.button("Supprimer membre"):
 
     supabase.table("cours_presences").delete().eq("membre_id", membre_id).execute()
     supabase.table("cours_inscriptions").delete().eq("membre_id", membre_id).execute()
