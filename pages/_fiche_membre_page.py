@@ -6,11 +6,21 @@ st.set_page_config(page_title="Fiche membre", page_icon="👤")
 
 st.title("Fiche membre")
 
+# ---------------------------------------------------------
+# FORMAT DATE JJ/MM/AAAA
+# ---------------------------------------------------------
+def format_date(date_str):
+    if not date_str:
+        return "N/A"
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%d").strftime("%d/%m/%Y")
+    except:
+        return date_str
+
 # Déterminer mode création ou édition
 if "membre_id" not in st.session_state or st.session_state["membre_id"] is None:
     mode_creation = True
 
-    # TOUS LES CHAMPS DE LA TABLE MEMBRES
     membre = {
         "prenom": "",
         "nom": "",
@@ -40,11 +50,9 @@ else:
 
 date_raw = membre.get("date_inscription", None)
 
-# Si la date est une chaîne vide → None
 if isinstance(date_raw, str) and date_raw.strip() == "":
     date_raw = None
 
-# Si la date est une chaîne ISO → conversion
 if isinstance(date_raw, str):
     try:
         date_raw = datetime.date.fromisoformat(date_raw)
@@ -69,7 +77,6 @@ statut = st.text_input("Statut", membre.get("statut", "membre"))
 date_inscription = st.date_input("Date d'inscription", date_raw)
 remarques = st.text_area("Remarques", membre.get("remarques", ""))
 
-# Actif / Archive
 actif = st.checkbox("Actif", membre.get("actif", True))
 archive = st.checkbox("Archivé", membre.get("archive", False))
 
@@ -107,7 +114,6 @@ if st.button("💾 Enregistrer"):
 
     st.switch_page("pages/01_Membres.py")
 
-# Bouton retour
 if st.button("Retour"):
     st.switch_page("pages/01_Membres.py")
 
@@ -143,7 +149,6 @@ if not mode_creation:
     cotisations = supabase.table("cotisations").select("*").eq("id_membre", membre_id).execute().data
 
     st.write(f"📊 **Nombre de cotisations : {len(cotisations)}**")
-    st.caption("Affichage statique — non mis à jour automatiquement.")
 
     if len(cotisations) == 0:
         st.info("Aucune cotisation enregistrée.")
@@ -151,8 +156,8 @@ if not mode_creation:
         for c in cotisations:
             st.write(f"""
             💶 **Montant :** {c.get('montant', 'N/A')}  
-            📅 **Date de paiement :** {c.get('date_paiement', 'N/A')}  
-            ⏳ **Expiration :** {c.get('date_expiration', 'N/A')}  
+            📅 **Date de paiement :** {format_date(c.get('date_paiement'))}  
+            ⏳ **Expiration :** {format_date(c.get('date_expiration'))}  
             🏷️ **Type :** {c.get('type', 'N/A')}  
             🔖 **Statut :** {c.get('statut', 'N/A')}  
             📝 **Remarques :** {c.get('remarques', 'N/A')}
@@ -169,7 +174,6 @@ if not mode_creation:
     abonnements = supabase.table("abonnements").select("*").eq("id_membre", membre_id).execute().data
 
     st.write(f"📊 **Nombre d’abonnements : {len(abonnements)}**")
-    st.caption("Affichage statique — non mis à jour automatiquement.")
 
     if len(abonnements) == 0:
         st.info("Aucun abonnement enregistré.")
@@ -182,8 +186,8 @@ if not mode_creation:
             💶 **Prix :** {a.get('prix', 'N/A')}  
             🔢 **Séances totales :** {a.get('seances_total', 'N/A')}  
             🔢 **Séances restantes :** {a.get('seances_restantes', 'N/A')}  
-            📅 **Date d'achat :** {a.get('date_achat', 'N/A')}  
-            ⏳ **Expiration :** {a.get('expiration', 'N/A')}  
+            📅 **Date d'achat :** {format_date(a.get('date_achat'))}  
+            ⏳ **Expiration :** {format_date(a.get('expiration'))}  
             {actif_ab}  
             📝 **Note :** {a.get('note', 'N/A')}
             """)
