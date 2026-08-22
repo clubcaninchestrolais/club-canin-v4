@@ -159,14 +159,14 @@ if st.session_state["seance_detail"]:
                     }).eq("id", abonnement["id"]).execute()
 
                 # ---------------------------------------------------------
-                # Insérer présence réelle (version corrigée)
+                # Insérer présence réelle (version finale)
                 # ---------------------------------------------------------
                 supabase.table("cours_presences").insert({
                     "seance_id": s["id"],
                     "membre_id": p.get("membre_id"),
                     "chien_id": p.get("chien_id"),
-                    "present": True,
-                    "commentaire": None
+                    "date_presence": s["date_seance"],
+                    "present": True
                 }).execute()
 
                 # ---------------------------------------------------------
@@ -199,7 +199,5 @@ for s in seances:
     if col3.button("Valider", key=f"voir_{s['id']}"):
         st.session_state["seance_detail"] = s
         st.rerun()
-
-    st.markdown("---")
 
     st.markdown("---")
