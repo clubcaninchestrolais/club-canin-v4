@@ -1,7 +1,8 @@
 import streamlit as st
+import datetime
 from supabase import create_client
 
-st.set_page_config(page_title="Ajouter un chien", page_icon="🐶")
+st.set_page_config(page_title="Ajouter un chien", page_icon="🐶", layout="wide")
 
 # ---------------------------------------------------------
 # Connexion Supabase
@@ -13,9 +14,33 @@ supabase = create_client(url, key)
 st.title("🐶 Ajouter un chien")
 
 # ---------------------------------------------------------
-# Vérifier membre sélectionné
+# Charger les membres pour choisir le propriétaire
 # ---------------------------------------------------------
-membre_id = st.session_state.get("membre_id")
+membres = (
+    supabase.table("membres")
+    .select("id, nom, prenom")
+    .eq("archive", False)
+    .execute()
+    .data
+)
+
+# Tri alphabétique NOM + PRÉNOM
+membres = sorted(membres, key=lambda m: (m["nom"].lower(), m["prenom"].lower()))
+
+# Liste déroulante
+options = {f"{m['nom']} {m['prenom']}": m["id"] for m in membres}
+
+proprietaire_nom = st.selectbox("Propriétaire du chien", list(options.keys()))
+id_membre = options[proprietaire_nom]
+
+# ---------------------------------------------------------
+# Validation numéro de puce (15 chiffres)
+# ---------------------------------------------------------
+def valide_puce(puce):
+    if not puce:
+        return False
+    puce_clean = puce.replace(" ", "")
+    return puce_clean.isdigit() and len(puce_clean) == 15
 
 # ---------------------------------------------------------
 # Formulaire complet
@@ -26,16 +51,17 @@ with st.form("form_chien"):
     nom = st.text_input("Nom du chien")
     race = st.text_input("Race")
     sexe = st.selectbox("Sexe", ["Mâle", "Femelle", "Inconnu"])
-    date_naissance = st.date_input("Date de naissance")
+
+    # Date JJ/MM/AAAA
+    date_naissance = st.date_input("Date de naissance", format="DD/MM/YYYY")
 
     st.subheader("Identification")
-    numero_puce = st.text_input("Numéro de puce")
+    numero_puce = st.text_input("Numéro de puce (15 chiffres)")
     identification = st.text_input("Identification")
-    numero_carnet = st.text_input("Numéro carnet")
 
     st.subheader("Santé")
     vaccins = st.text_input("Vaccins")
-    date_vaccin = st.date_input("Date du dernier vaccin")
+    date_vaccin = st.date_input("Date du dernier vaccin", format="DD/MM/YYYY")
 
     st.subheader("Activité & remarques")
     activite = st.text_input("Activité")
@@ -47,28 +73,31 @@ with st.form("form_chien"):
     submit = st.form_submit_button("Ajouter le chien")
 
     if submit:
+
+        # Vérification numéro de puce
+        if not valide_puce(numero_puce):
+            st.error("❌ Le numéro de puce doit contenir exactement 15 chiffres.")
+            st.stop()
+
         supabase.table("chiens").insert({
             "nom": nom,
             "race": race,
             "sexe": sexe,
-            "date_naissance": str(date_naissance),
-            "numero_puce": numero_puce,
+            "date_naissance": date_naissance.isoformat(),
+            "numero_puce": numero_puce.replace(" ", ""),
             "identification": identification,
-            "numero_carnet": numero_carnet,
             "vaccins": vaccins,
-            "date_vaccin": str(date_vaccin),
+            "date_vaccin": date_vaccin.isoformat(),
             "activite": activite,
             "remarques": remarques,
             "photo_url": photo_url,
-            "id_membre": membre_id,
+            "id_membre": id_membre,
             "archive": False
         }).execute()
 
         st.success("🐶 Chien ajouté avec succès !")
 
-        # Si on vient de la fiche membre → retour fiche membre
-        if membre_id:
-            st.switch_page("pages/21_Fiche_Membre.py")
-        else:
-            # Sinon → retour à la liste des chiens
-            st.switch_page("pages/02_Chiens.py")
+        # Retour à la fiche membre
+        st.session_state["membre_id"] = id_membre
+        st.switch_page("pages/21_Fiche_Membre.py")
+
