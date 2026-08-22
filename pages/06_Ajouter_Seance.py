@@ -45,9 +45,19 @@ st.markdown("---")
 # ---------------------------------------------------------
 if st.button("➕ Créer la séance"):
 
+    # 🔥 Récupérer le cours complet
+    cours = supabase.table("cours").select("*").eq("id", cours_id).execute().data[0]
+
+    # 🔥 Le nom du cours contient déjà l'heure et le niveau
+    nom_cours = cours["nom"]
+
+    # 🔥 Générer automatiquement le nom de la séance
+    nom_seance = f"{nom_cours} — {date_seance}"
+
     data = {
         "cours_id": cours_id,
         "date_seance": str(date_seance),
+        "nom_seance": nom_seance,        # 🔥 nom complet généré
         "note": note if note else None,
         "actif": actif
     }
