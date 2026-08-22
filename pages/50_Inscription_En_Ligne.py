@@ -69,6 +69,8 @@ chien_naissance = choix_chien["date_naissance"]
 
 # 4. Bouton de confirmation
 if st.button("Créer la préinscription membre"):
+
+    # 1. Créer la préinscription membre (acceptée automatiquement)
     supabase.table("preinscriptions").insert({
         "nom": choix_membre["nom"],
         "prenom": choix_membre["prenom"],
@@ -80,13 +82,22 @@ if st.button("Créer la préinscription membre"):
         "cours_id": cours_id,
         "seance_id": seance_id,
         "date_preinscription": date.today().isoformat(),
-        "statut": "En attente",
-        "traitee": False,
-        "acceptee": None,
+        "statut": "Acceptée automatiquement",
+        "traitee": True,
+        "acceptee": True,   # IMPORTANT : membre accepté automatiquement
         "type": "membre",
         "chien_id": chien_id,
         "membre_id": membre_id
     }).execute()
 
-    st.success("Préinscription membre créée avec succès !")
+    # 2. Inscrire automatiquement le membre dans la séance
+    supabase.table("cours_seances_inscriptions").insert({
+        "seance_id": seance_id,
+        "membre_id": membre_id,
+        "chien_id": chien_id,
+        "actif": True
+    }).execute()
+
+    st.success("Préinscription membre créée et inscription enregistrée !")
     st.rerun()
+
