@@ -201,3 +201,5 @@ for s in seances:
         st.rerun()
 
     st.markdown("---")
+
+    st.markdown("---")
