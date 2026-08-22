@@ -161,8 +161,8 @@ if st.session_state["seance_detail"]:
                 # ---------------------------------------------------------
                 # Insérer présence réelle (membre ou extérieur)
                 # ---------------------------------------------------------
-                membre_id = p["membre_id"] if p["type"] == "membre" else 0
-                chien_id = p["chien_id"] if p["type"] == "membre" else 0
+                membre_id = p["membre_id"] if p["type"] == "membre" else 99999
+                chien_id = p["chien_id"] if p["type"] == "membre" else 99999
 
                 supabase.table("cours_presences").insert({
                     "seance_id": s["id"],
@@ -211,5 +211,3 @@ for s in seances:
 
     st.markdown("---")
 
-
-    st.markdown("---")
