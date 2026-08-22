@@ -146,5 +146,13 @@ if st.button("Mettre à jour les remarques"):
     st.success("Remarques mises à jour.")
     st.rerun()
 
+st.markdown("---")
 
+# ---------------------------------------------------------
+# Retour (version stable)
+# ---------------------------------------------------------
+st.info("Pour revenir à la liste des cotisations, utilisez le menu à gauche ou cliquez sur le bouton ci‑dessous.")
 
+if st.button("⬅️ Retour à la liste"):
+    st.session_state["go_back"] = True
+    st.rerun()
