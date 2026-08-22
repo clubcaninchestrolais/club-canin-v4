@@ -62,9 +62,12 @@ if choix != "-- Tous les membres --":
     ]
 
 # ---------------------------------------------------------
-# Affichage ultra-compact LARGE (version parfaite)
+# Affichage ultra-compact LARGE
 # ---------------------------------------------------------
 st.subheader("📋 Liste des abonnements")
+
+if "abo_id" not in st.session_state:
+    st.session_state["abo_id"] = None
 
 if abos:
     for abo in abos:
@@ -87,7 +90,6 @@ if abos:
             else:
                 couleur = "#ffcccc"
 
-        # 6 colonnes larges comme dans cotisation
         col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 2])
 
         with col1:
@@ -125,7 +127,6 @@ if abos:
                 unsafe_allow_html=True
             )
 
-        # Colonne des boutons regroupés proprement
         with col6:
             b1, b2, b3 = st.columns([1, 1, 2])
 
@@ -147,18 +148,100 @@ if abos:
             with b3:
                 if st.button("Voir détail", key=f"detail_{abo['id']}"):
                     st.session_state["abo_id"] = abo["id"]
-                    st.session_state["go_detail"] = True
                     st.rerun()
-
-    # Navigation stable
-    if st.session_state.get("go_detail", False):
-        st.session_state["go_detail"] = False
-        st.switch_page("Fiche Abonnement")
 
 else:
     st.info("Aucun abonnement trouvé.")
 
 st.markdown("---")
+
+# ---------------------------------------------------------
+# FICHE ABONNEMENT (sur la même page)
+# ---------------------------------------------------------
+if st.session_state["abo_id"] is not None:
+    abo_id = st.session_state["abo_id"]
+
+    abo = (
+        supabase.table("abonnements")
+        .select("*")
+        .eq("id", abo_id)
+        .execute()
+        .data
+    )
+
+    if abo:
+        abo = abo[0]
+
+        membre = (
+            supabase.table("membres")
+            .select("*")
+            .eq("id", abo["membre_id"])
+            .execute()
+            .data[0]
+        )
+
+        st.subheader("📄 Détail de l'abonnement")
+
+        st.markdown("### 👤 Informations du membre")
+        st.write(f"**Nom :** {membre['nom']}")
+        st.write(f"**Prénom :** {membre['prenom']}")
+        st.write(f"**Statut :** {membre['statut']}")
+
+        st.markdown("---")
+
+        st.markdown("### 🎫 Informations de l'abonnement")
+        st.write(f"**ID abonnement :** {abo['id']}")
+        st.write(f"**Total séances :** {abo['seances_total']}")
+        st.write(f"**Séances restantes :** {abo['seances_restantes']}")
+        st.write(f"**Prix :** {abo.get('prix', '')} €")
+        st.write(f"**Date d'achat :** {abo['date_achat']}")
+        st.write(f"**Actif :** {'Oui' if abo['actif'] else 'Non'}")
+
+        st.markdown("---")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("➕ Ajouter une séance", key="fiche_plus"):
+                supabase.table("abonnements").update({
+                    "seances_restantes": abo["seances_restantes"] + 1
+                }).eq("id", abo_id).execute()
+                st.success("Séance ajoutée.")
+                st.rerun()
+
+        with col2:
+            if st.button("➖ Retirer une séance", key="fiche_minus"):
+                if abo["seances_restantes"] > 0:
+                    supabase.table("abonnements").update({
+                        "seances_restantes": abo["seances_restantes"] - 1
+                    }).eq("id", abo_id).execute()
+                    st.success("Séance retirée.")
+                    st.rerun()
+                else:
+                    st.warning("Impossible : aucune séance restante.")
+
+        st.markdown("---")
+
+        if abo["actif"]:
+            if st.button("🔴 Désactiver l'abonnement", key="fiche_desactiver"):
+                supabase.table("abonnements").update({
+                    "actif": False
+                }).eq("id", abo_id).execute()
+                st.success("Abonnement désactivé.")
+                st.rerun()
+        else:
+            if st.button("🟢 Réactiver l'abonnement", key="fiche_activer"):
+                supabase.table("abonnements").update({
+                    "actif": True
+                }).eq("id", abo_id).execute()
+                st.success("Abonnement réactivé.")
+                st.rerun()
+
+        st.markdown("---")
+
+        if st.button("⬅️ Fermer la fiche"):
+            st.session_state["abo_id"] = None
+            st.rerun()
 
 # ---------------------------------------------------------
 # Création d’un abonnement
@@ -205,10 +288,7 @@ if choix != "-- Tous les membres --":
             "seances_total": total,
             "seances_restantes": total,
             "date_achat": datetime.now().date().isoformat(),
-            "actif": True,
-            "paye": False,
-            "date_paiement": None,
-            "date_expiration": None
+            "actif": True
         }).execute()
 
         st.success("🎉 Abonnement créé avec succès.")
@@ -216,5 +296,4 @@ if choix != "-- Tous les membres --":
 
 else:
     st.info("Sélectionnez un membre pour créer un abonnement.")
-
 
