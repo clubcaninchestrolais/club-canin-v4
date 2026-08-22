@@ -107,19 +107,13 @@ st.subheader("💰 Paiement")
 paye = st.checkbox("Le membre a payé", value=cot.get("paye", False))
 
 if paye:
-    # Date paiement obligatoire si payé
     new_date_pay = st.date_input(
         "Date de paiement",
         value=date_pay.date() if date_pay else date.today()
     )
-
-    # 🔥 Calcul automatique de la date d'expiration
     new_exp = new_date_pay + timedelta(days=365)
-
 else:
     new_date_pay = None
-
-    # Expiration provisoire si impayé
     new_exp = st.date_input(
         "Date d'expiration (provisoire si impayé)",
         value=date_exp.date() if date_exp else date.today()
@@ -151,14 +145,6 @@ if st.button("Mettre à jour les remarques"):
 
     st.success("Remarques mises à jour.")
     st.rerun()
-
-st.markdown("---")
-
-# ---------------------------------------------------------
-# Retour
-# ---------------------------------------------------------
-if st.button("⬅️ Retour"):
-    st.switch_page("31_Cotisations")
 
 
 
