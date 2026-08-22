@@ -24,47 +24,68 @@ if not preinscriptions:
     st.stop()
 
 # ---------------------------------------------------------
-# PDF
+# PDF PRO
 # ---------------------------------------------------------
-st.subheader("📄 Export PDF — Préinscrits par cours")
+st.subheader("📄 Export PDF — Préinscrits par séance (version PRO)")
 
 if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
-    cours_dict_pdf = {}
+    # Regroupement par séance reconstruite
+    seances_dict_pdf = {}
 
     for pre in preinscriptions:
-        cours_id = pre.get("cours_id")
-        cours_nom = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
+        cours_nom = cours_dict.get(pre.get("cours_id"), {}).get("nom", "Cours inconnu")
+        date_seance = pre.get("date_seance", "")
+        heure = pre.get("heure_debut", "")
+
+        # 🔥 Référence séance reconstruite
+        nom_seance = f"{cours_nom} - {date_seance} {heure}".strip()
 
         # Nettoyage Unicode
-        cours_nom = cours_nom.replace("—", "-")
+        nom_seance = nom_seance.replace("—", "-")
 
-        cours_dict_pdf.setdefault(cours_nom, []).append(pre)
+        seances_dict_pdf.setdefault(nom_seance, []).append(pre)
 
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    pdf.cell(0, 10, "Liste des preinscrits par cours", ln=True)
+    pdf.set_font("Arial", size=14)
+    pdf.cell(0, 10, "Liste des preinscrits par seance", ln=True)
     pdf.ln(5)
 
-    for cours_nom, liste in cours_dict_pdf.items():
+    for nom_seance, liste in seances_dict_pdf.items():
 
+        # Titre séance
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 8, f"Cours : {cours_nom}", ln=True)
-        pdf.set_font("Arial", size=11)
+        pdf.cell(0, 8, f"Seance : {nom_seance}", ln=True)
         pdf.ln(2)
 
-        for pre in liste:
+        # En-tête tableau
+        pdf.set_font("Arial", "B", 11)
+        pdf.cell(10, 8, " ", border=0)
+        pdf.cell(10, 8, "N°", border=0)
+        pdf.cell(60, 8, "Nom du membre", border=0)
+        pdf.cell(50, 8, "Chien", border=0)
+        pdf.ln(6)
+
+        pdf.set_font("Arial", size=11)
+
+        # Lignes tableau
+        for idx, pre in enumerate(liste, start=1):
             membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}".replace("—", "-")
             chien_nom = pre.get("chien_nom", "Chien").replace("—", "-")
-            date_seance = pre.get("date_seance", "")
-            heure = pre.get("heure_debut", "")
 
-            pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom} - {date_seance} {heure}", ln=True)
+            pdf.cell(10, 6, "[ ]", border=0)
+            pdf.cell(10, 6, f"{idx:02d}", border=0)
+            pdf.cell(60, 6, membre_nom, border=0)
+            pdf.cell(50, 6, chien_nom, border=0)
+            pdf.ln(6)
 
         pdf.ln(4)
+        pdf.set_font("Arial", "B", 11)
+        pdf.cell(0, 8, f"Total inscrits : {len(liste)}", ln=True)
+        pdf.ln(6)
 
+    # Export
     pdf_buffer = BytesIO()
     pdf.output(pdf_buffer)
     pdf_buffer.seek(0)
@@ -87,8 +108,7 @@ for pre in preinscriptions:
 
     nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
     chien = pre.get("chien_nom", "")
-    cours_id = pre.get("cours_id")
-    cours_nom = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
+    cours_nom = cours_dict.get(pre.get("cours_id"), {}).get("nom", "Cours inconnu")
     date_seance = pre.get("date_seance", "")
     heure = pre.get("heure_debut", "")
 
@@ -111,5 +131,6 @@ for pre in preinscriptions:
 st.markdown("---")
 
 st.info("⚠️ Mode affichage uniquement — validation réelle désactivée car supabase_rest ne supporte pas les insert/update.")
+
 
 
