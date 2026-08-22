@@ -161,10 +161,13 @@ if st.session_state["seance_detail"]:
                 # ---------------------------------------------------------
                 # Insérer présence réelle (membre ou extérieur)
                 # ---------------------------------------------------------
+                membre_id = p["membre_id"] if p["type"] == "membre" else 0
+                chien_id = p["chien_id"] if p["type"] == "membre" else 0
+
                 supabase.table("cours_presences").insert({
                     "seance_id": s["id"],
-                    "membre_id": p.get("membre_id", 0),   # extérieurs → membre_id = 0
-                    "chien_id": p.get("chien_id", 0),     # extérieurs → chien_id = 0
+                    "membre_id": membre_id,
+                    "chien_id": chien_id,
                     "date_presence": s["date_seance"],
                     "present": True
                 }).execute()
@@ -205,5 +208,8 @@ for s in seances:
     if col3.button("Valider", key=f"voir_{s['id']}"):
         st.session_state["seance_detail"] = s
         st.rerun()
+
+    st.markdown("---")
+
 
     st.markdown("---")
