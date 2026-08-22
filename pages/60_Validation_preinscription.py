@@ -1,17 +1,8 @@
 import streamlit as st
 from supabase_rest import supabase
-from fpdf import FPDF
-from io import BytesIO
 
-st.set_page_config(page_title="Validation préinscription", page_icon="📝")
-st.title("📝 Validation des préinscriptions")
-
-# ---------------------------------------------------------
-# Charger les cours
-# ---------------------------------------------------------
-cours_table = supabase.table("cours").select("*").execute()
-cours_list = cours_table.data or []
-cours_dict = {c["id"]: c for c in cours_list}
+st.set_page_config(page_title="Validation préinscriptions", page_icon="📝")
+st.title("📝 Validation des préinscriptions (NON-MEMBRES)")
 
 # ---------------------------------------------------------
 # Charger les préinscriptions
@@ -19,118 +10,64 @@ cours_dict = {c["id"]: c for c in cours_list}
 pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
 preinscriptions = pre_table.data or []
 
-if not preinscriptions:
-    st.info("Aucune préinscription.")
+# Filtrer UNIQUEMENT les non-membres
+non_membres = [p for p in preinscriptions if p.get("membre_id") is None]
+
+if not non_membres:
+    st.info("Aucun non-membre en préinscription.")
     st.stop()
 
 # ---------------------------------------------------------
-# PDF PRO
+# Affichage des non-membres avec boutons VALIDER / REFUSER
 # ---------------------------------------------------------
-st.subheader("📄 Export PDF — Préinscrits par séance (version PRO)")
+st.subheader("👤 Non-membres préinscrits")
 
-if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
-
-    # Regroupement par séance reconstruite
-    seances_dict_pdf = {}
-
-    for pre in preinscriptions:
-        cours_nom = cours_dict.get(pre.get("cours_id"), {}).get("nom", "Cours inconnu")
-        date_seance = pre.get("date_seance", "")
-        heure = pre.get("heure_debut", "")
-
-        # 🔥 Référence séance reconstruite
-        nom_seance = f"{cours_nom} - {date_seance} {heure}".strip()
-
-        # Nettoyage Unicode
-        nom_seance = nom_seance.replace("—", "-")
-
-        seances_dict_pdf.setdefault(nom_seance, []).append(pre)
-
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=14)
-    pdf.cell(0, 10, "Liste des preinscrits par seance", ln=True)
-    pdf.ln(5)
-
-    for nom_seance, liste in seances_dict_pdf.items():
-
-        # Titre séance
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 8, f"Seance : {nom_seance}", ln=True)
-        pdf.ln(2)
-
-        # En-tête tableau
-        pdf.set_font("Arial", "B", 11)
-        pdf.cell(10, 8, " ", border=0)
-        pdf.cell(10, 8, "N°", border=0)
-        pdf.cell(60, 8, "Nom du membre", border=0)
-        pdf.cell(50, 8, "Chien", border=0)
-        pdf.ln(6)
-
-        pdf.set_font("Arial", size=11)
-
-        # Lignes tableau
-        for idx, pre in enumerate(liste, start=1):
-            membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}".replace("—", "-")
-            chien_nom = pre.get("chien_nom", "Chien").replace("—", "-")
-
-            pdf.cell(10, 6, "[ ]", border=0)
-            pdf.cell(10, 6, f"{idx:02d}", border=0)
-            pdf.cell(60, 6, membre_nom, border=0)
-            pdf.cell(50, 6, chien_nom, border=0)
-            pdf.ln(6)
-
-        pdf.ln(4)
-        pdf.set_font("Arial", "B", 11)
-        pdf.cell(0, 8, f"Total inscrits : {len(liste)}", ln=True)
-        pdf.ln(6)
-
-    # Export
-    pdf_buffer = BytesIO()
-    pdf.output(pdf_buffer)
-    pdf_buffer.seek(0)
-
-    st.download_button(
-        label="📄 Télécharger PDF",
-        data=pdf_buffer,
-        file_name="preinscrits.pdf",
-        mime="application/pdf"
-    )
-
-st.markdown("---")
-
-# ---------------------------------------------------------
-# Affichage compact (restauré)
-# ---------------------------------------------------------
-st.subheader("📋 Préinscriptions (affichage uniquement)")
-
-for pre in preinscriptions:
+for pre in non_membres:
 
     nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
     chien = pre.get("chien_nom", "")
-    cours_nom = cours_dict.get(pre.get("cours_id"), {}).get("nom", "Cours inconnu")
+    cours_nom = pre.get("cours_nom", "Cours inconnu")
     date_seance = pre.get("date_seance", "")
     heure = pre.get("heure_debut", "")
 
-    bg = "background-color: #d4f8d4;" if pre.get("traitee") else "background-color: #f8e6d4;"
+    statut = pre.get("statut_preinscription", "en_attente")
+
+    # Couleur selon statut
+    if statut == "valide":
+        bg = "background-color: #d4f8d4;"  # vert clair
+    elif statut == "refuse":
+        bg = "background-color: #f8d4d4;"  # rouge clair
+    else:
+        bg = "background-color: #f8f3d4;"  # jaune clair
 
     st.markdown(
         f"""
-        <div style="{bg}; padding:10px; border-radius:8px; margin-bottom:8px;">
+        <div style="{bg}; padding:12px; border-radius:8px; margin-bottom:10px;">
             <b>👤 {nom_complet}</b><br>
             🐶 {chien}<br>
             📘 {cours_nom}<br>
-            📅 {date_seance} — ⏰ {heure}
+            📅 {date_seance} — ⏰ {heure}<br>
+            <i>Statut : {statut}</i>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    st.button("Valider (affichage uniquement)", key=f"val_{pre['id']}")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button(f"VALIDER {nom_complet}", key=f"val_{pre['id']}"):
+            supabase.table("preinscriptions").update({"statut_preinscription": "valide"}).eq("id", pre["id"]).execute()
+            st.rerun()
+
+    with col2:
+        if st.button(f"REFUSER {nom_complet}", key=f"ref_{pre['id']}"):
+            supabase.table("preinscriptions").update({"statut_preinscription": "refuse"}).eq("id", pre["id"]).execute()
+            st.rerun()
 
 st.markdown("---")
+st.info("Cette page prépare la séance : seuls les NON-MEMBRES sont affichés. La validation réelle se fera dans la page 'Validation des présences'.")
 
-st.info("⚠️ Mode affichage uniquement — validation réelle désactivée car supabase_rest ne supporte pas les insert/update.")
 
 
 
