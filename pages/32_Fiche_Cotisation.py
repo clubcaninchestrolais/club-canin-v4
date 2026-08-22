@@ -158,5 +158,3 @@ if st.button("⬅️ Retour à la liste"):
     st.session_state["cot_id"] = None
     st.session_state["scroll_top"] = True
     st.rerun()
-
-    st.rerun()
