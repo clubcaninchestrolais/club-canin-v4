@@ -159,17 +159,22 @@ if st.session_state["seance_detail"]:
                     }).eq("id", abonnement["id"]).execute()
 
                 # ---------------------------------------------------------
-                # Insérer présence réelle
+                # Insérer présence réelle (version corrigée)
                 # ---------------------------------------------------------
                 supabase.table("cours_presences").insert({
                     "seance_id": s["id"],
-                    "cours_id": s["cours_id"],
                     "membre_id": p.get("membre_id"),
                     "chien_id": p.get("chien_id"),
-                    "type": p["type"],
-                    "date_seance": s["date_seance"],
-                    "present": True
+                    "present": True,
+                    "commentaire": None
                 }).execute()
+
+                # ---------------------------------------------------------
+                # Mettre à jour cours_seances_inscriptions.present
+                # ---------------------------------------------------------
+                supabase.table("cours_seances_inscriptions").update({
+                    "present": True
+                }).eq("seance_id", s["id"]).eq("chien_id", p["chien_id"]).execute()
 
                 st.success(f"Présence validée pour {membre_nom}.")
                 st.rerun()
