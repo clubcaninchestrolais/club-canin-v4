@@ -79,9 +79,9 @@ if abos:
             if date_exp:
                 jours = (date_exp - datetime.now()).days
                 if jours < 0:
-                    couleur = "#ffcccc"
+                    couleur = "#ffcccc"  # rouge
                 elif jours <= 30:
-                    couleur = "#ffe6cc"
+                    couleur = "#ffe6cc"  # orange
                 else:
                     couleur = "#ffcccc"
             else:
@@ -91,35 +91,35 @@ if abos:
 
         with col1:
             st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
+                f"<div style='background:{couleur};padding:6px;border-radius:4px;'>"
                 f"<b>{abo['id']}</b></div>",
                 unsafe_allow_html=True
             )
 
         with col2:
             st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
+                f"<div style='background:{couleur};padding:6px;border-radius:4px;'>"
                 f"{abo['nom']}</div>",
                 unsafe_allow_html=True
             )
 
         with col3:
             st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
+                f"<div style='background:{couleur};padding:6px;border-radius:4px;'>"
                 f"{abo['prenom']}</div>",
                 unsafe_allow_html=True
             )
 
         with col4:
             st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
+                f"<div style='background:{couleur};padding:6px;border-radius:4px;'>"
                 f"{abo['seances_total']}</div>",
                 unsafe_allow_html=True
             )
 
         with col5:
             st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
+                f"<div style='background:{couleur};padding:6px;border-radius:4px;'>"
                 f"<b>{abo['seances_restantes']}</b></div>",
                 unsafe_allow_html=True
             )
@@ -150,7 +150,6 @@ if abos:
 
     if st.session_state.get("go_detail", False):
         st.session_state["go_detail"] = False
-        st.session_state["open_detail"] = True
         st.switch_page("22_Fiche_Abonnement")
 
 else:
