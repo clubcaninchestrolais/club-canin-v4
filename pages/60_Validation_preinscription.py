@@ -44,6 +44,7 @@ for pre in preinscriptions:
 
     col1, col2 = st.columns(2)
 
+    # VALIDATION
     with col1:
         if st.button(f"✅ Valider #{pre['id']}", key=f"valider_{pre['id']}"):
             supabase.table("preinscriptions").update(
@@ -53,9 +54,11 @@ for pre in preinscriptions:
                     "acceptee": True,
                 }
             ).eq("id", pre["id"]).execute()
-            st.success(f"Préinscription #{pre['id']} validée.")
-            st.experimental_rerun()
 
+            st.success(f"Préinscription #{pre['id']} validée.")
+            st.rerun()
+
+    # REFUS
     with col2:
         if st.button(f"❌ Refuser #{pre['id']}", key=f"refuser_{pre['id']}"):
             supabase.table("preinscriptions").update(
@@ -65,9 +68,9 @@ for pre in preinscriptions:
                     "acceptee": False,
                 }
             ).eq("id", pre["id"]).execute()
-            st.warning(f"Préinscription #{pre['id']} refusée.")
-            st.experimental_rerun()
 
+            st.warning(f"Préinscription #{pre['id']} refusée.")
+            st.rerun()
 
 
 
