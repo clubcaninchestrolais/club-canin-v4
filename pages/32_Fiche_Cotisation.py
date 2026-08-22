@@ -2,17 +2,34 @@ import streamlit as st
 from supabase_rest import supabase
 from datetime import datetime, date
 
-st.set_page_config(page_title="Fiche Cotisation", page_icon="💳")
-st.title("💳 Fiche Cotisation")
+st.set_page_config(page_title="Fiche Cotisation", page_icon="📄")
+st.title("📄 Fiche Cotisation")
 
 # ---------------------------------------------------------
-# Vérifier qu’un ID est présent
+# Fonction de conversion sécurisée
 # ---------------------------------------------------------
-if "cot_id" not in st.session_state:
+def safe_date(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, date):
+        return datetime.combine(value, datetime.min.time())
+    if isinstance(value, str) and value.strip() != "":
+        try:
+            return datetime.fromisoformat(value.replace("Z", ""))
+        except:
+            return None
+    return None
+
+# ---------------------------------------------------------
+# Vérifier que l’ID est présent
+# ---------------------------------------------------------
+cot_id = st.session_state.get("cot_id", None)
+
+if cot_id is None:
     st.error("Aucune cotisation sélectionnée.")
     st.stop()
-
-cot_id = st.session_state["cot_id"]
 
 # ---------------------------------------------------------
 # Charger la cotisation
@@ -31,9 +48,7 @@ if not cot:
 
 cot = cot[0]
 
-# ---------------------------------------------------------
-# Charger le membre (CORRECTION ICI : membre_id)
-# ---------------------------------------------------------
+# Charger le membre
 membre = (
     supabase.table("membres")
     .select("*")
@@ -42,51 +57,114 @@ membre = (
     .data
 )
 
-if membre:
-    membre = membre[0]
-    nom = membre["nom"]
-    prenom = membre["prenom"]
-else:
-    nom = "Inconnu"
-    prenom = ""
+membre = membre[0] if membre else None
 
 # ---------------------------------------------------------
-# Fonction date sécurisée
+# Préparer les dates
 # ---------------------------------------------------------
-def safe_date(value):
-    if value is None:
-        return ""
-    if isinstance(value, datetime):
-        return value.strftime("%d/%m/%Y")
-    if isinstance(value, date):
-        return value.strftime("%d/%m/%Y")
-    if isinstance(value, str):
-        try:
-            return datetime.fromisoformat(value.replace("Z", "")).strftime("%d/%m/%Y")
-        except:
-            return ""
-    return ""
-
 date_pay = safe_date(cot.get("date_paiement"))
 date_exp = safe_date(cot.get("date_expiration"))
 
 # ---------------------------------------------------------
+# Déterminer la couleur
+# ---------------------------------------------------------
+if cot.get("paye"):
+    couleur = "#e6ffe6"  # vert = payé
+else:
+    if date_exp:
+        jours_restants = (date_exp - datetime.now()).days
+        if jours_restants < 0:
+            couleur = "#ffcccc"  # rouge = expirée impayée
+        elif jours_restants <= 30:
+            couleur = "#ffe6cc"  # orange = bientôt expirée impayée
+        else:
+            couleur = "#ffcccc"
+    else:
+        couleur = "#ffcccc"
+
+# ---------------------------------------------------------
 # Affichage
 # ---------------------------------------------------------
-st.subheader("📄 Informations de la cotisation")
-
-st.markdown(f"""
-**Membre :** {nom} {prenom}  
-**Montant :** {cot['montant']} €  
-**Type :** {cot['type']}  
-**Payée le :** {date_pay}  
-**Expire le :** {date_exp}  
-""")
+st.markdown(
+    f"<div style='background:{couleur};padding:10px;border-radius:6px;'>"
+    f"<b>{membre['nom']} {membre['prenom']}</b><br>"
+    f"Montant : {cot['montant']} €<br>"
+    f"Type : {cot['type']}<br>"
+    f"Payé : {'Oui' if cot.get('paye') else 'Non'}<br>"
+    f"Date paiement : {date_pay.strftime('%d/%m/%Y') if date_pay else '—'}<br>"
+    f"Expiration : {date_exp.strftime('%d/%m/%Y') if date_exp else '—'}"
+    f"</div>",
+    unsafe_allow_html=True
+)
 
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Bouton retour
+# Modification du paiement
 # ---------------------------------------------------------
-if st.button("⬅️ Retour aux cotisations"):
-    st.switch_page("pages/20_Cotisations.py")
+st.subheader("💰 Paiement")
+
+paye = st.checkbox("Le membre a payé", value=cot.get("paye", False))
+
+if paye:
+    new_date_pay = st.date_input(
+        "Date de paiement",
+        value=date_pay.date() if date_pay else date.today()
+    )
+else:
+    new_date_pay = None
+
+if st.button("Mettre à jour le paiement"):
+    supabase.table("cotisations").update({
+        "paye": paye,
+        "date_paiement": str(new_date_pay) if new_date_pay else None
+    }).eq("id", cot_id).execute()
+
+    st.success("Paiement mis à jour.")
+    st.rerun()
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# Modification expiration
+# ---------------------------------------------------------
+st.subheader("📅 Expiration")
+
+new_exp = st.date_input(
+    "Nouvelle date d'expiration",
+    value=date_exp.date() if date_exp else date.today()
+)
+
+if st.button("Mettre à jour l'expiration"):
+    supabase.table("cotisations").update({
+        "date_expiration": str(new_exp)
+    }).eq("id", cot_id).execute()
+
+    st.success("Expiration mise à jour.")
+    st.rerun()
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# Remarques
+# ---------------------------------------------------------
+st.subheader("📝 Remarques")
+
+new_rem = st.text_area("Remarques", cot.get("remarques", ""))
+
+if st.button("Mettre à jour les remarques"):
+    supabase.table("cotisations").update({
+        "remarques": new_rem
+    }).eq("id", cot_id).execute()
+
+    st.success("Remarques mises à jour.")
+    st.rerun()
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# Retour
+# ---------------------------------------------------------
+if st.button("⬅️ Retour"):
+    st.switch_page("pages/31_Cotisations.py")
+
