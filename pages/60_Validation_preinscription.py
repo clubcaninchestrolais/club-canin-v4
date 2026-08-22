@@ -35,38 +35,50 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
     for pre in preinscriptions:
         nom_seance = pre.get("nom_seance", "Seance inconnue")
-
-        # 🔥 Nettoyage des caractères interdits
-        nom_seance = nom_seance.replace("—", "-")
+        nom_seance = nom_seance.replace("—", "-")  # Nettoyage Unicode
 
         seances_dict_pdf.setdefault(nom_seance, []).append(pre)
 
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
+    pdf.set_font("Arial", size=14)
     pdf.cell(0, 10, "Liste des preinscrits par seance", ln=True)
     pdf.ln(5)
 
     for nom_seance, liste in seances_dict_pdf.items():
 
+        # Titre séance
         pdf.set_font("Arial", "B", 12)
         pdf.cell(0, 8, f"Seance : {nom_seance}", ln=True)
-        pdf.set_font("Arial", size=11)
         pdf.ln(2)
 
-        for pre in liste:
-            membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}"
-            chien_nom = pre.get("chien_nom", "Chien")
+        # En-tête tableau
+        pdf.set_font("Arial", "B", 11)
+        pdf.cell(10, 8, " ", border=0)
+        pdf.cell(10, 8, "N°", border=0)
+        pdf.cell(60, 8, "Nom du membre", border=0)
+        pdf.cell(50, 8, "Chien", border=0)
+        pdf.ln(6)
 
-            # 🔥 Nettoyage Unicode
-            membre_nom = membre_nom.replace("—", "-")
-            chien_nom = chien_nom.replace("—", "-")
+        pdf.set_font("Arial", size=11)
 
-            pdf.cell(0, 6, f"[ ] {membre_nom} - Chien : {chien_nom}", ln=True)
+        # Lignes tableau
+        for idx, pre in enumerate(liste, start=1):
+            membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}".replace("—", "-")
+            chien_nom = pre.get("chien_nom", "Chien").replace("—", "-")
+
+            pdf.cell(10, 6, "[ ]", border=0)
+            pdf.cell(10, 6, f"{idx:02d}", border=0)
+            pdf.cell(60, 6, membre_nom, border=0)
+            pdf.cell(50, 6, chien_nom, border=0)
+            pdf.ln(6)
 
         pdf.ln(4)
+        pdf.set_font("Arial", "B", 11)
+        pdf.cell(0, 8, f"Total inscrits : {len(liste)}", ln=True)
+        pdf.ln(6)
 
+    # Export
     pdf_buffer = BytesIO()
     pdf.output(pdf_buffer)
     pdf_buffer.seek(0)
@@ -89,14 +101,10 @@ for pre in preinscriptions:
 
     nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
     chien = pre.get("chien_nom", "")
-
     nom_seance = pre.get("nom_seance", "Seance inconnue")
 
-    # Couleur selon état (affichage seulement)
-    if pre.get("traitee"):
-        bg = "background-color: #d4f8d4;"   # vert clair
-    else:
-        bg = "background-color: #f8e6d4;"   # orange clair
+    # Couleur selon état
+    bg = "background-color: #d4f8d4;" if pre.get("traitee") else "background-color: #f8e6d4;"
 
     st.markdown(
         f"""
