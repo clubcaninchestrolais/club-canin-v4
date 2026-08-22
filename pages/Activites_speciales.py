@@ -2,12 +2,13 @@ import streamlit as st
 from supabase_rest import supabase
 import pandas as pd
 from datetime import datetime
+from fpdf import FPDF
 
 st.set_page_config(page_title="Activités Spéciales", page_icon="🎉")
 st.title("🎉 Activités Spéciales")
 
 # ---------------------------------------------------------
-# Charger les activités (TA TABLE EXISTANTE)
+# Charger les activités
 # ---------------------------------------------------------
 activites = (
     supabase.table("activites_speciales")
@@ -24,13 +25,13 @@ if "act_id" not in st.session_state:
     st.session_state["act_id"] = None
 
 # ---------------------------------------------------------
-# Création d’une activité (dans TA TABLE)
+# Création d’une activité
 # ---------------------------------------------------------
 st.subheader("➕ Créer une activité")
 
 nom = st.text_input("Nom de l’activité")
 date_act = st.date_input("Date")
-prix = st.number_input("Prix par personne (€)", min_value=0.0, step=1.0)
+prix = float(st.number_input("Prix par personne (€)", min_value=0.0, step=1.0))
 description = st.text_area("Description")
 
 if st.button("Créer l’activité"):
@@ -102,7 +103,7 @@ if st.session_state["act_id"] is not None:
     st.markdown("---")
 
     # ---------------------------------------------------------
-    # Inscription simple (TA TABLE EXISTANTE)
+    # Inscription simple
     # ---------------------------------------------------------
     st.markdown("### ➕ Ajouter une inscription")
 
@@ -140,6 +141,47 @@ if st.session_state["act_id"] is not None:
         .data
     )
 
+    # ---------------------------------------------------------
+    # Fonction PDF
+    # ---------------------------------------------------------
+    def generate_pdf(inscrits, act):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(0, 10, f"Liste des inscrits - {act['nom']}", ln=True)
+
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 8, f"Date : {act['date']}", ln=True)
+        pdf.cell(0, 8, f"Prix par personne : {act['prix_default']} €", ln=True)
+        pdf.ln(5)
+
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(60, 10, "Nom", 1)
+        pdf.cell(60, 10, "Prénom", 1)
+        pdf.cell(30, 10, "Nb", 1)
+        pdf.cell(30, 10, "Total (€)", 1)
+        pdf.ln()
+
+        pdf.set_font("Arial", size=12)
+        for i in inscrits:
+            pdf.cell(60, 10, i["nom"], 1)
+            pdf.cell(60, 10, i["prenom"], 1)
+            pdf.cell(30, 10, str(i["nombre"]), 1)
+            pdf.cell(30, 10, str(i["total"]), 1)
+            pdf.ln()
+
+        total_general = sum(i["total"] for i in inscrits)
+        pdf.ln(5)
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 10, f"Total général : {total_general} €", ln=True)
+
+        return pdf.output(dest="S").encode("latin-1")
+
+    # ---------------------------------------------------------
+    # Affichage des inscrits
+    # ---------------------------------------------------------
     if inscrits:
         total_general = sum(i["total"] for i in inscrits)
 
@@ -171,16 +213,13 @@ if st.session_state["act_id"] is not None:
             "text/csv"
         )
 
-        # Export PDF simple
-        pdf_text = "\n".join([
-            f"{i['nom']} {i['prenom']} — {i['nombre']} pers — {i['total']} €"
-            for i in inscrits
-        ])
+        # Export PDF
+        pdf_bytes = generate_pdf(inscrits, act)
         st.download_button(
-            "📄 Export PDF",
-            pdf_text.encode("utf-8"),
-            "inscriptions.pdf",
-            "application/pdf"
+            "📄 Télécharger PDF",
+            pdf_bytes,
+            file_name="inscriptions.pdf",
+            mime="application/pdf"
         )
 
     else:
