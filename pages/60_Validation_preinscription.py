@@ -78,4 +78,41 @@ if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
         mime="application/pdf"
     )
 
+st.markdown("---")
+
+# ---------------------------------------------------------
+# Affichage compact (restauré)
+# ---------------------------------------------------------
+st.subheader("📋 Préinscriptions (affichage uniquement)")
+
+for pre in preinscriptions:
+
+    nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
+    chien = pre.get("chien_nom", "")
+
+    nom_seance = pre.get("nom_seance", "Seance inconnue")
+
+    # Couleur selon état (affichage seulement)
+    if pre.get("traitee"):
+        bg = "background-color: #d4f8d4;"   # vert clair
+    else:
+        bg = "background-color: #f8e6d4;"   # orange clair
+
+    st.markdown(
+        f"""
+        <div style="{bg}; padding:10px; border-radius:8px; margin-bottom:8px;">
+            <b>👤 {nom_complet}</b><br>
+            🐶 {chien}<br>
+            📘 {nom_seance}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.button("Valider (affichage uniquement)", key=f"val_{pre['id']}")
+
+st.markdown("---")
+
+st.info("⚠️ Mode affichage uniquement — validation réelle désactivée car supabase_rest ne supporte pas les insert/update.")
+
 
