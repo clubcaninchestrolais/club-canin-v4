@@ -198,8 +198,8 @@ if st.session_state["act_id"] is not None:
         total_txt = total_txt.encode("latin-1", "replace").decode("latin-1")
         pdf.cell(0, 10, total_txt, ln=True)
 
-        # IMPORTANT : nouvelle methode FPDF2
-        return pdf.output()
+        # Retourne des bytes (FPDF2)
+        return pdf.output_to_bytes()
 
     # ---------------------------------------------------------
     # Affichage des inscrits
