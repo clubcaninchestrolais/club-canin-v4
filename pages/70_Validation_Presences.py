@@ -6,6 +6,12 @@ st.set_page_config(page_title="Validation des présences", page_icon="🟢")
 st.title("🟢 Validation des présences")
 
 # ---------------------------------------------------------
+# Initialiser la séance sélectionnée
+# ---------------------------------------------------------
+if "seance_detail" not in st.session_state:
+    st.session_state["seance_detail"] = None
+
+# ---------------------------------------------------------
 # Charger les cours
 # ---------------------------------------------------------
 cours = (
@@ -34,9 +40,9 @@ if not seances:
     st.stop()
 
 # ---------------------------------------------------------
-# Détail d'une séance
+# Si une séance est sélectionnée → afficher les participants
 # ---------------------------------------------------------
-seance_detail = st.session_state.get("seance_detail", None)
+seance_detail = st.session_state["seance_detail"]
 
 if seance_detail:
 
