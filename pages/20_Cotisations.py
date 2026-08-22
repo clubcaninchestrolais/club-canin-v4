@@ -158,5 +158,6 @@ else:
 # ---------------------------------------------------------
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
-    st.switch_page("32_Fiche_Cotisation")  # NOM EXACT
+    st.session_state["open_detail"] = True
+    st.rerun()
 
