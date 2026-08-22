@@ -159,22 +159,28 @@ if st.session_state["seance_detail"]:
                     }).eq("id", abonnement["id"]).execute()
 
                 # ---------------------------------------------------------
-                # Insérer présence réelle (version finale)
+                # Insérer présence réelle (membre ou extérieur)
                 # ---------------------------------------------------------
                 supabase.table("cours_presences").insert({
                     "seance_id": s["id"],
-                    "membre_id": p.get("membre_id"),
-                    "chien_id": p.get("chien_id"),
+                    "membre_id": p.get("membre_id", 0),   # extérieurs → membre_id = 0
+                    "chien_id": p.get("chien_id", 0),     # extérieurs → chien_id = 0
                     "date_presence": s["date_seance"],
                     "present": True
                 }).execute()
 
                 # ---------------------------------------------------------
-                # Mettre à jour cours_seances_inscriptions.present
+                # Mettre à jour cours_seances_inscriptions.present (membres)
                 # ---------------------------------------------------------
-                supabase.table("cours_seances_inscriptions").update({
-                    "present": True
-                }).eq("seance_id", s["id"]).eq("chien_id", p["chien_id"]).execute()
+                if p["type"] == "membre":
+                    supabase.table("cours_seances_inscriptions").update({
+                        "present": True
+                    }).eq("seance_id", s["id"]).eq("chien_id", p["chien_id"]).execute()
+
+                # ---------------------------------------------------------
+                # Supprimer la préinscription → disparition immédiate
+                # ---------------------------------------------------------
+                supabase.table("preinscriptions").delete().eq("id", p["id"]).execute()
 
                 st.success(f"Présence validée pour {membre_nom}.")
                 st.rerun()
