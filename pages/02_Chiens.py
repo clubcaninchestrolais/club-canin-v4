@@ -17,6 +17,17 @@ chiens = (
 )
 
 # ---------------------------------------------------------
+# Tri alphabétique NOM + RACE
+# ---------------------------------------------------------
+chiens = sorted(
+    chiens,
+    key=lambda c: (
+        c.get("nom", "").lower(),
+        c.get("race", "").lower()
+    )
+)
+
+# ---------------------------------------------------------
 # Format date JJ/MM/AAAA
 # ---------------------------------------------------------
 def format_date(date_str):
@@ -121,3 +132,4 @@ st.markdown("---")
 if st.button("➕ Ajouter un chien"):
     st.session_state["membre_id"] = None
     st.switch_page("pages/22_Ajout_Chien.py")
+
