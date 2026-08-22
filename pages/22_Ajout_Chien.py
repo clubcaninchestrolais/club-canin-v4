@@ -27,11 +27,14 @@ membres = (
 # Tri alphabétique NOM + PRÉNOM
 membres = sorted(membres, key=lambda m: (m["nom"].lower(), m["prenom"].lower()))
 
-# Liste déroulante
-options = {f"{m['nom']} {m['prenom']}": m["id"] for m in membres}
+# Liste triée pour affichage
+liste_affichage = [f"{m['nom']} {m['prenom']}" for m in membres]
 
-proprietaire_nom = st.selectbox("Propriétaire du chien", list(options.keys()))
-id_membre = options[proprietaire_nom]
+# Sélecteur alphabétique
+proprietaire_nom = st.selectbox("Propriétaire du chien", liste_affichage)
+
+# Retrouver l'id du membre choisi
+id_membre = next(m["id"] for m in membres if f"{m['nom']} {m['prenom']}" == proprietaire_nom)
 
 # ---------------------------------------------------------
 # Validation numéro de puce (15 chiffres)
@@ -64,7 +67,7 @@ with st.form("form_chien"):
     date_vaccin = st.date_input("Date du dernier vaccin", format="DD/MM/YYYY")
 
     st.subheader("Activité & remarques")
-    activite = st.text_input("Activité")
+    activite = st.selectbox("Activité", ["OBE", "AGI", "OBE/AGI"])
     remarques = st.text_area("Remarques")
 
     st.subheader("Photo")
@@ -97,7 +100,7 @@ with st.form("form_chien"):
 
         st.success("🐶 Chien ajouté avec succès !")
 
-        # Retour à la fiche membre
+        # Retour à la fiche du propriétaire
         st.session_state["membre_id"] = id_membre
         st.switch_page("pages/21_Fiche_Membre.py")
 
