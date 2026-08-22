@@ -79,7 +79,7 @@ with st.sidebar:
         st.page_link("pages/32_Seance_inscription.py", label="Inscription séance")
         st.page_link("pages/33_Seance_presence.py", label="Présences séance")
         st.page_link("pages/40_Historique_Presences.py", label="Historique présences")
-        st.page_link("pages/70_Validation_Presences.py", label="Validation présences")
+        st.page_link("pages/70_validation_presences.py", label="Validation présences")
         st.page_link("pages/70_Prepose_Validation.py", label="Préposé validation")
 
         # -------------------------------
