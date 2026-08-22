@@ -62,7 +62,7 @@ if choix != "-- Tous les membres --":
     ]
 
 # ---------------------------------------------------------
-# Affichage large comme cotisations
+# Affichage ultra-compact LARGE (version parfaite)
 # ---------------------------------------------------------
 st.subheader("📋 Liste des abonnements")
 
@@ -87,6 +87,7 @@ if abos:
             else:
                 couleur = "#ffcccc"
 
+        # 6 colonnes larges comme dans cotisation
         col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 2])
 
         with col1:
@@ -124,17 +125,18 @@ if abos:
                 unsafe_allow_html=True
             )
 
+        # Colonne des boutons regroupés proprement
         with col6:
-            plus, minus, detail = st.columns([1, 1, 2])
+            b1, b2, b3 = st.columns([1, 1, 2])
 
-            with plus:
+            with b1:
                 if st.button("+1", key=f"plus_{abo['id']}"):
                     supabase.table("abonnements").update({
                         "seances_restantes": abo["seances_restantes"] + 1
                     }).eq("id", abo["id"]).execute()
                     st.rerun()
 
-            with minus:
+            with b2:
                 if st.button("-1", key=f"minus_{abo['id']}"):
                     if abo["seances_restantes"] > 0:
                         supabase.table("abonnements").update({
@@ -142,7 +144,7 @@ if abos:
                         }).eq("id", abo["id"]).execute()
                         st.rerun()
 
-            with detail:
+            with b3:
                 if st.button("Voir détail", key=f"detail_{abo['id']}"):
                     st.session_state["abo_id"] = abo["id"]
                     st.session_state["go_detail"] = True
@@ -213,3 +215,4 @@ if choix != "-- Tous les membres --":
 
 else:
     st.info("Sélectionnez un membre pour créer un abonnement.")
+
