@@ -4,11 +4,11 @@ import pandas as pd
 from datetime import datetime
 from fpdf import FPDF
 
-st.set_page_config(page_title="Activités Spéciales", page_icon="🎉")
-st.title("🎉 Activités Spéciales")
+st.set_page_config(page_title="Activites Speciales", page_icon="🎉")
+st.title("🎉 Activites Speciales")
 
 # ---------------------------------------------------------
-# Charger les activités
+# Charger les activites
 # ---------------------------------------------------------
 activites = (
     supabase.table("activites_speciales")
@@ -19,22 +19,22 @@ activites = (
 )
 
 # ---------------------------------------------------------
-# État pour fiche activité
+# Etat pour fiche activite
 # ---------------------------------------------------------
 if "act_id" not in st.session_state:
     st.session_state["act_id"] = None
 
 # ---------------------------------------------------------
-# Création d’une activité
+# Creation d’une activite
 # ---------------------------------------------------------
-st.subheader("➕ Créer une activité")
+st.subheader("➕ Creer une activite")
 
-nom = st.text_input("Nom de l’activité")
+nom = st.text_input("Nom de l'activite")
 date_act = st.date_input("Date")
-prix = float(st.number_input("Prix par personne (€)", min_value=0.0, step=1.0))
+prix = float(st.number_input("Prix par personne (EUR)", min_value=0.0, step=1.0))
 description = st.text_area("Description")
 
-if st.button("Créer l’activité"):
+if st.button("Creer l'activite"):
     supabase.table("activites_speciales").insert({
         "nom": nom,
         "date": date_act.isoformat(),
@@ -42,15 +42,15 @@ if st.button("Créer l’activité"):
         "afficher_chien": False,
         "description": description
     }).execute()
-    st.success("🎉 Activité créée.")
+    st.success("🎉 Activite creee.")
     st.rerun()
 
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Liste des activités
+# Liste des activites
 # ---------------------------------------------------------
-st.subheader("📋 Liste des activités")
+st.subheader("📋 Liste des activites")
 
 if activites:
     for act in activites:
@@ -67,20 +67,20 @@ if activites:
             )
 
         with col2:
-            st.write(f"📅 {act['date']} — {act['prix_default']} €")
+            st.write(f"📅 {act['date']} — {act['prix_default']} EUR")
 
         with col3:
-            if st.button("Gérer", key=f"gerer_{act['id']}"):
+            if st.button("Gerer", key=f"gerer_{act['id']}"):
                 st.session_state["act_id"] = act["id"]
                 st.rerun()
 
 else:
-    st.info("Aucune activité.")
+    st.info("Aucune activite.")
 
 st.markdown("---")
 
 # ---------------------------------------------------------
-# FICHE ACTIVITÉ
+# FICHE ACTIVITE
 # ---------------------------------------------------------
 if st.session_state["act_id"] is not None:
 
@@ -94,10 +94,10 @@ if st.session_state["act_id"] is not None:
         .data[0]
     )
 
-    st.subheader(f"📄 Détail : {act['nom']}")
+    st.subheader(f"📄 Detail : {act['nom']}")
 
     st.write(f"**Date :** {act['date']}")
-    st.write(f"**Prix par personne :** {act['prix_default']} €")
+    st.write(f"**Prix par personne :** {act['prix_default']} EUR")
     st.write(f"**Description :** {act['description']}")
 
     st.markdown("---")
@@ -108,8 +108,8 @@ if st.session_state["act_id"] is not None:
     st.markdown("### ➕ Ajouter une inscription")
 
     nom = st.text_input("Nom")
-    prenom = st.text_input("Prénom")
-    nombre = st.number_input("Nombre de réservations", min_value=1, step=1)
+    prenom = st.text_input("Prenom")
+    nombre = st.number_input("Nombre de reservations", min_value=1, step=1)
 
     if st.button("Ajouter"):
         total = nombre * act["prix_default"]
@@ -122,7 +122,7 @@ if st.session_state["act_id"] is not None:
             "total": total
         }).execute()
 
-        st.success("Inscription ajoutée.")
+        st.success("Inscription ajoutee.")
         st.rerun()
 
     st.markdown("---")
@@ -142,40 +142,61 @@ if st.session_state["act_id"] is not None:
     )
 
     # ---------------------------------------------------------
-    # Fonction PDF
+    # Fonction PDF (sans accents, sans €)
     # ---------------------------------------------------------
     def generate_pdf(inscrits, act):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
 
+        # Titre
         pdf.set_font("Arial", "B", 16)
-        pdf.cell(0, 10, f"Liste des inscrits - {act['nom']}", ln=True)
+        titre = f"Liste des inscrits - {act['nom']}"
+        titre = titre.encode("latin-1", "replace").decode("latin-1")
+        pdf.cell(0, 10, titre, ln=True)
 
         pdf.set_font("Arial", size=12)
-        pdf.cell(0, 8, f"Date : {act['date']}", ln=True)
-        pdf.cell(0, 8, f"Prix par personne : {act['prix_default']} €", ln=True)
+
+        # Date
+        date_txt = f"Date : {act['date']}"
+        date_txt = date_txt.encode("latin-1", "replace").decode("latin-1")
+        pdf.cell(0, 8, date_txt, ln=True)
+
+        # Prix (EUR)
+        prix_txt = f"Prix par personne : {act['prix_default']} EUR"
+        prix_txt = prix_txt.encode("latin-1", "replace").decode("latin-1")
+        pdf.cell(0, 8, prix_txt, ln=True)
+
         pdf.ln(5)
 
+        # En-tetes du tableau
         pdf.set_font("Arial", "B", 12)
         pdf.cell(60, 10, "Nom", 1)
-        pdf.cell(60, 10, "Prénom", 1)
+        pdf.cell(60, 10, "Prenom", 1)
         pdf.cell(30, 10, "Nb", 1)
-        pdf.cell(30, 10, "Total (€)", 1)
+        pdf.cell(30, 10, "Total (EUR)", 1)
         pdf.ln()
 
+        # Lignes du tableau
         pdf.set_font("Arial", size=12)
         for i in inscrits:
-            pdf.cell(60, 10, i["nom"], 1)
-            pdf.cell(60, 10, i["prenom"], 1)
+            nom = i["nom"].encode("latin-1", "replace").decode("latin-1")
+            prenom = i["prenom"].encode("latin-1", "replace").decode("latin-1")
+
+            pdf.cell(60, 10, nom, 1)
+            pdf.cell(60, 10, prenom, 1)
             pdf.cell(30, 10, str(i["nombre"]), 1)
             pdf.cell(30, 10, str(i["total"]), 1)
             pdf.ln()
 
+        # Total general
         total_general = sum(i["total"] for i in inscrits)
         pdf.ln(5)
         pdf.set_font("Arial", "B", 14)
-        pdf.cell(0, 10, f"Total général : {total_general} €", ln=True)
+
+        total_txt = f"Total general : {total_general} EUR"
+        total_txt = total_txt.encode("latin-1", "replace").decode("latin-1")
+        pdf.cell(0, 10, total_txt, ln=True)
 
         return pdf.output(dest="S").encode("latin-1")
 
@@ -195,14 +216,14 @@ if st.session_state["act_id"] is not None:
                 st.write(f"{ins['nombre']} pers.")
 
             with col3:
-                st.write(f"{ins['total']} €")
+                st.write(f"{ins['total']} EUR")
 
             with col4:
                 if st.button("Supprimer", key=f"suppr_{ins['id']}"):
                     supabase.table("inscriptions_speciales").delete().eq("id", ins["id"]).execute()
                     st.rerun()
 
-        st.markdown(f"### 💰 Total général : **{total_general} €**")
+        st.markdown(f"### 💰 Total general : **{total_general} EUR**")
 
         # Export Excel
         df = pd.DataFrame(inscrits)
@@ -216,7 +237,7 @@ if st.session_state["act_id"] is not None:
         # Export PDF
         pdf_bytes = generate_pdf(inscrits, act)
         st.download_button(
-            "📄 Télécharger PDF",
+            "📄 Telecharger PDF",
             pdf_bytes,
             file_name="inscriptions.pdf",
             mime="application/pdf"
