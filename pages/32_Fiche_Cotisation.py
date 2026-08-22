@@ -69,14 +69,14 @@ date_exp = safe_date(cot.get("date_expiration"))
 # Déterminer la couleur
 # ---------------------------------------------------------
 if cot.get("paye"):
-    couleur = "#e6ffe6"  # vert = payé
+    couleur = "#e6ffe6"
 else:
     if date_exp:
         jours_restants = (date_exp - datetime.now()).days
         if jours_restants < 0:
-            couleur = "#ffcccc"  # rouge = expirée impayée
+            couleur = "#ffcccc"
         elif jours_restants <= 30:
-            couleur = "#ffe6cc"  # orange = bientôt expirée impayée
+            couleur = "#ffe6cc"
         else:
             couleur = "#ffcccc"
     else:
@@ -149,10 +149,11 @@ if st.button("Mettre à jour les remarques"):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Retour (version stable)
+# Retour FIABLE
 # ---------------------------------------------------------
-st.info("Pour revenir à la liste des cotisations, utilisez le menu à gauche ou cliquez sur le bouton ci‑dessous.")
+st.info("Pour revenir à la liste des cotisations, cliquez sur le bouton ci‑dessous.")
 
 if st.button("⬅️ Retour à la liste"):
     st.session_state["go_back"] = True
+    st.session_state["cot_id"] = None
     st.rerun()
