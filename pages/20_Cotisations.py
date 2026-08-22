@@ -68,7 +68,7 @@ if choix != "-- Tous les membres --":
     ]
 
 # ---------------------------------------------------------
-# Affichage ultra-compact
+# Affichage ultra-compact avec couleur impayés
 # ---------------------------------------------------------
 st.subheader("📋 Liste des cotisations")
 
@@ -78,38 +78,42 @@ if cotisations:
         date_pay = safe_date(cot.get("date_paiement"))
         date_exp = safe_date(cot.get("date_expiration"))
 
-        # Déterminer la couleur
-        if date_exp is None:
-            couleur = "#ffcccc"
+        # Couleur selon paiement / échéance
+        if cot.get("paye"):
+            couleur = "#e6ffe6"  # vert = payé
         else:
-            jours_restants = (date_exp - datetime.now()).days
-            if jours_restants < 0:
-                couleur = "#ffcccc"
-            elif jours_restants <= 30:
-                couleur = "#ffe6cc"
+            # impayé
+            if date_exp:
+                jours_restants = (date_exp - datetime.now()).days
+                if jours_restants < 0:
+                    couleur = "#ffcccc"  # rouge = expirée impayée
+                elif jours_restants <= 30:
+                    couleur = "#ffe6cc"  # orange = bientôt expirée impayée
+                else:
+                    couleur = "#ffcccc"  # rouge = impayée
             else:
-                couleur = "#e6ffe6"
+                couleur = "#ffcccc"
 
         col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 2])
 
         with col1:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{cot['nom']}</div>",
+                f"{cot.get('nom', '')}</div>",
                 unsafe_allow_html=True
             )
 
         with col2:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{cot['prenom']}</div>",
+                f"{cot.get('prenom', '')}</div>",
                 unsafe_allow_html=True
             )
 
         with col3:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{cot['montant']} €</div>",
+                f"{cot.get('montant', 0)} €</div>",
                 unsafe_allow_html=True
             )
 
@@ -146,7 +150,7 @@ if st.session_state.get("go_detail", False):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Création d’une cotisation (VERSION STABLE)
+# Création d’une cotisation (IMPAYÉS GÉRÉS)
 # ---------------------------------------------------------
 if choix != "-- Tous les membres --":
 
@@ -159,13 +163,25 @@ if choix != "-- Tous les membres --":
 
     montant = st.number_input("Montant (€)", min_value=0, value=45)
     type_cot = st.selectbox("Type de cotisation", ["annuelle", "gratuite", "speciale"])
-    date_paiement = st.date_input("Date de paiement", value=date.today())
-    date_expiration = st.date_input("Date d'expiration", value=date.today().replace(year=date.today().year + 1))
+
+    # Le paiement n'est plus obligatoire
+    paye_maintenant = st.checkbox("Le membre a payé maintenant ?", value=False)
+
+    if paye_maintenant:
+        date_paiement = st.date_input("Date de paiement", value=date.today())
+    else:
+        date_paiement = None
+
+    date_expiration = st.date_input(
+        "Date d'expiration",
+        value=date.today().replace(year=date.today().year + 1)
+    )
+
     remarques = st.text_area("Remarques (optionnel)", "")
 
     if st.button("Créer la cotisation"):
 
-        # Vérifier cotisation active existante (expiration > aujourd’hui)
+        # Vérifier cotisation active existante
         cot_active = (
             supabase.table("cotisations")
             .select("*")
@@ -183,14 +199,15 @@ if choix != "-- Tous les membres --":
             st.error("❌ Ce membre possède déjà une cotisation active.")
             st.stop()
 
-        # Créer la cotisation
+        # Créer la cotisation avec impayé possible
         supabase.table("cotisations").insert({
             "membre_id": membre_sel["id"],
             "montant": montant,
             "type": type_cot,
-            "date_paiement": str(date_paiement),
+            "date_paiement": str(date_paiement) if date_paiement else None,
             "date_expiration": str(date_expiration),
             "remarques": remarques,
+            "paye": paye_maintenant,
             "statut": "active"
         }).execute()
 
@@ -200,8 +217,9 @@ if choix != "-- Tous les membres --":
             "actif": True
         }).eq("id", membre_sel["id"]).execute()
 
-        st.success("🎉 Cotisation créée et membre activé.")
+        st.success("🎉 Cotisation créée (paiement en attente si non payé).")
         st.rerun()
+
 
 else:
     st.info("Sélectionnez un membre pour créer une cotisation.")
