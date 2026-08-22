@@ -1,6 +1,6 @@
 import streamlit as st
 from supabase_rest import supabase
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 st.set_page_config(page_title="Fiche Cotisation", page_icon="📄")
 st.title("📄 Fiche Cotisation")
@@ -111,36 +111,25 @@ if paye:
         "Date de paiement",
         value=date_pay.date() if date_pay else date.today()
     )
+
+    # 🔥 Calcul automatique de la date d'expiration
+    new_exp = new_date_pay + timedelta(days=365)
+
 else:
     new_date_pay = None
+    new_exp = st.date_input(
+        "Date d'expiration (provisoire si impayé)",
+        value=date_exp.date() if date_exp else date.today()
+    )
 
 if st.button("Mettre à jour le paiement"):
     supabase.table("cotisations").update({
         "paye": paye,
-        "date_paiement": str(new_date_pay) if new_date_pay else None
-    }).eq("id", cot_id).execute()
-
-    st.success("Paiement mis à jour.")
-    st.rerun()
-
-st.markdown("---")
-
-# ---------------------------------------------------------
-# Modification expiration
-# ---------------------------------------------------------
-st.subheader("📅 Expiration")
-
-new_exp = st.date_input(
-    "Nouvelle date d'expiration",
-    value=date_exp.date() if date_exp else date.today()
-)
-
-if st.button("Mettre à jour l'expiration"):
-    supabase.table("cotisations").update({
+        "date_paiement": str(new_date_pay) if new_date_pay else None,
         "date_expiration": str(new_exp)
     }).eq("id", cot_id).execute()
 
-    st.success("Expiration mise à jour.")
+    st.success("Paiement mis à jour.")
     st.rerun()
 
 st.markdown("---")
@@ -167,4 +156,5 @@ st.markdown("---")
 # ---------------------------------------------------------
 if st.button("⬅️ Retour"):
     st.switch_page("pages/31_Cotisations.py")
+
 
