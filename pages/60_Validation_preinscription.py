@@ -26,61 +26,45 @@ if not preinscriptions:
 # ---------------------------------------------------------
 # PDF
 # ---------------------------------------------------------
-st.subheader("📄 Export PDF — Préinscrits par séance")
+st.subheader("📄 Export PDF — Préinscrits par cours")
 
 if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
-    # Regroupement par nom_seance (la vraie référence séance)
-    seances_dict_pdf = {}
+    cours_dict_pdf = {}
 
     for pre in preinscriptions:
-        nom_seance = pre.get("nom_seance", "Seance inconnue")
+        cours_id = pre.get("cours_id")
+        cours_nom = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
 
-        # 🔥 Nettoyage des caractères interdits par FPDF
-        nom_seance = nom_seance.replace("—", "-")
+        # Nettoyage Unicode
+        cours_nom = cours_nom.replace("—", "-")
 
-        seances_dict_pdf.setdefault(nom_seance, []).append(pre)
+        cours_dict_pdf.setdefault(cours_nom, []).append(pre)
 
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=14)
-    pdf.cell(0, 10, "Liste des preinscrits par seance", ln=True)
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(0, 10, "Liste des preinscrits par cours", ln=True)
     pdf.ln(5)
 
-    for nom_seance, liste in seances_dict_pdf.items():
+    for cours_nom, liste in cours_dict_pdf.items():
 
-        # Titre séance
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 8, f"Seance : {nom_seance}", ln=True)
+        pdf.cell(0, 8, f"Cours : {cours_nom}", ln=True)
+        pdf.set_font("Arial", size=11)
         pdf.ln(2)
 
-        # En-tête tableau
-        pdf.set_font("Arial", "B", 11)
-        pdf.cell(10, 8, " ", border=0)
-        pdf.cell(10, 8, "N°", border=0)
-        pdf.cell(60, 8, "Nom du membre", border=0)
-        pdf.cell(50, 8, "Chien", border=0)
-        pdf.ln(6)
-
-        pdf.set_font("Arial", size=11)
-
-        # Lignes tableau
-        for idx, pre in enumerate(liste, start=1):
+        for pre in liste:
             membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}".replace("—", "-")
             chien_nom = pre.get("chien_nom", "Chien").replace("—", "-")
+            date_seance = pre.get("date_seance", "")
+            heure = pre.get("heure_debut", "")
 
-            pdf.cell(10, 6, "[ ]", border=0)
-            pdf.cell(10, 6, f"{idx:02d}", border=0)
-            pdf.cell(60, 6, membre_nom, border=0)
-            pdf.cell(50, 6, chien_nom, border=0)
-            pdf.ln(6)
+            pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom} - {date_seance} {heure}", ln=True)
 
         pdf.ln(4)
-        pdf.set_font("Arial", "B", 11)
-        pdf.cell(0, 8, f"Total inscrits : {len(liste)}", ln=True)
-        pdf.ln(6)
 
-    # Export
     pdf_buffer = BytesIO()
     pdf.output(pdf_buffer)
     pdf_buffer.seek(0)
@@ -103,9 +87,11 @@ for pre in preinscriptions:
 
     nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
     chien = pre.get("chien_nom", "")
-    nom_seance = pre.get("nom_seance", "Seance inconnue")
+    cours_id = pre.get("cours_id")
+    cours_nom = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
+    date_seance = pre.get("date_seance", "")
+    heure = pre.get("heure_debut", "")
 
-    # Couleur selon état
     bg = "background-color: #d4f8d4;" if pre.get("traitee") else "background-color: #f8e6d4;"
 
     st.markdown(
@@ -113,7 +99,8 @@ for pre in preinscriptions:
         <div style="{bg}; padding:10px; border-radius:8px; margin-bottom:8px;">
             <b>👤 {nom_complet}</b><br>
             🐶 {chien}<br>
-            📘 {nom_seance}
+            📘 {cours_nom}<br>
+            📅 {date_seance} — ⏰ {heure}
         </div>
         """,
         unsafe_allow_html=True
@@ -124,6 +111,5 @@ for pre in preinscriptions:
 st.markdown("---")
 
 st.info("⚠️ Mode affichage uniquement — validation réelle désactivée car supabase_rest ne supporte pas les insert/update.")
-
 
 
