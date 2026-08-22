@@ -1,9 +1,20 @@
 import streamlit as st
 from supabase_rest import supabase
-from datetime import datetime
+from datetime import datetime, date
 
 st.set_page_config(page_title="Abonnements", page_icon="🎫")
 st.title("🎫 Gestion des abonnements")
+
+# ---------------------------------------------------------
+# Fonction date sécurisée
+# ---------------------------------------------------------
+def safe_date(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", ""))
+    except:
+        return None
 
 # ---------------------------------------------------------
 # Charger les membres
@@ -21,6 +32,7 @@ options = ["-- Tous les membres --"] + [
 ]
 
 choix = st.selectbox("Sélectionner un membre", options)
+
 st.markdown("---")
 
 # ---------------------------------------------------------
@@ -41,21 +53,42 @@ for abo in abos:
         abo["nom"] = membre["nom"]
         abo["prenom"] = membre["prenom"]
 
-# Filtrer
+# Filtrer si un membre est sélectionné
 if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
-    abos = [a for a in abos if a["nom"] == nom_sel and a["prenom"] == prenom_sel]
+    abos = [
+        a for a in abos
+        if a["nom"] == nom_sel and a["prenom"] == prenom_sel
+    ]
 
 # ---------------------------------------------------------
-# Affichage
+# Affichage ultra-compact LARGE
 # ---------------------------------------------------------
 st.subheader("📋 Liste des abonnements")
+
+if "abo_id" not in st.session_state:
+    st.session_state["abo_id"] = None
 
 if abos:
     for abo in abos:
 
-        # Couleur
-        couleur = "#e6ffe6" if abo.get("paye") else "#ffcccc"
+        date_pay = safe_date(abo.get("date_paiement"))
+        date_exp = safe_date(abo.get("date_expiration"))
+
+        # Déterminer la couleur
+        if abo.get("paye"):
+            couleur = "#e6ffe6"  # vert
+        else:
+            if date_exp:
+                jours = (date_exp - datetime.now()).days
+                if jours < 0:
+                    couleur = "#ffcccc"  # rouge
+                elif jours <= 30:
+                    couleur = "#ffe6cc"  # orange
+                else:
+                    couleur = "#ffcccc"
+            else:
+                couleur = "#ffcccc"
 
         col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 2])
 
@@ -115,9 +148,153 @@ if abos:
             with b3:
                 if st.button("Voir détail", key=f"detail_{abo['id']}"):
                     st.session_state["abo_id"] = abo["id"]
-                    st.switch_page("Fiche Abonnement")
+                    st.rerun()
 
 else:
     st.info("Aucun abonnement trouvé.")
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# FICHE ABONNEMENT (sur la même page)
+# ---------------------------------------------------------
+if st.session_state["abo_id"] is not None:
+    abo_id = st.session_state["abo_id"]
+
+    abo = (
+        supabase.table("abonnements")
+        .select("*")
+        .eq("id", abo_id)
+        .execute()
+        .data
+    )
+
+    if abo:
+        abo = abo[0]
+
+        membre = (
+            supabase.table("membres")
+            .select("*")
+            .eq("id", abo["membre_id"])
+            .execute()
+            .data[0]
+        )
+
+        st.subheader("📄 Détail de l'abonnement")
+
+        st.markdown("### 👤 Informations du membre")
+        st.write(f"**Nom :** {membre['nom']}")
+        st.write(f"**Prénom :** {membre['prenom']}")
+        st.write(f"**Statut :** {membre['statut']}")
+
+        st.markdown("---")
+
+        st.markdown("### 🎫 Informations de l'abonnement")
+        st.write(f"**ID abonnement :** {abo['id']}")
+        st.write(f"**Total séances :** {abo['seances_total']}")
+        st.write(f"**Séances restantes :** {abo['seances_restantes']}")
+        st.write(f"**Prix :** {abo.get('prix', '')} €")
+        st.write(f"**Date d'achat :** {abo['date_achat']}")
+        st.write(f"**Actif :** {'Oui' if abo['actif'] else 'Non'}")
+
+        st.markdown("---")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("➕ Ajouter une séance", key="fiche_plus"):
+                supabase.table("abonnements").update({
+                    "seances_restantes": abo["seances_restantes"] + 1
+                }).eq("id", abo_id).execute()
+                st.success("Séance ajoutée.")
+                st.rerun()
+
+        with col2:
+            if st.button("➖ Retirer une séance", key="fiche_minus"):
+                if abo["seances_restantes"] > 0:
+                    supabase.table("abonnements").update({
+                        "seances_restantes": abo["seances_restantes"] - 1
+                    }).eq("id", abo_id).execute()
+                    st.success("Séance retirée.")
+                    st.rerun()
+                else:
+                    st.warning("Impossible : aucune séance restante.")
+
+        st.markdown("---")
+
+        if abo["actif"]:
+            if st.button("🔴 Désactiver l'abonnement", key="fiche_desactiver"):
+                supabase.table("abonnements").update({
+                    "actif": False
+                }).eq("id", abo_id).execute()
+                st.success("Abonnement désactivé.")
+                st.rerun()
+        else:
+            if st.button("🟢 Réactiver l'abonnement", key="fiche_activer"):
+                supabase.table("abonnements").update({
+                    "actif": True
+                }).eq("id", abo_id).execute()
+                st.success("Abonnement réactivé.")
+                st.rerun()
+
+        st.markdown("---")
+
+        if st.button("⬅️ Fermer la fiche"):
+            st.session_state["abo_id"] = None
+            st.rerun()
+
+# ---------------------------------------------------------
+# Création d’un abonnement
+# ---------------------------------------------------------
+if choix != "-- Tous les membres --":
+
+    st.subheader("➕ Créer un abonnement")
+
+    membre_sel = next(
+        (m for m in membres if f"{m['nom']} {m['prenom']}" == choix),
+        None
+    )
+
+    types_abonnements = {
+        "Abonnement 12 séances": 12,
+        "Abonnement 20 séances": 20,
+        "Abonnement illimité": -1
+    }
+
+    type_abo = st.selectbox("Type d’abonnement", list(types_abonnements.keys()))
+    total = types_abonnements[type_abo]
+
+    if st.button("Créer l’abonnement"):
+
+        cotisations = (
+            supabase.table("cotisations")
+            .select("*")
+            .eq("membre_id", membre_sel["id"])
+            .execute()
+            .data
+        )
+
+        cot_active = [
+            c for c in cotisations
+            if c["date_expiration"] and datetime.fromisoformat(c["date_expiration"]) > datetime.now()
+        ]
+
+        if not cot_active:
+            st.error("❌ Impossible : ce membre n'a pas de cotisation active.")
+            st.stop()
+
+        supabase.table("abonnements").insert({
+            "membre_id": membre_sel["id"],
+            "seances_total": total,
+            "seances_restantes": total,
+            "date_achat": datetime.now().date().isoformat(),
+            "actif": True
+        }).execute()
+
+        st.success("🎉 Abonnement créé avec succès.")
+        st.rerun()
+
+else:
+    st.info("Sélectionnez un membre pour créer un abonnement.")
 
 
