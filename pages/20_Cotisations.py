@@ -6,20 +6,6 @@ st.set_page_config(page_title="Cotisations", page_icon="💳")
 st.title("💳 Gestion des cotisations")
 
 # ---------------------------------------------------------
-# Retour fiable depuis la fiche cotisation
-# ---------------------------------------------------------
-if st.session_state.get("go_back", False):
-    st.session_state["go_back"] = False
-    st.session_state["cot_id"] = None
-
-    # Remonter en haut de la page
-    if st.session_state.get("scroll_top", False):
-        st.session_state["scroll_top"] = False
-        st.markdown("<script>window.scrollTo(0, 0);</script>", unsafe_allow_html=True)
-
-    st.rerun()
-
-# ---------------------------------------------------------
 # Fonction de conversion sécurisée
 # ---------------------------------------------------------
 def safe_date(value):
@@ -96,14 +82,15 @@ if cotisations:
         if cot.get("paye"):
             couleur = "#e6ffe6"  # vert = payé
         else:
+            # impayé
             if date_exp:
                 jours_restants = (date_exp - datetime.now()).days
                 if jours_restants < 0:
-                    couleur = "#ffcccc"
+                    couleur = "#ffcccc"  # rouge = expirée impayée
                 elif jours_restants <= 30:
-                    couleur = "#ffe6cc"
+                    couleur = "#ffe6cc"  # orange = bientôt expirée impayée
                 else:
-                    couleur = "#ffcccc"
+                    couleur = "#ffcccc"  # rouge = impayée
             else:
                 couleur = "#ffcccc"
 
@@ -154,10 +141,82 @@ else:
     st.info("Aucune cotisation trouvée.")
 
 # ---------------------------------------------------------
-# Navigation vers fiche détail (FIABLE)
+# Navigation vers fiche détail
 # ---------------------------------------------------------
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
-    st.session_state["open_detail"] = True
-    st.rerun()
+    st.switch_page("pages/32_Fiche_Cotisation.py")
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# Création d’une cotisation (IMPAYÉS GÉRÉS)
+# ---------------------------------------------------------
+if choix != "-- Tous les membres --":
+
+    st.subheader("➕ Créer une cotisation")
+
+    membre_sel = next(
+        (m for m in membres if f"{m['nom']} {m['prenom']}" == choix),
+        None
+    )
+
+    montant = st.number_input("Montant (€)", min_value=0, value=45)
+    type_cot = st.selectbox("Type de cotisation", ["annuelle", "gratuite", "speciale"])
+
+    # Le paiement n'est plus obligatoire
+    paye_maintenant = st.checkbox("Le membre a payé maintenant ?", value=False)
+
+    if paye_maintenant:
+        date_paiement = st.date_input("Date de paiement", value=date.today())
+    else:
+        date_paiement = None
+
+    date_expiration = st.date_input(
+        "Date d'expiration",
+        value=date.today().replace(year=date.today().year + 1)
+    )
+
+    remarques = st.text_area("Remarques (optionnel)", "")
+
+    if st.button("Créer la cotisation"):
+
+        # Vérifier cotisation active existante
+        cot_active = (
+            supabase.table("cotisations")
+            .select("*")
+            .eq("membre_id", membre_sel["id"])
+            .execute()
+            .data
+        )
+
+        cot_active = [
+            c for c in cot_active
+            if safe_date(c["date_expiration"]) and safe_date(c["date_expiration"]) > datetime.now()
+        ]
+
+        if cot_active:
+            st.error("❌ Ce membre possède déjà une cotisation active.")
+            st.stop()
+
+        # Créer la cotisation avec impayé possible
+        supabase.table("cotisations").insert({
+            "membre_id": membre_sel["id"],
+            "montant": montant,
+            "type": type_cot,
+            "date_paiement": str(date_paiement) if date_paiement else None,
+            "date_expiration": str(date_expiration),
+            "remarques": remarques,
+            "paye": paye_maintenant,
+            "statut": "active"
+        }).execute()
+
+        # Activer le membre
+        supabase.table("membres").update({
+            "statut": "membre",
+            "actif": True
+        }).eq("id", membre_sel["id"]).execute()
+
+        st.success("🎉 Cotisation créée (paiement en attente si non payé).")
+        st.rerun()
 
