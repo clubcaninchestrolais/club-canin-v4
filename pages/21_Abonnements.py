@@ -150,6 +150,7 @@ if abos:
                     st.session_state["go_detail"] = True
                     st.rerun()
 
+    # Navigation stable
     if st.session_state.get("go_detail", False):
         st.session_state["go_detail"] = False
         st.switch_page("22_Fiche_Abonnement")
