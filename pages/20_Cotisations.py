@@ -158,6 +158,5 @@ else:
 # ---------------------------------------------------------
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
-    st.switch_page("20_Cotisation")  # nom exact de ta fiche cotisation
-
+    st.switch_page("32_Fiche_Cotisation")  # NOM EXACT
 
