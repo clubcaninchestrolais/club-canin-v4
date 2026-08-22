@@ -153,7 +153,7 @@ if abos:
     # Navigation stable
     if st.session_state.get("go_detail", False):
         st.session_state["go_detail"] = False
-        st.switch_page("22_Fiche_Abonnement")
+        st.switch_page("Fiche Abonnement")
 
 else:
     st.info("Aucun abonnement trouvé.")
@@ -216,4 +216,5 @@ if choix != "-- Tous les membres --":
 
 else:
     st.info("Sélectionnez un membre pour créer un abonnement.")
+
 
