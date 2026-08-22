@@ -220,6 +220,3 @@ if choix != "-- Tous les membres --":
         st.success("🎉 Cotisation créée (paiement en attente si non payé).")
         st.rerun()
 
-
-else:
-    st.info("Sélectionnez un membre pour créer une cotisation.")
