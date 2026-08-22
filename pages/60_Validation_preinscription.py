@@ -1,72 +1,72 @@
 import streamlit as st
-from supabase_rest import supabase
-
-st.set_page_config(page_title="Validation préinscriptions", page_icon="📝")
-st.title("📝 Validation des préinscriptions (NON-MEMBRES)")
+from supabase import create_client, Client
 
 # ---------------------------------------------------------
-# Charger les préinscriptions
+# Connexion Supabase
 # ---------------------------------------------------------
-pre_table = supabase.table("preinscriptions").select("*").order("id", desc=True).execute()
-preinscriptions = pre_table.data or []
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(url, key)
 
-# Filtrer UNIQUEMENT les non-membres
-non_membres = [p for p in preinscriptions if p.get("membre_id") is None]
+st.set_page_config(page_title="Validation préinscriptions", page_icon="✅", layout="centered")
+st.title("Validation des préinscriptions extérieures")
 
-if not non_membres:
-    st.info("Aucun non-membre en préinscription.")
+# ---------------------------------------------------------
+# Charger les préinscriptions extérieures NON traitées
+# ---------------------------------------------------------
+res = (
+    supabase.table("preinscriptions")
+    .select("*")
+    .eq("type", "exterieur")
+    .eq("traitee", False)
+    .execute()
+)
+
+preinscriptions = res.data or []
+
+if not preinscriptions:
+    st.info("Aucune préinscription extérieure à valider.")
     st.stop()
 
 # ---------------------------------------------------------
-# Affichage des non-membres avec boutons VALIDER / REFUSER
+# Affichage et actions
 # ---------------------------------------------------------
-st.subheader("👤 Non-membres préinscrits")
+for pre in preinscriptions:
+    st.markdown("---")
+    st.subheader(f"#{pre['id']} – {pre['prenom']} {pre['nom']}")
 
-for pre in non_membres:
-
-    nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
-    chien = pre.get("chien_nom", "")
-    cours_nom = pre.get("cours_nom", "Cours inconnu")
-    date_seance = pre.get("date_seance", "")
-    heure = pre.get("heure_debut", "")
-
-    statut = pre.get("statut_preinscription", "en_attente")
-
-    # Couleur selon statut
-    if statut == "valide":
-        bg = "background-color: #d4f8d4;"  # vert clair
-    elif statut == "refuse":
-        bg = "background-color: #f8d4d4;"  # rouge clair
-    else:
-        bg = "background-color: #f8f3d4;"  # jaune clair
-
-    st.markdown(
-        f"""
-        <div style="{bg}; padding:12px; border-radius:8px; margin-bottom:10px;">
-            <b>👤 {nom_complet}</b><br>
-            🐶 {chien}<br>
-            📘 {cours_nom}<br>
-            📅 {date_seance} — ⏰ {heure}<br>
-            <i>Statut : {statut}</i>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.write(f"**Email :** {pre.get('email', '')}")
+    st.write(f"**Téléphone :** {pre.get('telephone', '')}")
+    st.write(f"**Chien :** {pre.get('chien_nom', '')} ({pre.get('chien_race', '')})")
+    st.write(f"**Cours ID :** {pre.get('cours_id', '')}")
+    st.write(f"**Date préinscription :** {pre.get('date_preinscription', '')}")
+    st.write(f"**Statut actuel :** {pre.get('statut', 'En attente')}")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button(f"VALIDER {nom_complet}", key=f"val_{pre['id']}"):
-            supabase.table("preinscriptions").update({"statut_preinscription": "valide"}).eq("id", pre["id"]).execute()
-            st.rerun()
+        if st.button(f"✅ Valider #{pre['id']}", key=f"valider_{pre['id']}"):
+            supabase.table("preinscriptions").update(
+                {
+                    "statut": "valide",
+                    "traitee": True,
+                    "acceptee": True,
+                }
+            ).eq("id", pre["id"]).execute()
+            st.success(f"Préinscription #{pre['id']} validée.")
+            st.experimental_rerun()
 
     with col2:
-        if st.button(f"REFUSER {nom_complet}", key=f"ref_{pre['id']}"):
-            supabase.table("preinscriptions").update({"statut_preinscription": "refuse"}).eq("id", pre["id"]).execute()
-            st.rerun()
-
-st.markdown("---")
-st.info("Cette page prépare la séance : seuls les NON-MEMBRES sont affichés. La validation réelle se fera dans la page 'Validation des présences'.")
+        if st.button(f"❌ Refuser #{pre['id']}", key=f"refuser_{pre['id']}"):
+            supabase.table("preinscriptions").update(
+                {
+                    "statut": "refuse",
+                    "traitee": True,
+                    "acceptee": False,
+                }
+            ).eq("id", pre["id"]).execute()
+            st.warning(f"Préinscription #{pre['id']} refusée.")
+            st.experimental_rerun()
 
 
 
