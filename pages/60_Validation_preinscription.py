@@ -30,12 +30,14 @@ st.subheader("📄 Export PDF — Préinscrits par séance")
 
 if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
-    # Regroupement par nom_seance
+    # Regroupement par nom_seance (la vraie référence séance)
     seances_dict_pdf = {}
 
     for pre in preinscriptions:
         nom_seance = pre.get("nom_seance", "Seance inconnue")
-        nom_seance = nom_seance.replace("—", "-")  # Nettoyage Unicode
+
+        # 🔥 Nettoyage des caractères interdits par FPDF
+        nom_seance = nom_seance.replace("—", "-")
 
         seances_dict_pdf.setdefault(nom_seance, []).append(pre)
 
@@ -122,5 +124,6 @@ for pre in preinscriptions:
 st.markdown("---")
 
 st.info("⚠️ Mode affichage uniquement — validation réelle désactivée car supabase_rest ne supporte pas les insert/update.")
+
 
 
