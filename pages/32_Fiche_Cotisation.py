@@ -149,11 +149,14 @@ if st.button("Mettre à jour les remarques"):
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Retour FIABLE
+# Retour FIABLE + remonter en haut
 # ---------------------------------------------------------
 st.info("Pour revenir à la liste des cotisations, cliquez sur le bouton ci‑dessous.")
 
 if st.button("⬅️ Retour à la liste"):
     st.session_state["go_back"] = True
     st.session_state["cot_id"] = None
+    st.session_state["scroll_top"] = True
+    st.rerun()
+
     st.rerun()
