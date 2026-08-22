@@ -26,36 +26,36 @@ if not preinscriptions:
 # ---------------------------------------------------------
 # PDF
 # ---------------------------------------------------------
-st.subheader("📄 Export PDF — Préinscrits par cours")
+st.subheader("📄 Export PDF — Préinscrits par séance")
 
 if st.button("📄 Télécharger la liste des préinscrits (PDF)"):
 
-    cours_dict_pdf = {}
+    # Regroupement par nom_seance
+    seances_dict_pdf = {}
 
     for pre in preinscriptions:
-        cours_id = pre.get("cours_id")
-        cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
-        cours_dict_pdf.setdefault(cours_type, []).append(pre)
+        nom_seance = pre.get("nom_seance", "Séance inconnue")
+        seances_dict_pdf.setdefault(nom_seance, []).append(pre)
 
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
 
-    pdf.cell(0, 10, "Liste des preinscrits par cours", ln=True)
+    pdf.cell(0, 10, "Liste des préinscrits par séance", ln=True)
     pdf.ln(5)
 
-    for cours_type, liste in cours_dict_pdf.items():
+    for nom_seance, liste in seances_dict_pdf.items():
+
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 8, f"Cours : {cours_type}", ln=True)
+        pdf.cell(0, 8, f"Séance : {nom_seance}", ln=True)
         pdf.set_font("Arial", size=11)
         pdf.ln(2)
 
+        # Format liste lisible
         for pre in liste:
             membre_nom = f"{pre.get('prenom','')} {pre.get('nom','')}"
             chien_nom = pre.get("chien_nom", "Chien")
-            date_seance = pre.get("date_seance", "")
-            heure = pre.get("heure_debut", "")
-            pdf.cell(0, 6, f"- {membre_nom} - Chien : {chien_nom} - {date_seance} {heure}", ln=True)
+            pdf.cell(0, 6, f"[ ] {membre_nom} — Chien : {chien_nom}", ln=True)
 
         pdf.ln(4)
 
@@ -82,11 +82,7 @@ for pre in preinscriptions:
     nom_complet = f"{pre.get('prenom','')} {pre.get('nom','')}"
     chien = pre.get("chien_nom", "")
 
-    cours_id = pre.get("cours_id")
-    cours_type = cours_dict.get(cours_id, {}).get("nom", "Cours inconnu")
-
-    date_seance = pre.get("date_seance", "")
-    heure = pre.get("heure_debut", "")
+    nom_seance = pre.get("nom_seance", "Séance inconnue")
 
     # Couleur selon état (affichage seulement)
     if pre.get("traitee"):
@@ -99,19 +95,16 @@ for pre in preinscriptions:
         <div style="{bg}; padding:10px; border-radius:8px; margin-bottom:8px;">
             <b>👤 {nom_complet}</b><br>
             🐶 {chien}<br>
-            📘 {cours_type}<br>
-            📅 {date_seance} — ⏰ {heure}
+            📘 {nom_seance}
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # Bouton affiché mais ne fait rien (supabase_rest ne supporte pas update)
     st.button("Valider (affichage uniquement)", key=f"val_{pre['id']}")
 
 st.markdown("---")
 
 st.info("⚠️ Mode affichage uniquement — validation réelle désactivée car supabase_rest ne supporte pas les insert/update.")
-
 
 
