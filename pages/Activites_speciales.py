@@ -1,38 +1,18 @@
 import streamlit as st
 from supabase_rest import supabase
-from datetime import datetime, date
+import pandas as pd
+from datetime import datetime
 
 st.set_page_config(page_title="Activités Spéciales", page_icon="🎉")
 st.title("🎉 Activités Spéciales")
 
 # ---------------------------------------------------------
-# Charger les membres
-# ---------------------------------------------------------
-membres = (
-    supabase.table("membres")
-    .select("*")
-    .order("nom")
-    .execute()
-    .data
-)
-
-# ---------------------------------------------------------
-# Charger les activités
+# Charger les activités (TA TABLE EXISTANTE)
 # ---------------------------------------------------------
 activites = (
     supabase.table("activites_speciales")
     .select("*")
     .order("date", desc=True)
-    .execute()
-    .data
-)
-
-# ---------------------------------------------------------
-# Charger les participants
-# ---------------------------------------------------------
-participants = (
-    supabase.table("activites_participants")
-    .select("*")
     .execute()
     .data
 )
@@ -44,27 +24,24 @@ if "act_id" not in st.session_state:
     st.session_state["act_id"] = None
 
 # ---------------------------------------------------------
-# Création d’une activité
+# Création d’une activité (dans TA TABLE)
 # ---------------------------------------------------------
-st.subheader("➕ Créer une activité spéciale")
+st.subheader("➕ Créer une activité")
 
 nom = st.text_input("Nom de l’activité")
-description = st.text_area("Description")
 date_act = st.date_input("Date")
-lieu = st.text_input("Lieu")
-prix = st.number_input("Prix (€)", min_value=0.0, step=1.0)
-places = st.number_input("Nombre de places", min_value=0, step=1)
+prix = st.number_input("Prix par personne (€)", min_value=0.0, step=1.0)
+description = st.text_area("Description")
 
 if st.button("Créer l’activité"):
     supabase.table("activites_speciales").insert({
         "nom": nom,
-        "description": description,
         "date": date_act.isoformat(),
-        "lieu": lieu,
-        "prix": prix,
-        "places": places
+        "prix_default": prix,
+        "afficher_chien": False,
+        "description": description
     }).execute()
-    st.success("🎉 Activité créée avec succès.")
+    st.success("🎉 Activité créée.")
     st.rerun()
 
 st.markdown("---")
@@ -77,9 +54,9 @@ st.subheader("📋 Liste des activités")
 if activites:
     for act in activites:
 
-        couleur = "#e6ffe6" if act["date"] >= date.today().isoformat() else "#ffcccc"
+        couleur = "#e6ffe6" if act["date"] >= datetime.now().date().isoformat() else "#ffcccc"
 
-        col1, col2, col3, col4 = st.columns([3, 3, 3, 2])
+        col1, col2, col3 = st.columns([4, 3, 2])
 
         with col1:
             st.markdown(
@@ -89,18 +66,15 @@ if activites:
             )
 
         with col2:
-            st.write(f"📅 {act['date']}")
+            st.write(f"📅 {act['date']} — {act['prix_default']} €")
 
         with col3:
-            st.write(f"📍 {act['lieu']}")
-
-        with col4:
             if st.button("Gérer", key=f"gerer_{act['id']}"):
                 st.session_state["act_id"] = act["id"]
                 st.rerun()
 
 else:
-    st.info("Aucune activité trouvée.")
+    st.info("Aucune activité.")
 
 st.markdown("---")
 
@@ -121,83 +95,98 @@ if st.session_state["act_id"] is not None:
 
     st.subheader(f"📄 Détail : {act['nom']}")
 
-    st.write(f"**Description :** {act['description']}")
     st.write(f"**Date :** {act['date']}")
-    st.write(f"**Lieu :** {act['lieu']}")
-    st.write(f"**Prix :** {act['prix']} €")
-    st.write(f"**Places :** {act['places']}")
+    st.write(f"**Prix par personne :** {act['prix_default']} €")
+    st.write(f"**Description :** {act['description']}")
 
     st.markdown("---")
 
     # ---------------------------------------------------------
-    # Inscription membre
+    # Inscription simple (TA TABLE EXISTANTE)
     # ---------------------------------------------------------
-    st.markdown("### ➕ Inscrire un membre")
+    st.markdown("### ➕ Ajouter une inscription")
 
-    membre_options = [f"{m['nom']} {m['prenom']}" for m in membres]
-    choix_membre = st.selectbox("Choisir un membre", membre_options)
+    nom = st.text_input("Nom")
+    prenom = st.text_input("Prénom")
+    nombre = st.number_input("Nombre de réservations", min_value=1, step=1)
 
-    if st.button("Inscrire"):
-        membre_sel = next(m for m in membres if f"{m['nom']} {m['prenom']}" == choix_membre)
+    if st.button("Ajouter"):
+        total = nombre * act["prix_default"]
 
-        supabase.table("activites_participants").insert({
+        supabase.table("inscriptions_speciales").insert({
             "activite_id": act_id,
-            "membre_id": membre_sel["id"],
-            "present": False
+            "nom": nom,
+            "prenom": prenom,
+            "nombre": nombre,
+            "total": total
         }).execute()
 
-        st.success("Membre inscrit.")
+        st.success("Inscription ajoutée.")
         st.rerun()
 
     st.markdown("---")
 
     # ---------------------------------------------------------
-    # Liste des participants
+    # Liste des inscrits
     # ---------------------------------------------------------
-    st.markdown("### 👥 Participants")
+    st.markdown("### 👥 Liste des inscrits")
 
-    part_act = [p for p in participants if p["activite_id"] == act_id]
+    inscrits = (
+        supabase.table("inscriptions_speciales")
+        .select("*")
+        .eq("activite_id", act_id)
+        .order("id")
+        .execute()
+        .data
+    )
 
-    if part_act:
-        for p in part_act:
+    if inscrits:
+        total_general = sum(i["total"] for i in inscrits)
 
-            membre = next(m for m in membres if m["id"] == p["membre_id"])
-
-            col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
+        for ins in inscrits:
+            col1, col2, col3, col4 = st.columns([3, 3, 2, 2])
 
             with col1:
-                st.write(f"{membre['nom']} {membre['prenom']}")
+                st.write(f"{ins['nom']} {ins['prenom']}")
 
             with col2:
-                etat = "🟢 Présent" if p["present"] else "⚪ Absent"
-                st.write(etat)
+                st.write(f"{ins['nombre']} pers.")
 
             with col3:
-                if st.button("Présent", key=f"present_{p['id']}"):
-                    supabase.table("activites_participants").update({
-                        "present": True
-                    }).eq("id", p["id"]).execute()
-                    st.rerun()
+                st.write(f"{ins['total']} €")
 
             with col4:
-                if st.button("Supprimer", key=f"suppr_{p['id']}"):
-                    supabase.table("activites_participants").delete().eq("id", p["id"]).execute()
+                if st.button("Supprimer", key=f"suppr_{ins['id']}"):
+                    supabase.table("inscriptions_speciales").delete().eq("id", ins["id"]).execute()
                     st.rerun()
 
+        st.markdown(f"### 💰 Total général : **{total_general} €**")
+
+        # Export Excel
+        df = pd.DataFrame(inscrits)
+        st.download_button(
+            "📥 Export Excel",
+            df.to_csv(index=False).encode("utf-8"),
+            "inscriptions.csv",
+            "text/csv"
+        )
+
+        # Export PDF simple
+        pdf_text = "\n".join([
+            f"{i['nom']} {i['prenom']} — {i['nombre']} pers — {i['total']} €"
+            for i in inscrits
+        ])
+        st.download_button(
+            "📄 Export PDF",
+            pdf_text.encode("utf-8"),
+            "inscriptions.pdf",
+            "application/pdf"
+        )
+
     else:
-        st.info("Aucun participant inscrit.")
+        st.info("Aucun inscrit.")
 
     st.markdown("---")
-
-    # ---------------------------------------------------------
-    # Suppression activité
-    # ---------------------------------------------------------
-    if st.button("🗑️ Supprimer l’activité"):
-        supabase.table("activites_speciales").delete().eq("id", act_id).execute()
-        supabase.table("activites_participants").delete().eq("activite_id", act_id).execute()
-        st.success("Activité supprimée.")
-        st.session_state["act_id"] = None
-        st.rerun()
 
     if st.button("⬅️ Fermer la fiche"):
         st.session_state["act_id"] = None
