@@ -133,3 +133,4 @@ if st.button("➕ Ajouter un chien"):
     st.session_state["membre_id"] = None
     st.switch_page("pages/22_Ajout_Chien.py")
 
+
