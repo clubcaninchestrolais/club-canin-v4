@@ -3,6 +3,7 @@ from supabase_rest import supabase
 import pandas as pd
 from datetime import datetime
 from fpdf import FPDF
+from io import BytesIO
 
 st.set_page_config(page_title="Activites Speciales", page_icon="🎉")
 st.title("🎉 Activites Speciales")
@@ -142,7 +143,7 @@ if st.session_state["act_id"] is not None:
     )
 
     # ---------------------------------------------------------
-    # Fonction PDF (sans accents, sans €)
+    # Fonction PDF (BytesIO → 100 % compatible)
     # ---------------------------------------------------------
     def generate_pdf(inscrits, act):
         pdf = FPDF()
@@ -162,14 +163,14 @@ if st.session_state["act_id"] is not None:
         date_txt = date_txt.encode("latin-1", "replace").decode("latin-1")
         pdf.cell(0, 8, date_txt, ln=True)
 
-        # Prix (EUR)
+        # Prix
         prix_txt = f"Prix par personne : {act['prix_default']} EUR"
         prix_txt = prix_txt.encode("latin-1", "replace").decode("latin-1")
         pdf.cell(0, 8, prix_txt, ln=True)
 
         pdf.ln(5)
 
-        # En-tetes du tableau
+        # En-tetes
         pdf.set_font("Arial", "B", 12)
         pdf.cell(60, 10, "Nom", 1)
         pdf.cell(60, 10, "Prenom", 1)
@@ -177,7 +178,7 @@ if st.session_state["act_id"] is not None:
         pdf.cell(30, 10, "Total (EUR)", 1)
         pdf.ln()
 
-        # Lignes du tableau
+        # Lignes
         pdf.set_font("Arial", size=12)
         for i in inscrits:
             nom = i["nom"].encode("latin-1", "replace").decode("latin-1")
@@ -198,8 +199,13 @@ if st.session_state["act_id"] is not None:
         total_txt = total_txt.encode("latin-1", "replace").decode("latin-1")
         pdf.cell(0, 10, total_txt, ln=True)
 
-        # Retourne des bytes (FPDF2)
-        return pdf.output_to_bytes()
+        # ⭐ Buffer mémoire → PDF binaire
+        buffer = BytesIO()
+        pdf.output(buffer)
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+
+        return pdf_bytes
 
     # ---------------------------------------------------------
     # Affichage des inscrits
