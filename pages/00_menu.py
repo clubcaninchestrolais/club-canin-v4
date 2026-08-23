@@ -25,7 +25,7 @@ st.sidebar.page_link("pages/23_Depenses.py", label="Dépenses")
 st.sidebar.markdown("### 🌐 Public")
 st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="Inscription en ligne")
 st.sidebar.page_link("pages/52_Preinscription_Exterieur.py", label="Préinscription extérieure")
-st.sidebar.page_link("pages/60_Validation_Preinscription.py", label="Validation préinscription")
+st.sidebar.page_link("pages/60_Validation_preinscription.py", label="Validation préinscription")
 
 # --- ADMINISTRATION ---
 st.sidebar.markdown("### 🔒 Administration")
