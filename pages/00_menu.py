@@ -12,7 +12,7 @@ st.sidebar.page_link("pages/02_Chiens.py", label="Chiens")
 st.sidebar.page_link("pages/organisations.py", label="Activités")
 st.sidebar.page_link("pages/04_Cours.py", label="Cours")
 st.sidebar.page_link("pages/07_Seances_Cours.py", label="Séances des cours")
-st.sidebar.page_link("pages/33_presence_du_jour.py", label="Présence du jour")
+#st.sidebar.page_link("pages/33_presence_du_jour.py", label="Présence du jour")
 
 # --- FINANCES ---
 st.sidebar.markdown("### 💰 Finances")
@@ -29,7 +29,7 @@ st.sidebar.page_link("pages/60_Validation_preinscription.py", label="Validation 
 
 # --- ADMINISTRATION ---
 st.sidebar.markdown("### 🔒 Administration")
-st.sidebar.page_link("pages/40_presences_historiques.py", label="Présences historiques")
+#st.sidebar.page_link("pages/40_presences_historiques.py", label="Présences historiques")
 st.sidebar.page_link("pages/70_validation_presences.py", label="Validation présences")
 st.sidebar.page_link("pages/70_Transformation_membre.py", label="Transformation membre")
 st.sidebar.page_link("pages/10_Parametres.py", label="Paramètres")
