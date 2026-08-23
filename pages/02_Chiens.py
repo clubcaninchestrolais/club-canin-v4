@@ -2,12 +2,10 @@ import streamlit as st
 import datetime
 from supabase_rest import supabase
 
-# Page large comme Membres
 st.set_page_config(page_title="Chiens", page_icon="🐶", layout="wide")
 
 st.title("Liste des chiens actifs")
 
-# Charger uniquement les chiens NON archivés
 chiens = (
     supabase.table("chiens")
     .select("*")
@@ -16,20 +14,15 @@ chiens = (
     .data
 )
 
-# ---------------------------------------------------------
-# Tri alphabétique NOM + RACE
-# ---------------------------------------------------------
+# --- Tri sécurisé ---
 chiens = sorted(
     chiens,
     key=lambda c: (
-        c.get("nom", "").lower(),
-        c.get("race", "").lower()
+        str(c.get("nom", "") or "").lower(),
+        str(c.get("race", "") or "").lower()
     )
 )
 
-# ---------------------------------------------------------
-# Format date JJ/MM/AAAA
-# ---------------------------------------------------------
 def format_date(date_str):
     if not date_str:
         return "N/A"
@@ -38,9 +31,6 @@ def format_date(date_str):
     except:
         return date_str
 
-# ---------------------------------------------------------
-# Calcul automatique de l'âge
-# ---------------------------------------------------------
 def calcul_age(date_str):
     if not date_str:
         return "N/A"
@@ -52,23 +42,17 @@ def calcul_age(date_str):
     except:
         return "N/A"
 
-# ---------------------------------------------------------
-# Recherche
-# ---------------------------------------------------------
+# --- Recherche sécurisée ---
 search = st.text_input("🔍 Rechercher un chien")
 
 if search:
     search_lower = search.lower()
     chiens = [
         c for c in chiens
-        if search_lower in c.get("nom", "").lower()
-        or search_lower in c.get("race", "").lower()
-        or search_lower in str(c.get("identification", "")).lower()
+        if search_lower in str(c.get("nom", "") or "").lower()
+        or search_lower in str(c.get("race", "") or "").lower()
+        or search_lower in str(c.get("identification", "") or "").lower()
     ]
-
-# ---------------------------------------------------------
-# Affichage moderne
-# ---------------------------------------------------------
 
 def ligne_style(index):
     return (
@@ -77,7 +61,6 @@ def ligne_style(index):
         else "padding: 8px;"
     )
 
-# Colonnes rééquilibrées
 header = st.columns([3, 2, 4, 4, 1])
 header[0].markdown("**Nom**")
 header[1].markdown("**Race**")
@@ -96,7 +79,6 @@ for index, chien in enumerate(chiens):
 
     id_membre = chien.get("id_membre", None)
 
-    # Charger le propriétaire
     membre_nom = "Inconnu"
     if id_membre:
         membre = (
@@ -119,18 +101,12 @@ for index, chien in enumerate(chiens):
     )
     cols[3].markdown(f"<div style='{ligne_style(index)}'>👤 {membre_nom}</div>", unsafe_allow_html=True)
 
-    # Bouton fiche chien
     if cols[4].button("🔍", key=f"fiche_chien_{chien['id']}"):
         st.session_state["chien_id"] = chien["id"]
         st.switch_page("pages/_fiche_chien_page.py")
 
 st.markdown("---")
 
-# ---------------------------------------------------------
-# Bouton ajouter
-# ---------------------------------------------------------
 if st.button("➕ Ajouter un chien"):
     st.session_state["membre_id"] = None
     st.switch_page("pages/22_Ajout_Chien.py")
-
-
