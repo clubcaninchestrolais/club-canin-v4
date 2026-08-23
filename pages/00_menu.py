@@ -14,7 +14,7 @@ st.sidebar.page_link("pages/03_Membres_archives.py", label="Archives membres")
 st.sidebar.page_link("pages/02_Chiens.py", label="Chiens")
 st.sidebar.page_link("pages/22_Ajout_Chien.py", label="Ajouter un chien")
 st.sidebar.page_link("pages/04_Chiens_archives.py", label="Archives chiens")
-st.sidebar.page_link("pages/23_Fiche_Chien.py", label="Fiche chien")
+#st.sidebar.page_link("pages/23_Fiche_Chien.py", label="Fiche chien")
 
 st.sidebar.page_link("pages/organisations.py", label="Activités")
 
