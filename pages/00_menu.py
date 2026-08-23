@@ -9,7 +9,7 @@ st.sidebar.page_link("pages/Accueil.py", label="🏠 Accueil")
 st.sidebar.markdown("### 👥 Gestion du club")
 st.sidebar.page_link("pages/01_Membres.py", label="Membres")
 st.sidebar.page_link("pages/02_Chiens.py", label="Chiens")
-st.sidebar.page_link("pages/Activites.py", label="Activités")
+st.sidebar.page_link("pages/organisations.py", label="Activités")
 st.sidebar.page_link("pages/04_Cours.py", label="Cours")
 st.sidebar.page_link("pages/07_Seances_Cours.py", label="Séances des cours")
 st.sidebar.page_link("pages/33_Presence_Du_Jour.py", label="Présence du jour")
@@ -23,4 +23,13 @@ st.sidebar.page_link("pages/23_Depenses.py", label="Dépenses")
 
 # --- PUBLIC ---
 st.sidebar.markdown("### 🌐 Public")
-st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="Inscription en ligne
+st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="Inscription en ligne")
+st.sidebar.page_link("pages/52_Preinscription_Exterieur.py", label="Préinscription extérieure")
+st.sidebar.page_link("pages/60_Validation_Preinscription.py", label="Validation préinscription")
+
+# --- ADMINISTRATION ---
+st.sidebar.markdown("### 🔒 Administration")
+st.sidebar.page_link("pages/40_Presences_Historiques.py", label="Présences historiques")
+st.sidebar.page_link("pages/70_validation_presences.py", label="Validation présences")
+st.sidebar.page_link("pages/70_Transformation_membre.py", label="Transformation membre")
+st.sidebar.page_link("pages/10_Parametres.py", label="Paramètres")
