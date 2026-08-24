@@ -1,8 +1,14 @@
 import streamlit as st
 from supabase_rest import supabase
 
+# 🔥 AJOUT : import du menu
+from utilitaires.menu import afficher_menu
+
 # Page en mode large
 st.set_page_config(page_title="Membres", page_icon="👥", layout="wide")
+
+# 🔥 AJOUT : affichage du menu
+afficher_menu()
 
 st.title("Liste des membres")
 
@@ -77,4 +83,5 @@ st.markdown("---")
 if st.button("➕ Ajouter un membre"):
     st.session_state["membre_id"] = None
     st.switch_page("pages/01_Ajout_Membre.py")
+
 
