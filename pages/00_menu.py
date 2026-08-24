@@ -48,7 +48,7 @@ st.sidebar.page_link("pages/70_validation_presences.py", label="Validation prés
 st.sidebar.markdown("### 🌐 Public")
 st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="Inscription en ligne")
 st.sidebar.page_link("pages/52_Preinscription_Exterieur.py", label="Préinscription extérieur")
-st.sidebar.page_link("pages/60_Validation_préinscription.py", label="Validation préinscription")
+st.sidebar.page_link("pages/60_Validation_preinscription.py", label="Validation préinscription")
 
 # --- TECHNIQUE ---
 st.sidebar.markdown("### ⚙️ Technique")
