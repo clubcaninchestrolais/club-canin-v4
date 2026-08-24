@@ -21,7 +21,7 @@ st.sidebar.page_link("pages/organisations.py", label="Activités")
 # --- COURS ---
 st.sidebar.markdown("### 📘 Cours")
 st.sidebar.page_link("pages/04_Cours.py", label="Cours")
-st.sidebar.page_link("pages/05_Cours_Ajouter.py", label="Ajouter un cours")
+st.sidebar.page_link("pages/05_Ajouter_cours.py", label="Ajouter un cours")
 st.sidebar.page_link("pages/05_Modifier_Cours.py", label="Modifier un cours")
 st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="Ajouter une séance")
 st.sidebar.page_link("pages/06_Séances_archives.py", label="Archives séances")
