@@ -3,7 +3,8 @@ import streamlit as st
 st.sidebar.markdown("## 🐶 Menu Club Canin")
 
 # --- ACCUEIL ---
-st.sidebar.page_link("pages/Accueil.py", label="🏠 Accueil")
+st.sidebar.page_link("pages/00_Accueil.py", label="🏠 Accueil")
+
 
 # --- GESTION DU CLUB ---
 st.sidebar.markdown("### 👥 Gestion du club")
