@@ -52,7 +52,7 @@ st.sidebar.page_link("pages/60_Validation_preinscription.py", label="Validation 
 
 # --- TECHNIQUE ---
 st.sidebar.markdown("### ⚙️ Technique")
-st.sidebar.page_link("pages/10_Paramètres.py", label="Paramètres")
+st.sidebar.page_link("pages/10_Parametres.py", label="Paramètres")
 st.sidebar.page_link("pages/11_Flux_club.py", label="Flux club")
 st.sidebar.page_link("pages/00_Apropos.py", label="À propos")
 st.sidebar.page_link("pages/14_Deconnexion.py", label="Déconnexion")
