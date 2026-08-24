@@ -37,7 +37,6 @@ st.sidebar.page_link("pages/21_Recettes.py", label="Recettes")
 st.sidebar.page_link("pages/23_Depenses.py", label="Dépenses")
 st.sidebar.page_link("pages/24_Fiche_Depense.py", label="Fiche dépense")
 st.sidebar.page_link("pages/09_Finances.py", label="Finances")
-st.sidebar.page_link("pages/9_Finances_Annuelles.py", label="Finances annuelles")
 
 # --- PRÉSENCES ---
 st.sidebar.markdown("### 👣 Présences")
