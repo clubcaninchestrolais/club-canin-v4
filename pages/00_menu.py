@@ -40,7 +40,7 @@ st.sidebar.page_link("pages/09_Finances.py", label="Finances")
 
 # --- PRÉSENCES ---
 st.sidebar.markdown("### 👣 Présences")
-st.sidebar.page_link("pages/33_présence_du_jour.py", label="Présence du jour")
+st.sidebar.page_link("pages/33_presence_du_jour.py", label="Présence du jour")
 st.sidebar.page_link("pages/40_presences_historiques.py", label="Historique des présences")
 st.sidebar.page_link("pages/70_validation_presences.py", label="Validation présences")
 st.sidebar.page_link("pages/36_presences_par_cours.py", label="Présences par cours")
