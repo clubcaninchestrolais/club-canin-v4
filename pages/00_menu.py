@@ -43,7 +43,7 @@ st.sidebar.markdown("### 👣 Présences")
 st.sidebar.page_link("pages/33_presence_du_jour.py", label="Présence du jour")
 st.sidebar.page_link("pages/40_presences_historiques.py", label="Historique des présences")
 st.sidebar.page_link("pages/70_validation_presences.py", label="Validation présences")
-st.sidebar.page_link("pages/36_presences_par_cours.py", label="Présences par cours")
+
 st.sidebar.page_link("pages/37_presences_par_membre.py", label="Présences par membre")
 st.sidebar.page_link("pages/38_historique_presences.py", label="Historique présences")
 
