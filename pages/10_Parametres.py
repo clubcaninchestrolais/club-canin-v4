@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 
 st.set_page_config(page_title="Paramètres du club", page_icon="⚙️")
@@ -48,7 +53,6 @@ st.markdown("---")
 st.subheader("Abonnements")
 col5, col6 = st.columns(2)
 
-# Abonnement 12 séances
 params["abo_12_seances_nb"] = col5.number_input(
     "Nombre séances (abonnement 12)",
     value=int(params["abo_12_seances_nb"])
@@ -58,7 +62,6 @@ params["abo_12_seances_prix"] = col6.number_input(
     value=float(params["abo_12_seances_prix"])
 )
 
-# Abonnement 1 séance
 params["abo1seance_nbre"] = col5.number_input(
     "Nombre séances (abonnement 1)",
     value=int(params["abo1seance_nbre"])
@@ -68,13 +71,11 @@ params["abo_1_seance_prix"] = col6.number_input(
     value=float(params["abo_1_seance_prix"])
 )
 
-# Abonnement bénévole
 params["abo_benevole_prix"] = col5.number_input(
     "Prix abonnement bénévole (€)",
     value=float(params.get("abo_benevole_prix", 0))
 )
 
-# Abonnement illimité
 params["abo_illimite_prix"] = col6.number_input(
     "Prix abonnement illimité (€)",
     value=float(params["abo_illimite_prix"]) if params["abo_illimite_prix"] else 0.0
