@@ -9,8 +9,16 @@ import pandas as pd
 from datetime import datetime
 from fpdf import FPDF
 from io import BytesIO
+from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
 
 st.set_page_config(page_title="Activités Spéciales", page_icon="🎉")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()   # <-- AJOUT
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()          # <-- AJOUT
+
 st.title("🎉 Activités Spéciales")
 
 # ---------------------------------------------------------
@@ -262,5 +270,4 @@ if st.session_state["act_id"] is not None:
     if st.button("⬅️ Fermer la fiche"):
         st.session_state["act_id"] = None
         st.rerun()
-
 
