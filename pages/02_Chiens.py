@@ -1,11 +1,20 @@
 import streamlit as st
 import datetime
 from supabase_rest import supabase
+from menu import hide_streamlit_menu, menu_lateral
 
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+# --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Chiens", page_icon="🐶", layout="wide")
 
 st.title("Liste des chiens actifs")
 
+# Charger uniquement les chiens NON archivés
 chiens = (
     supabase.table("chiens")
     .select("*")
