@@ -138,3 +138,4 @@ if st.button("📝 Inscrire à cette séance"):
 
     st.success("Inscription enregistrée !")
     st.rerun()
+
