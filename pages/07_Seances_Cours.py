@@ -109,7 +109,7 @@ for seance in seances:
         with col2:
             if st.button(f"📝 Inscriptions", key=f"inscr_{seance['id']}"):
                 st.session_state["seance_id"] = seance["id"]
-                st.switch_page("pages/32_Seance_inscription.py")   # <-- CORRECTION ICI
+                st.switch_page("pages/32_Inscription_Seance.py")   # <-- CORRECTION FINALE
 
         # --- Archiver ---
         with col3:
@@ -124,4 +124,3 @@ for seance in seances:
                 st.rerun()
 
         st.markdown("---")
-
