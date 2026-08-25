@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 
 st.set_page_config(page_title="Cours", page_icon="📚")
@@ -49,3 +54,4 @@ for cours in cours_list:
                 st.switch_page("pages/07_Seances_Cours.py")
 
         st.markdown("---")
+
