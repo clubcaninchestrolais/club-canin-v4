@@ -1,16 +1,21 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 from datetime import datetime, date
 from menu import hide_streamlit_menu, menu_lateral
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Cotisations", page_icon="💳", layout="wide")
 
 # --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
 
 # --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
-
-# --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Cotisations", page_icon="💳", layout="wide")
 
 st.title("💳 Gestion des cotisations")
 
