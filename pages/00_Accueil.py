@@ -53,29 +53,29 @@ with col7:
 col8, col9, col10 = st.columns(3)
 
 with col8:
-    bloc("11_Flux_club", "🔄", "Flux du club")
+    bloc("08_Modifier_Seance", "✏️", "Modifier séance")  # interne
 
 with col9:
-    bloc("08_Modifier_Seance", "✏️", "Modifier séance")  # interne
+    bloc("11_Flux_club", "🔄", "Flux du club")  # déplacé ensuite dans Technique
 
 with col10:
     st.write("")
 
 # ---------------------------------------------------------
-# 💰 FINANCES (optionnel)
+# 💰 FINANCES
 # ---------------------------------------------------------
 st.subheader("💰 Finances")
 
 col11, col12, col13 = st.columns(3)
 
 with col11:
-    bloc("23_Recettes", "📈", "Recettes")
+    bloc("23_Depenses", "🧾", "Dépenses")
 
 with col12:
-    bloc("09_Finances", "💼", "Finances globales")
+    bloc("23_Recettes", "📈", "Recettes")
 
 with col13:
-    st.write("")
+    bloc("09_Finances", "💼", "Finances globales")
 
 # ---------------------------------------------------------
 # 👣 PRESENCES
@@ -93,7 +93,14 @@ bloc("50_Inscription_En_Ligne", "🌐", "Inscription en ligne")
 # ⚙️ TECHNIQUE
 # ---------------------------------------------------------
 st.subheader("⚙️ Technique")
-bloc("10_Parametres", "⚙️", "Paramètres")
+
+col14, col15 = st.columns(2)
+
+with col14:
+    bloc("10_Parametres", "⚙️", "Paramètres")
+
+with col15:
+    bloc("11_Flux_club", "🔄", "Flux du club")  # déplacé ici
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
