@@ -70,14 +70,13 @@ membres = (
 membre = st.selectbox("Sélectionnez un membre :", membres, format_func=lambda m: f"{m['prenom']} {m['nom']}")
 
 # ---------------------------------------------------------
-# Sélection du chien (CORRECTION ICI → id_membre)
+# Sélection du chien (id_membre)
 # ---------------------------------------------------------
 chiens = (
     supabase.table("chiens")
     .select("*")
-    .eq("id_membre", membre["id"])   # <-- CORRECTION
-    .eq("activite", "OBE")           # <-- si tu veux filtrer par activité
-    .eq("vaccins", "oui")            # <-- si tu veux filtrer par vaccins
+    .eq("id_membre", membre["id"])
+    .eq("activite", "OBE")
     .execute()
     .data
 )
@@ -89,19 +88,31 @@ if not chiens:
 chien = st.selectbox("Sélectionnez un chien :", chiens, format_func=lambda c: c["nom"])
 
 # ---------------------------------------------------------
-# Vérification abonnement (CORRECTION ICI → id_membre)
+# Vérification abonnement (détection automatique de la colonne)
 # ---------------------------------------------------------
-abo = (
-    supabase.table("abonnements")
-    .select("*")
-    .eq("id_membre", membre["id"])   # <-- CORRECTION
-    .order("id", desc=True)
-    .execute()
-    .data
-)
+
+# Essayer les colonnes possibles
+colonnes_abo = ["id_membre", "membre_id", "id_membre_fk", "membre"]
+
+abo = None
+for col in colonnes_abo:
+    try:
+        abo_test = (
+            supabase.table("abonnements")
+            .select("*")
+            .eq(col, membre["id"])
+            .order("id", desc=True)
+            .execute()
+            .data
+        )
+        if abo_test:
+            abo = abo_test
+            break
+    except:
+        pass
 
 if not abo:
-    st.error("Ce membre n'a aucun abonnement.")
+    st.error("⛔ Aucun abonnement trouvé pour ce membre. Vérifiez la colonne de lien dans Supabase.")
     st.stop()
 
 abo = abo[0]
