@@ -76,6 +76,6 @@ for index, ligne in enumerate(membres):
     with cols[5]:
         if st.button("🔍", key=f"fiche_arch_{ligne['id']}"):
             st.session_state["membre_id"] = ligne["id"]
-            st.switch_page("pages/_fiche_membre_page.py")
+            st.switch_page("pages/21_Fiche_Membre.py")
 
 st.markdown("---")
