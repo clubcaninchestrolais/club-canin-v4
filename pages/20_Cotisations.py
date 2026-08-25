@@ -1,8 +1,17 @@
 import streamlit as st
 from supabase_rest import supabase
 from datetime import datetime, date
+from menu import hide_streamlit_menu, menu_lateral
 
-st.set_page_config(page_title="Cotisations", page_icon="💳")
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Cotisations", page_icon="💳", layout="wide")
+
 st.title("💳 Gestion des cotisations")
 
 # ---------------------------------------------------------
@@ -82,7 +91,6 @@ if cotisations:
         if cot.get("paye"):
             couleur = "#e6ffe6"  # vert = payé
         else:
-            # impayé
             if date_exp:
                 jours_restants = (date_exp - datetime.now()).days
                 if jours_restants < 0:
@@ -90,7 +98,7 @@ if cotisations:
                 elif jours_restants <= 30:
                     couleur = "#ffe6cc"  # orange = bientôt expirée impayée
                 else:
-                    couleur = "#ffcccc"  # rouge = impayée
+                    couleur = "#ffcccc"
             else:
                 couleur = "#ffcccc"
 
@@ -164,7 +172,6 @@ if choix != "-- Tous les membres --":
     montant = st.number_input("Montant (€)", min_value=0, value=45)
     type_cot = st.selectbox("Type de cotisation", ["annuelle", "gratuite", "speciale"])
 
-    # Le paiement n'est plus obligatoire
     paye_maintenant = st.checkbox("Le membre a payé maintenant ?", value=False)
 
     if paye_maintenant:
@@ -179,44 +186,4 @@ if choix != "-- Tous les membres --":
 
     remarques = st.text_area("Remarques (optionnel)", "")
 
-    if st.button("Créer la cotisation"):
-
-        # Vérifier cotisation active existante
-        cot_active = (
-            supabase.table("cotisations")
-            .select("*")
-            .eq("membre_id", membre_sel["id"])
-            .execute()
-            .data
-        )
-
-        cot_active = [
-            c for c in cot_active
-            if safe_date(c["date_expiration"]) and safe_date(c["date_expiration"]) > datetime.now()
-        ]
-
-        if cot_active:
-            st.error("❌ Ce membre possède déjà une cotisation active.")
-            st.stop()
-
-        # Créer la cotisation avec impayé possible
-        supabase.table("cotisations").insert({
-            "membre_id": membre_sel["id"],
-            "montant": montant,
-            "type": type_cot,
-            "date_paiement": str(date_paiement) if date_paiement else None,
-            "date_expiration": str(date_expiration),
-            "remarques": remarques,
-            "paye": paye_maintenant,
-            "statut": "active"
-        }).execute()
-
-        # Activer le membre
-        supabase.table("membres").update({
-            "statut": "membre",
-            "actif": True
-        }).eq("id", membre_sel["id"]).execute()
-
-        st.success("🎉 Cotisation créée (paiement en attente si non payé).")
-        st.rerun()
-
+    if
