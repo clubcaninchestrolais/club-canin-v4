@@ -16,6 +16,9 @@ prenom = st.text_input("Prénom")
 email = st.text_input("Email")
 telephone = st.text_input("Téléphone")
 
+# Anti‑robot simple
+anti_bot = st.text_input("Écrivez le mot 'chien' pour confirmer que vous êtes humain")
+
 # ---------------------------------------------------------
 # 2. Informations du chien
 # ---------------------------------------------------------
@@ -63,10 +66,31 @@ choix_seance = st.selectbox(
 # ---------------------------------------------------------
 if st.button("Envoyer la préinscription"):
 
+    # Champs obligatoires
     if not nom or not prenom or not email or not telephone or not chien_nom or not chien_race:
         st.error("Veuillez remplir tous les champs obligatoires.")
         st.stop()
 
+    # Anti‑robot
+    if anti_bot.lower().strip() != "chien":
+        st.error("Veuillez écrire le mot 'chien' pour confirmer que vous êtes humain.")
+        st.stop()
+
+    # Anti‑doublon
+    doublon = (
+        supabase.table("preinscriptions")
+        .select("*")
+        .eq("email", email)
+        .eq("seance_id", choix_seance["id"])
+        .execute()
+        .data
+    )
+
+    if doublon:
+        st.warning("Vous avez déjà une préinscription pour cette séance.")
+        st.stop()
+
+    # Enregistrement
     supabase.table("preinscriptions").insert({
         "type": "exterieur",
         "statut": "en_attente",
@@ -80,5 +104,8 @@ if st.button("Envoyer la préinscription"):
         "seance_id": choix_seance["id"]
     }).execute()
 
-    st.success("Votre préinscription a été envoyée. Nous vous attendons au club pour la séance.")
-    st.info("Un moniteur validera votre inscription lors de votre arrivée.")
+    st.success("Votre préinscription a bien été enregistrée !")
+    st.info("""
+Un moniteur confirmera votre présence à votre arrivée au club.
+Merci pour votre intérêt et à très bientôt 🐾
+""")
