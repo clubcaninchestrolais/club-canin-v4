@@ -2,7 +2,7 @@ import streamlit as st
 from menu import hide_streamlit_menu, menu_lateral
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="                Club Canin – Accueil", page_icon="🏠")
+st.set_page_config(page_title=" Club Canin – Accueil", page_icon="🏠")
 
 hide_streamlit_menu()
 menu_lateral()
