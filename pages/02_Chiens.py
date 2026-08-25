@@ -1,16 +1,21 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 import datetime
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Chiens", page_icon="🐶", layout="wide")
 
 # --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
 
 # --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
-
-# --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Chiens", page_icon="🐶", layout="wide")
 
 st.title("Liste des chiens actifs")
 
@@ -119,3 +124,4 @@ st.markdown("---")
 if st.button("➕ Ajouter un chien"):
     st.session_state["membre_id"] = None
     st.switch_page("pages/22_Ajout_Chien.py")
+
