@@ -99,21 +99,25 @@ for seance in seances:
 
         col1, col2, col3, col4 = st.columns(4)
 
+        # --- Modifier ---
         with col1:
             if st.button(f"✏️ Modifier", key=f"edit_{seance['id']}"):
                 st.session_state["seance_id"] = seance["id"]
                 st.switch_page("pages/08_Modifier_Seance.py")
 
+        # --- Inscriptions ---
         with col2:
             if st.button(f"📝 Inscriptions", key=f"inscr_{seance['id']}"):
                 st.session_state["seance_id"] = seance["id"]
-                st.switch_page("pages/09_Inscription_Seance.py")
+                st.switch_page("pages/32_Seance_inscription.py")   # <-- CORRECTION ICI
 
+        # --- Archiver ---
         with col3:
             if st.button(f"📦 Archiver", key=f"archive_{seance['id']}"):
                 supabase.table("cours_seances").update({"actif": False}).eq("id", seance["id"]).execute()
                 st.rerun()
 
+        # --- Supprimer ---
         with col4:
             if st.button(f"🗑️ Supprimer", key=f"delete_{seance['id']}"):
                 supabase.table("cours_seances").delete().eq("id", seance["id"]).execute()
