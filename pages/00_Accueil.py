@@ -20,7 +20,7 @@ with col3:
 col4, col5, col6 = st.columns(3)
 
 with col4:
-    st.page_link("pages/20_Cotisations.py", label="💰\nFinances")
+    st.page_link("pages/20_Cotisations.py", label="💰\nCotisations")
 
 with col5:
     st.page_link("pages/33_presence_du_jour.py", label="👣\nPrésences")
