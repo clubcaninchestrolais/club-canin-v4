@@ -7,7 +7,7 @@ st.set_page_config(page_title="Connexion", page_icon="🔐")
 st.title("🔐 Connexion au Club Canin")
 
 # ---------------------------------------------------------
-# Fonction de hash
+# Fonction de hash SHA-256
 # ---------------------------------------------------------
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -39,6 +39,7 @@ if st.button("Connexion"):
     else:
         user = user[0]
 
+        # Vérifier si le compte est actif
         if not user["actif"]:
             st.error("Ce compte est désactivé.")
         else:
@@ -48,7 +49,7 @@ if st.button("Connexion"):
                 st.session_state["connected"] = True
                 st.session_state["username"] = user["username"]
                 st.session_state["role"] = user["role"]
-                st.session_state["uuid"] = user["uuid"]
+                st.session_state["uuid"] = user["id"]   # ✔ CORRECTION ICI
 
                 st.success("Connexion réussie.")
                 st.switch_page("pages/00_Accueil.py")
