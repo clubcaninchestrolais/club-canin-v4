@@ -94,12 +94,6 @@ with colC:
     bloc("33_presence_du_jour", "👣", "Présences du jour")
 
 # ---------------------------------------------------------
-# 🌐 PUBLIC
-# ---------------------------------------------------------
-st.subheader("🌐 Public")
-bloc("50_Inscription_En_Ligne", "🌐", "Inscription en ligne")
-
-# ---------------------------------------------------------
 # ⚙️ TECHNIQUE
 # ---------------------------------------------------------
 st.subheader("⚙️ Technique")
@@ -117,5 +111,3 @@ with col16:
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
-
-
