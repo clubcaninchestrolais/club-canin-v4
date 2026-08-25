@@ -5,8 +5,16 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
 from supabase_rest import supabase
+from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
 
 st.set_page_config(page_title="Séances du cours", page_icon="📅")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()   # <-- AJOUT
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()          # <-- AJOUT
+
 st.title("📅 Séances du cours")
 
 # Vérifier que le cours est bien sélectionné
@@ -85,3 +93,4 @@ for seance in seances:
                 st.rerun()
 
         st.markdown("---")
+
