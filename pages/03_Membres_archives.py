@@ -1,16 +1,30 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
 
 st.set_page_config(page_title="Membres archivés", page_icon="🗃️")
 
+# --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
 st.title("🗃️ Membres archivés")
 
 # Charger uniquement les membres ARCHIVÉS
-membres = supabase.table("membres").select("*").eq("archive", True).execute().data
+membres = (
+    supabase.table("membres")
+    .select("*")
+    .eq("archive", True)
+    .execute()
+    .data
+)
 
 st.write("### Membres archivés")
 
