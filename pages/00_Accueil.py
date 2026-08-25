@@ -35,6 +35,19 @@ with col4:
     bloc("21_Abonnements", "🎫", "Abonnements")
 
 # ---------------------------------------------------------
+# 📁 ARCHIVES
+# ---------------------------------------------------------
+st.subheader("📁 Archives")
+
+colA1, colA2 = st.columns(2)
+
+with colA1:
+    bloc("03_Membres_archives", "📁", "Membres archivés")
+
+with colA2:
+    bloc("04_Chiens_archives", "📁", "Chiens archivés")
+
+# ---------------------------------------------------------
 # 📘 COURS
 # ---------------------------------------------------------
 st.subheader("📘 Gestion des cours")
@@ -82,15 +95,15 @@ with col13:
 # ---------------------------------------------------------
 st.subheader("🔄 Flux de validation")
 
-colA, colB, colC = st.columns(3)
+colV1, colV2, colV3 = st.columns(3)
 
-with colA:
+with colV1:
     bloc("50_Inscription_En_Ligne", "🌐", "Préinscription publique")
 
-with colB:
-    bloc("60_Validation_preinscription", "📝", "Validation préinscriptions")
+with colV2:
+    bloc("60_Validation_preinscription", "📝", "Validation préinscription")
 
-with colC:
+with colV3:
     bloc("33_presence_du_jour", "👣", "Présences du jour")
 
 # ---------------------------------------------------------
