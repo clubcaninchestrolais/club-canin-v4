@@ -70,7 +70,7 @@ membres = (
 membre = st.selectbox("Sélectionnez un membre :", membres, format_func=lambda m: f"{m['prenom']} {m['nom']}")
 
 # ---------------------------------------------------------
-# Sélection du chien (id_membre)
+# Sélection du chien (id_membre → chien_id)
 # ---------------------------------------------------------
 chiens = (
     supabase.table("chiens")
@@ -117,8 +117,8 @@ if st.button("📝 Inscrire à cette séance"):
     deja = (
         supabase.table("cours_presences")
         .select("*")
-        .eq("id_membre", membre["id"])
-        .eq("id_seance", seance_id)
+        .eq("membre_id", membre["id"])
+        .eq("seance_id", seance_id)
         .execute()
         .data
     )
@@ -128,9 +128,9 @@ if st.button("📝 Inscrire à cette séance"):
         st.stop()
 
     supabase.table("cours_presences").insert({
-        "id_membre": membre["id"],     # <-- CORRECTION
-        "id_chien": chien["id"],       # <-- CORRECTION
-        "id_seance": seance_id,        # <-- CORRECTION
+        "membre_id": membre["id"],     # <-- CORRECT
+        "chien_id": chien["id"],       # <-- CORRECT
+        "seance_id": seance_id,        # <-- CORRECT
         "date_presence": seance["date_seance"],
         "present": False,
         "statut": "absent"
