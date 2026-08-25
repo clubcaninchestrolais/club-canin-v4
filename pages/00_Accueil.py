@@ -74,4 +74,3 @@ with col13:
 
 with col14:
     bloc("51_Preinscription", "📝", "Préinscription extérieure")
-
