@@ -81,7 +81,7 @@ with col13:
 # 👣 PRESENCES
 # ---------------------------------------------------------
 st.subheader("👣 Présences")
-bloc("33_presence_du_jour", "👣", "Présences du jour")
+bloc("33_presence_du_jour", "👣", "Validation des présences par préposé")
 
 # ---------------------------------------------------------
 # 🌐 PUBLIC
