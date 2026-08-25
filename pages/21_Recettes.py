@@ -1,10 +1,16 @@
 import streamlit as st
 from supabase_rest import supabase
 from datetime import datetime
+from menu import hide_streamlit_menu, menu_lateral
 
-st.set_page_config(page_title="Recettes", page_icon="💵")
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Recettes", page_icon="💵", layout="wide")
 
-st.title("Recettes du club")
+# --- MENU PERSONNALISÉ ---
+hide_streamlit_menu()
+menu_lateral()
+
+st.title("💵 Recettes du club")
 
 # ---------------------------------------------------------
 # Chargement des données
@@ -90,13 +96,3 @@ if "edit_recette" in st.session_state:
         if submitted:
             supabase.table("recettes").update({
                 "date": new_date.isoformat(),
-                "rubrique": new_rubrique,
-                "libelle": new_libelle,
-                "montant": new_montant,
-                "remarque": new_remarque,
-                "exercice": new_date.year
-            }).eq("id", r["id"]).execute()
-
-            del st.session_state["edit_recette"]
-            st.success("Recette modifiée")
-            st.rerun()
