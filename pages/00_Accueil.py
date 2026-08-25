@@ -14,17 +14,37 @@ menu_lateral()
 st.title("🐾 Club Canin – Accueil")
 st.write("Choisissez une section :")
 
-# --- PARAMÈTRES DES BLOCS ---
-ICON_SIZE = 70
-TEXT_SIZE = 22
-
+# --- BLOC CLIQUABLE AVEC ICÔNE AGRANDIE ---
 def bloc(page, icone, texte):
-    """
-    Bloc cliquable : icône + texte
-    Utilise un bouton invisible pour une navigation Streamlit propre.
-    """
-    if st.button(f"{icone}\n{texte}", key=f"btn_{page}", help=f"Ouvrir {texte}"):
+    # Style CSS pour agrandir l’icône et le texte
+    st.markdown(
+        f"""
+        <style>
+        .btn_{page} {{
+            font-size: 70px;
+            padding: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+        }}
+        .txt_{page} {{
+            font-size: 24px;
+            text-align: center;
+            margin-top: -10px;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Bouton invisible mais cliquable
+    if st.button(f"{icone}", key=f"btn_{page}", help=f"Ouvrir {texte}"):
         st.switch_page(f"pages/{page}.py")
+
+    # Texte sous l’icône
+    st.markdown(f"<div class='txt_{page}'>{texte}</div>", unsafe_allow_html=True)
+
 
 # --- TABLEAU DE BORD ---
 col1, col2, col3 = st.columns(3)
@@ -41,14 +61,4 @@ with col3:
 col4, col5, col6 = st.columns(3)
 
 with col4:
-    bloc("20_Cotisations", "💰", "Finances")
-
-with col5:
-    bloc("33_presence_du_jour", "👣", "Présences")
-
-with col6:
-    bloc("50_Inscription_En_Ligne", "🌐", "Public")
-
-st.markdown("---")
-
-bloc("10_Parametres", "⚙️", "Technique")
+    bloc("20_Cotisations",
