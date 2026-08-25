@@ -37,11 +37,22 @@ with col4:
     bloc("20_Cotisations", "💰", "Cotisations")
 
 with col5:
-    bloc("33_presence_du_jour", "👣", "Présences")
+    bloc("21_Abonnements", "🎫", "Abonnements")
 
 with col6:
+    bloc("33_presence_du_jour", "👣", "Présences")
+
+col7, col8, col9 = st.columns(3)
+
+with col7:
     bloc("50_Inscription_En_Ligne", "🌐", "Public")
 
-st.markdown("---")
+with col8:
+    bloc("10_Parametres", "⚙️", "Technique")
 
-bloc("10_Parametres", "⚙️", "Technique")
+with col9:
+    st.write("")  # emplacement libre pour futur module
+
+st.markdown("---")
+st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
+
