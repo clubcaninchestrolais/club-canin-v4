@@ -53,10 +53,10 @@ with col7:
 col8, col9, col10 = st.columns(3)
 
 with col8:
-    bloc("08_Modifier_Seance", "✏️", "Modifier séance")  # interne
+    bloc("08_Modifier_Seance", "✏️", "Modifier séance")
 
 with col9:
-    st.write("")  # Flux retiré d'ici
+    st.write("")
 
 with col10:
     st.write("")
@@ -78,16 +78,30 @@ with col13:
     bloc("09_Finances", "💼", "Finances globales")
 
 # ---------------------------------------------------------
-# 👣 PRESENCES
+# 🔄 FLUX DE VALIDATION
 # ---------------------------------------------------------
-st.subheader("👣 Présences")
-bloc("33_presence_du_jour", "👣", "Validation des présences par préposé")
+st.subheader("🔄 Flux de validation")
+
+colA, colB, colC, colD = st.columns(4)
+
+with colA:
+    bloc("50_Inscription_En_Ligne", "🌐", "Préinscription publique")
+
+with colB:
+    bloc("60_Validation_Inscriptions", "📝", "Validation inscriptions")
+
+with colC:
+    bloc("33_presence_du_jour", "👣", "Présences du jour")
+
+with colD:
+    bloc("04_Cours", "📘", "Cours & séances")
 
 # ---------------------------------------------------------
 # 🌐 PUBLIC
 # ---------------------------------------------------------
 st.subheader("🌐 Public")
 bloc("50_Inscription_En_Ligne", "🌐", "Inscription en ligne")
+
 # ---------------------------------------------------------
 # ⚙️ TECHNIQUE
 # ---------------------------------------------------------
@@ -103,8 +117,6 @@ with col15:
 
 with col16:
     bloc("01_Apropos", "ℹ️", "À propos")
-
-
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
