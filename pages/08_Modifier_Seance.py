@@ -6,8 +6,16 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
 
 from supabase_rest import supabase
 from datetime import date
+from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
 
 st.set_page_config(page_title="Modifier une séance", page_icon="✏️")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()   # <-- AJOUT
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()          # <-- AJOUT
+
 st.title("✏️ Modifier une séance")
 
 # Vérifier que la séance est bien sélectionnée
@@ -70,3 +78,4 @@ with col1:
 with col2:
     if st.button("⬅️ Retour aux séances"):
         st.switch_page("pages/07_Seances_Cours.py")
+
