@@ -88,7 +88,7 @@ with colA:
     bloc("50_Inscription_En_Ligne", "🌐", "Préinscription publique")
 
 with colB:
-    bloc("60_Validation_preinscriptions", "📝", "Validation préinscriptions")
+    bloc("60_Validation_préinscriptions", "📝", "Validation préinscriptions")
 
 with colC:
     bloc("33_presence_du_jour", "👣", "Présences du jour")
