@@ -36,9 +36,12 @@ def menu_lateral():
     st.sidebar.page_link("pages/03_Membres_archives.py", label="📁 Membres archivés")
     st.sidebar.page_link("pages/04_Chiens_archives.py", label="📁 Chiens archivés")
 
+    # --- Cours & Séances ---
     st.sidebar.page_link("pages/04_Cours.py", label="📘 Cours")
+    st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")   # <-- AJOUT IMPORTANT
     st.sidebar.page_link("pages/07_Seances_Cours.py", label="🗓️ Séances des cours")
     st.sidebar.page_link("pages/10_Cours_du_jour.py", label="📅 Cours du jour")
+    st.sidebar.page_link("pages/33_presence_du_jour.py", label="👣 Présences du jour")
     st.sidebar.page_link("pages/08_Modifier_Seance.py", label="✏️ Modifier séance")
 
     st.sidebar.markdown("### 💰 Finances")
@@ -49,7 +52,6 @@ def menu_lateral():
     st.sidebar.page_link("pages/09_Finances.py", label="💼 Finances globales")
 
     st.sidebar.markdown("### 🔄 Flux")
-    st.sidebar.page_link("pages/33_presence_du_jour.py", label="👣 Présences du jour")
     st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="🌐 Préinscription publique")
     st.sidebar.page_link("pages/60_Validation_preinscription.py", label="📝 Validation préinscription")
 
@@ -62,6 +64,4 @@ def menu_lateral():
     st.sidebar.page_link("pages/01_Apropos.py", label="ℹ️ À propos")
 
     st.sidebar.markdown("---")
-
-
 
