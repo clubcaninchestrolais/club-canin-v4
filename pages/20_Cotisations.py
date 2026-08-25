@@ -186,4 +186,43 @@ if choix != "-- Tous les membres --":
 
     remarques = st.text_area("Remarques (optionnel)", "")
 
-    if
+    if st.button("Créer la cotisation"):
+
+        # Vérifier cotisation active existante
+        cot_active = (
+            supabase.table("cotisations")
+            .select("*")
+            .eq("membre_id", membre_sel["id"])
+            .execute()
+            .data
+        )
+
+        cot_active = [
+            c for c in cot_active
+            if safe_date(c["date_expiration"]) and safe_date(c["date_expiration"]) > datetime.now()
+        ]
+
+        if cot_active:
+            st.error("❌ Ce membre possède déjà une cotisation active.")
+            st.stop()
+
+        # Créer la cotisation
+        supabase.table("cotisations").insert({
+            "membre_id": membre_sel["id"],
+            "montant": montant,
+            "type": type_cot,
+            "date_paiement": str(date_paiement) if date_paiement else None,
+            "date_expiration": str(date_expiration),
+            "remarques": remarques,
+            "paye": paye_maintenant,
+            "statut": "active"
+        }).execute()
+
+        # Activer le membre
+        supabase.table("membres").update({
+            "statut": "membre",
+            "actif": True
+        }).eq("id", membre_sel["id"]).execute()
+
+        st.success("🎉 Cotisation créée (paiement en attente si non payé).")
+        st.rerun()
