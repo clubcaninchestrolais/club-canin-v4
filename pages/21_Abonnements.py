@@ -1,8 +1,17 @@
 import streamlit as st
 from supabase_rest import supabase
 from datetime import datetime, date
+from menu import hide_streamlit_menu, menu_lateral
 
-st.set_page_config(page_title="Abonnements", page_icon="🎫")
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Abonnements", page_icon="🎫", layout="wide")
+
 st.title("🎫 Gestion des abonnements")
 
 # ---------------------------------------------------------
@@ -156,7 +165,7 @@ else:
 st.markdown("---")
 
 # ---------------------------------------------------------
-# FICHE ABONNEMENT (sur la même page)
+# FICHE ABONNEMENT
 # ---------------------------------------------------------
 if st.session_state["abo_id"] is not None:
     abo_id = st.session_state["abo_id"]
