@@ -1,15 +1,20 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Membres", page_icon="👥", layout="wide")
 
 # --- CACHER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
 
 # --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
-
-# --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Membres", page_icon="👥", layout="wide")
 
 st.title("Liste des membres")
 
@@ -84,4 +89,3 @@ st.markdown("---")
 if st.button("➕ Ajouter un membre"):
     st.session_state["membre_id"] = None
     st.switch_page("pages/01_Ajout_Membre.py")
-
