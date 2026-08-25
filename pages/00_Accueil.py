@@ -72,7 +72,7 @@ with col11:
     bloc("23_Depenses", "🧾", "Dépenses")
 
 with col12:
-    bloc("23_Recettes", "📈", "Recettes")
+    bloc("21_Recettes", "📈", "Recettes")
 
 with col13:
     bloc("09_Finances", "💼", "Finances globales")
