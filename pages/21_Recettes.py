@@ -96,3 +96,13 @@ if "edit_recette" in st.session_state:
         if submitted:
             supabase.table("recettes").update({
                 "date": new_date.isoformat(),
+                "rubrique": new_rubrique,
+                "libelle": new_libelle,
+                "montant": new_montant,
+                "remarque": new_remarque,
+                "exercice": new_date.year
+            }).eq("id", r["id"]).execute()
+
+            del st.session_state["edit_recette"]
+            st.success("Recette modifiée")
+            st.rerun()
