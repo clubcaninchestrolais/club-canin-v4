@@ -1,9 +1,9 @@
 import streamlit as st
-from datetime import date, datetime
+from datetime import date
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
 
-# --- SÉCURITÉ ---
+# --- Sécurité ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
@@ -22,12 +22,10 @@ seance_id = st.session_state.get("seance_id")
 if not seance_id:
     st.warning("Aucune séance sélectionnée. Choisissez une séance ci-dessous.")
 
-    # Charger les séances actives
     seances = (
         supabase.table("cours_seances")
         .select("*")
-        .eq("actif", True)
-        .order("date_seance")
+        .order("date_seance", desc=False)
         .execute()
         .data
     )
@@ -91,7 +89,7 @@ chien = st.selectbox("Sélectionnez un chien :", chiens, format_func=lambda c: c
 abo = (
     supabase.table("abonnements")
     .select("*")
-    .eq("id_membre", membre["id"])
+    .eq("membre_id", membre["id"])   # <-- CORRECTION ICI
     .order("id", desc=True)
     .execute()
     .data
@@ -134,6 +132,10 @@ if st.button("📝 Inscrire à cette séance"):
         "present": False,
         "statut": "absent"
     }).execute()
+
+    st.success("Inscription enregistrée !")
+    st.rerun()
+
 
     st.success("Inscription enregistrée !")
     st.rerun()
