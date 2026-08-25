@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 from datetime import date
 
@@ -84,7 +89,7 @@ if st.button("Créer la préinscription membre"):
         "date_preinscription": date.today().isoformat(),
         "statut": "Acceptée automatiquement",
         "traitee": True,
-        "acceptee": True,   # IMPORTANT : membre accepté automatiquement
+        "acceptee": True,
         "type": "membre",
         "chien_id": chien_id,
         "membre_id": membre_id
