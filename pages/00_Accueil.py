@@ -1,42 +1,14 @@
 import streamlit as st
+from menu import hide_streamlit_menu, menu_lateral
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Club Canin – Accueil", page_icon="🏠")
 
 # --- MASQUER LE MENU AUTOMATIQUE DE STREAMLIT ---
-hide_streamlit_menu = """
-<style>
-[data-testid="stSidebarNav"] {
-    display: none !important;
-}
-</style>
-"""
-st.markdown(hide_streamlit_menu, unsafe_allow_html=True)
+hide_streamlit_menu()
 
-# --- MENU LATÉRAL PERSONNALISÉ ---
-st.sidebar.markdown("## 🐶 Menu Club Canin")
-
-col1, col2, col3, col4 = st.sidebar.columns(4)
-
-with col1:
-    st.page_link("pages/01_Membres.py", label="👥")
-
-with col2:
-    st.page_link("pages/02_Chiens.py", label="🐶")
-
-with col3:
-    st.page_link("pages/04_Cours.py", label="📘")
-
-with col4:
-    st.page_link("pages/20_Cotisations.py", label="💰")
-
-st.sidebar.page_link("pages/01_Membres.py", label="👥 Membres")
-st.sidebar.page_link("pages/02_Chiens.py", label="🐶 Chiens")
-st.sidebar.page_link("pages/04_Cours.py", label="📘 Cours")
-st.sidebar.page_link("pages/20_Cotisations.py", label="💰 Finances")
-st.sidebar.page_link("pages/33_presence_du_jour.py", label="👣 Présences")
-st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="🌐 Public")
-st.sidebar.page_link("pages/10_Parametres.py", label="⚙️ Technique")
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
 
 # --- TITRE ---
 st.title("🐾 Club Canin – Accueil")
@@ -47,15 +19,12 @@ ICON_SIZE = 70
 TEXT_SIZE = 22
 
 def bloc(page, icone, texte):
-    html = f"""
-    <div style='text-align:center;'>
-        <a href='?page={page}' style='text-decoration:none; color:inherit;'>
-            <div style='font-size:{ICON_SIZE}px;'>{icone}</div>
-            <div style='font-size:{TEXT_SIZE}px;'>{texte}</div>
-        </a>
-    </div>
     """
-    st.markdown(html, unsafe_allow_html=True)
+    Bloc cliquable : icône + texte
+    Utilise un bouton invisible pour une navigation Streamlit propre.
+    """
+    if st.button(f"{icone}\n{texte}", key=f"btn_{page}", help=f"Ouvrir {texte}"):
+        st.switch_page(f"pages/{page}.py")
 
 # --- TABLEAU DE BORD ---
 col1, col2, col3 = st.columns(3)
