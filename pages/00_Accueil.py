@@ -82,7 +82,7 @@ with col13:
 # ---------------------------------------------------------
 st.subheader("🔄 Flux de validation")
 
-colA, colB, colC, colD = st.columns(4)
+colA, colB, colC = st.columns(3)
 
 with colA:
     bloc("50_Inscription_En_Ligne", "🌐", "Préinscription publique")
@@ -92,9 +92,6 @@ with colB:
 
 with colC:
     bloc("33_presence_du_jour", "👣", "Présences du jour")
-
-with colD:
-    bloc("04_Cours", "📘", "Cours & séances")
 
 # ---------------------------------------------------------
 # 🌐 PUBLIC
@@ -120,4 +117,5 @@ with col16:
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
+
 
