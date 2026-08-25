@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 import pandas as pd
 from datetime import datetime
@@ -257,4 +262,5 @@ if st.session_state["act_id"] is not None:
     if st.button("⬅️ Fermer la fiche"):
         st.session_state["act_id"] = None
         st.rerun()
+
 
