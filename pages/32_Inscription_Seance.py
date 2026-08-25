@@ -76,7 +76,6 @@ chiens = (
     supabase.table("chiens")
     .select("*")
     .eq("id_membre", membre["id"])
-    .eq("activite", "OBE")
     .execute()
     .data
 )
@@ -88,31 +87,19 @@ if not chiens:
 chien = st.selectbox("Sélectionnez un chien :", chiens, format_func=lambda c: c["nom"])
 
 # ---------------------------------------------------------
-# Vérification abonnement (détection automatique de la colonne)
+# Vérification abonnement (id_membre)
 # ---------------------------------------------------------
-
-# Essayer les colonnes possibles
-colonnes_abo = ["id_membre", "membre_id", "id_membre_fk", "membre"]
-
-abo = None
-for col in colonnes_abo:
-    try:
-        abo_test = (
-            supabase.table("abonnements")
-            .select("*")
-            .eq(col, membre["id"])
-            .order("id", desc=True)
-            .execute()
-            .data
-        )
-        if abo_test:
-            abo = abo_test
-            break
-    except:
-        pass
+abo = (
+    supabase.table("abonnements")
+    .select("*")
+    .eq("id_membre", membre["id"])
+    .order("id", desc=True)
+    .execute()
+    .data
+)
 
 if not abo:
-    st.error("⛔ Aucun abonnement trouvé pour ce membre. Vérifiez la colonne de lien dans Supabase.")
+    st.error("Ce membre n'a aucun abonnement.")
     st.stop()
 
 abo = abo[0]
@@ -130,8 +117,8 @@ if st.button("📝 Inscrire à cette séance"):
     deja = (
         supabase.table("cours_presences")
         .select("*")
-        .eq("membre_id", membre["id"])
-        .eq("seance_id", seance_id)
+        .eq("id_membre", membre["id"])
+        .eq("id_seance", seance_id)
         .execute()
         .data
     )
@@ -141,9 +128,9 @@ if st.button("📝 Inscrire à cette séance"):
         st.stop()
 
     supabase.table("cours_presences").insert({
-        "membre_id": membre["id"],
-        "chien_id": chien["id"],
-        "seance_id": seance_id,
+        "id_membre": membre["id"],     # <-- CORRECTION
+        "id_chien": chien["id"],       # <-- CORRECTION
+        "id_seance": seance_id,        # <-- CORRECTION
         "date_presence": seance["date_seance"],
         "present": False,
         "statut": "absent"
