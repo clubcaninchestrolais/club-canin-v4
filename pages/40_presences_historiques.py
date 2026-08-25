@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase import create_client, Client
 
 # ---------------------------------------------------------
@@ -115,4 +120,3 @@ for p in presences:
     st.write(f"🐶 **{chien_nom}**")
     st.write(f"Présent : {'✅ Oui' if p['present'] else '❌ Non'}")
     st.write("---")
-
