@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 from datetime import datetime
 
@@ -105,3 +110,4 @@ if st.button(f"Clôturer l'année {annee}"):
     }).execute()
 
     st.success(f"Année {annee} clôturée et enregistrée.")
+
