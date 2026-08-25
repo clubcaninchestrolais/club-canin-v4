@@ -5,8 +5,16 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
 from datetime import datetime
+from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
 
 st.set_page_config(page_title="À propos", page_icon="ℹ️")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()   # <-- AJOUT
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()          # <-- AJOUT
+
 st.title("ℹ️ À propos du programme")
 
 st.markdown("""
