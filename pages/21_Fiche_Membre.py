@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 import datetime
 from supabase_rest import supabase
 
@@ -75,7 +80,6 @@ assurance = st.text_input("Assurance", membre.get("assurance", ""))
 police_assurance = st.text_input("Police d’assurance", membre.get("police_assurance", ""))
 statut = st.text_input("Statut", membre.get("statut", "membre"))
 
-# 👉 Format JJ/MM/AAAA dans le widget
 date_inscription = st.date_input(
     "Date d'inscription",
     date_raw,
