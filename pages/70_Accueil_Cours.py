@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 
 st.set_page_config(page_title="Accueil — Cours", page_icon="📘")
@@ -45,8 +50,7 @@ for c in cours:
 
     for s in seances:
         st.write(
-            f"- **{s['date_seance']}**"
-
+            f"- **{s['date_seance']}** "
             f"(ID séance : {s['id']})"
         )
 
@@ -69,3 +73,4 @@ for c in cours:
             st.query_params["cours_id"] = c["id"]
             st.query_params["seance_id"] = s["id"]
             st.switch_page("70_Validation_Presences.py")
+
