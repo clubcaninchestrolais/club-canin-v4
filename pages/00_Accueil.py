@@ -107,6 +107,13 @@ with colV3:
     bloc("33_presence_du_jour", "👣", "Présences du jour")
 
 # ---------------------------------------------------------
+# 🏛️ ORGANISATIONS (sans accent, au pluriel)
+# ---------------------------------------------------------
+st.subheader("🏛️ Organisations")
+
+bloc("organisations", "🏛️", "Organisations")
+
+# ---------------------------------------------------------
 # ⚙️ TECHNIQUE
 # ---------------------------------------------------------
 st.subheader("⚙️ Technique")
@@ -124,3 +131,4 @@ with col16:
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
+
