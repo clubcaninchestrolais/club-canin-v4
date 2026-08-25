@@ -3,10 +3,19 @@ import streamlit as st
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Club Canin – Accueil", page_icon="🏠")
 
-# --- MENU LATÉRAL ---
+# --- MASQUER LE MENU AUTOMATIQUE DE STREAMLIT ---
+hide_streamlit_menu = """
+<style>
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+</style>
+"""
+st.markdown(hide_streamlit_menu, unsafe_allow_html=True)
+
+# --- MENU LATÉRAL PERSONNALISÉ ---
 st.sidebar.markdown("## 🐶 Menu Club Canin")
 
-# Navigation rapide par icônes
 col1, col2, col3, col4 = st.sidebar.columns(4)
 
 with col1:
@@ -21,7 +30,6 @@ with col3:
 with col4:
     st.page_link("pages/20_Cotisations.py", label="💰")
 
-# Menu détaillé
 st.sidebar.page_link("pages/01_Membres.py", label="👥 Membres")
 st.sidebar.page_link("pages/02_Chiens.py", label="🐶 Chiens")
 st.sidebar.page_link("pages/04_Cours.py", label="📘 Cours")
@@ -30,11 +38,11 @@ st.sidebar.page_link("pages/33_presence_du_jour.py", label="👣 Présences")
 st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="🌐 Public")
 st.sidebar.page_link("pages/10_Parametres.py", label="⚙️ Technique")
 
-# --- TITRE DE LA PAGE ---
+# --- TITRE ---
 st.title("🐾 Club Canin – Accueil")
 st.write("Choisissez une section :")
 
-# --- PARAMÈTRES D'AFFICHAGE DES BLOCS ---
+# --- PARAMÈTRES DES BLOCS ---
 ICON_SIZE = 70
 TEXT_SIZE = 22
 
