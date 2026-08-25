@@ -1,14 +1,14 @@
 import streamlit as st
 from supabase_rest import supabase
-import streamlit as st
 from menu import hide_streamlit_menu, menu_lateral
 
+# --- CACHER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
-"""
-st.markdown(hide_streamlit_menu, unsafe_allow_html=True)
-# Page en mode large
+# --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Membres", page_icon="👥", layout="wide")
 
 st.title("Liste des membres")
