@@ -6,8 +6,16 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
 
 from supabase_rest import supabase
 from datetime import datetime
+from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
 
 st.set_page_config(page_title="Présence du jour", page_icon="📋")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()   # <-- AJOUT
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()          # <-- AJOUT
+
 st.title("📋 Présence du jour")
 
 # ---------------------------------------------------------
