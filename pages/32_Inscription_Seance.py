@@ -70,26 +70,31 @@ membres = (
 membre = st.selectbox("Sélectionnez un membre :", membres, format_func=lambda m: f"{m['prenom']} {m['nom']}")
 
 # ---------------------------------------------------------
-# Sélection du chien
+# Sélection du chien (CORRECTION ICI → id_membre)
 # ---------------------------------------------------------
 chiens = (
     supabase.table("chiens")
     .select("*")
-    .eq("membre_id", membre["id"])
-    .eq("actif", True)
+    .eq("id_membre", membre["id"])   # <-- CORRECTION
+    .eq("activite", "OBE")           # <-- si tu veux filtrer par activité
+    .eq("vaccins", "oui")            # <-- si tu veux filtrer par vaccins
     .execute()
     .data
 )
 
+if not chiens:
+    st.error("⛔ Ce membre n'a aucun chien actif. Impossible d'inscrire à une séance.")
+    st.stop()
+
 chien = st.selectbox("Sélectionnez un chien :", chiens, format_func=lambda c: c["nom"])
 
 # ---------------------------------------------------------
-# Vérification abonnement
+# Vérification abonnement (CORRECTION ICI → id_membre)
 # ---------------------------------------------------------
 abo = (
     supabase.table("abonnements")
     .select("*")
-    .eq("membre_id", membre["id"])   # <-- CORRECTION ICI
+    .eq("id_membre", membre["id"])   # <-- CORRECTION
     .order("id", desc=True)
     .execute()
     .data
@@ -132,10 +137,6 @@ if st.button("📝 Inscrire à cette séance"):
         "present": False,
         "statut": "absent"
     }).execute()
-
-    st.success("Inscription enregistrée !")
-    st.rerun()
-
 
     st.success("Inscription enregistrée !")
     st.rerun()
