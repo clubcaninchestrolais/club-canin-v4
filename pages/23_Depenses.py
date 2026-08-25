@@ -1,10 +1,16 @@
 import streamlit as st
 from supabase_rest import supabase
 from datetime import datetime
+from menu import hide_streamlit_menu, menu_lateral
 
-st.set_page_config(page_title="Dépenses", page_icon="📉")
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Dépenses", page_icon="📉", layout="wide")
 
-st.title("Dépenses du club")
+# --- MENU PERSONNALISÉ ---
+hide_streamlit_menu()
+menu_lateral()
+
+st.title("📉 Dépenses du club")
 
 # Charger les dépenses
 depenses = (
