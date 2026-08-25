@@ -5,11 +5,11 @@ from datetime import datetime
 from fpdf import FPDF
 from io import BytesIO
 
-st.set_page_config(page_title="Activites Speciales", page_icon="🎉")
-st.title("🎉 Activites Speciales")
+st.set_page_config(page_title="Activités Spéciales", page_icon="🎉")
+st.title("🎉 Activités Spéciales")
 
 # ---------------------------------------------------------
-# Charger les activites
+# Charger les activités
 # ---------------------------------------------------------
 activites = (
     supabase.table("activites_speciales")
@@ -20,22 +20,22 @@ activites = (
 )
 
 # ---------------------------------------------------------
-# Etat pour fiche activite
+# État pour fiche activité
 # ---------------------------------------------------------
 if "act_id" not in st.session_state:
     st.session_state["act_id"] = None
 
 # ---------------------------------------------------------
-# Creation d’une activite
+# Création d’une activité
 # ---------------------------------------------------------
-st.subheader("➕ Creer une activite")
+st.subheader("➕ Créer une activité")
 
-nom = st.text_input("Nom de l'activite")
+nom = st.text_input("Nom de l'activité")
 date_act = st.date_input("Date")
 prix = float(st.number_input("Prix par personne (EUR)", min_value=0.0, step=1.0))
 description = st.text_area("Description")
 
-if st.button("Creer l'activite"):
+if st.button("Créer l'activité"):
     supabase.table("activites_speciales").insert({
         "nom": nom,
         "date": date_act.isoformat(),
@@ -43,15 +43,15 @@ if st.button("Creer l'activite"):
         "afficher_chien": False,
         "description": description
     }).execute()
-    st.success("🎉 Activite creee.")
+    st.success("🎉 Activité créée.")
     st.rerun()
 
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Liste des activites
+# Liste des activités
 # ---------------------------------------------------------
-st.subheader("📋 Liste des activites")
+st.subheader("📋 Liste des activités")
 
 if activites:
     for act in activites:
@@ -71,17 +71,17 @@ if activites:
             st.write(f"📅 {act['date']} — {act['prix_default']} EUR")
 
         with col3:
-            if st.button("Gerer", key=f"gerer_{act['id']}"):
+            if st.button("Gérer", key=f"gerer_{act['id']}"):
                 st.session_state["act_id"] = act["id"]
                 st.rerun()
 
 else:
-    st.info("Aucune activite.")
+    st.info("Aucune activité.")
 
 st.markdown("---")
 
 # ---------------------------------------------------------
-# FICHE ACTIVITE
+# FICHE ACTIVITÉ
 # ---------------------------------------------------------
 if st.session_state["act_id"] is not None:
 
@@ -95,7 +95,7 @@ if st.session_state["act_id"] is not None:
         .data[0]
     )
 
-    st.subheader(f"📄 Detail : {act['nom']}")
+    st.subheader(f"📄 Détail : {act['nom']}")
 
     st.write(f"**Date :** {act['date']}")
     st.write(f"**Prix par personne :** {act['prix_default']} EUR")
@@ -109,8 +109,8 @@ if st.session_state["act_id"] is not None:
     st.markdown("### ➕ Ajouter une inscription")
 
     nom = st.text_input("Nom")
-    prenom = st.text_input("Prenom")
-    nombre = st.number_input("Nombre de reservations", min_value=1, step=1)
+    prenom = st.text_input("Prénom")
+    nombre = st.number_input("Nombre de réservations", min_value=1, step=1)
 
     if st.button("Ajouter"):
         total = nombre * act["prix_default"]
@@ -123,7 +123,7 @@ if st.session_state["act_id"] is not None:
             "total": total
         }).execute()
 
-        st.success("Inscription ajoutee.")
+        st.success("Inscription ajoutée.")
         st.rerun()
 
     st.markdown("---")
@@ -143,7 +143,7 @@ if st.session_state["act_id"] is not None:
     )
 
     # ---------------------------------------------------------
-    # Fonction PDF (BytesIO → 100 % compatible)
+    # Fonction PDF
     # ---------------------------------------------------------
     def generate_pdf(inscrits, act):
         pdf = FPDF()
@@ -170,10 +170,10 @@ if st.session_state["act_id"] is not None:
 
         pdf.ln(5)
 
-        # En-tetes
+        # En-têtes
         pdf.set_font("Arial", "B", 12)
         pdf.cell(60, 10, "Nom", 1)
-        pdf.cell(60, 10, "Prenom", 1)
+        pdf.cell(60, 10, "Prénom", 1)
         pdf.cell(30, 10, "Nb", 1)
         pdf.cell(30, 10, "Total (EUR)", 1)
         pdf.ln()
@@ -190,16 +190,15 @@ if st.session_state["act_id"] is not None:
             pdf.cell(30, 10, str(i["total"]), 1)
             pdf.ln()
 
-        # Total general
+        # Total général
         total_general = sum(i["total"] for i in inscrits)
         pdf.ln(5)
         pdf.set_font("Arial", "B", 14)
 
-        total_txt = f"Total general : {total_general} EUR"
+        total_txt = f"Total général : {total_general} EUR"
         total_txt = total_txt.encode("latin-1", "replace").decode("latin-1")
         pdf.cell(0, 10, total_txt, ln=True)
 
-        # ⭐ Buffer mémoire → PDF binaire
         buffer = BytesIO()
         pdf.output(buffer)
         pdf_bytes = buffer.getvalue()
@@ -230,7 +229,7 @@ if st.session_state["act_id"] is not None:
                     supabase.table("inscriptions_speciales").delete().eq("id", ins["id"]).execute()
                     st.rerun()
 
-        st.markdown(f"### 💰 Total general : **{total_general} EUR**")
+        st.markdown(f"### 💰 Total général : **{total_general} EUR**")
 
         # Export Excel
         df = pd.DataFrame(inscrits)
@@ -244,7 +243,7 @@ if st.session_state["act_id"] is not None:
         # Export PDF
         pdf_bytes = generate_pdf(inscrits, act)
         st.download_button(
-            "📄 Telecharger PDF",
+            "📄 Télécharger PDF",
             pdf_bytes,
             file_name="inscriptions.pdf",
             mime="application/pdf"
@@ -258,3 +257,4 @@ if st.session_state["act_id"] is not None:
     if st.button("⬅️ Fermer la fiche"):
         st.session_state["act_id"] = None
         st.rerun()
+
