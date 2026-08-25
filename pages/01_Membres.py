@@ -1,6 +1,13 @@
 import streamlit as st
 from supabase_rest import supabase
-
+hide_streamlit_menu = """
+<style>
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+</style>
+"""
+st.markdown(hide_streamlit_menu, unsafe_allow_html=True)
 # Page en mode large
 st.set_page_config(page_title="Membres", page_icon="👥", layout="wide")
 
