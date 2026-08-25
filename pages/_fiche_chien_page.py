@@ -1,5 +1,11 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
+from datetime import date
 
 st.set_page_config(page_title="Fiche chien", page_icon="🐾")
 
@@ -49,10 +55,15 @@ proprietaire = st.selectbox(
 st.markdown("### Informations générales")
 
 nom = st.text_input("Nom du chien", chien["nom"])
-race = st.text_input("Raceduchien", chien["race"])
-
+race = st.text_input("Race", chien["race"])
 sexe = st.text_input("Sexe", chien["sexe"])
-date_naissance = st.date_input("Date de naissance", chien["date_naissance"]) if chien["date_naissance"] else st.date_input("Date de naissance")
+
+date_naissance = (
+    st.date_input("Date de naissance", chien["date_naissance"])
+    if chien["date_naissance"]
+    else st.date_input("Date de naissance")
+)
+
 age = st.number_input("Âge", value=chien.get("age", 0))
 
 st.markdown("### Identification")
@@ -77,30 +88,23 @@ if uploaded_photo:
 
     bucket = supabase.storage.from_("photos_chiens")
 
-    # Supprimer l’ancienne photo si elle existe
     try:
         bucket.remove([file_name])
     except Exception:
         pass
 
-    # Upload du nouveau fichier
     bucket.upload(file_name, file_bytes)
-
-    # URL publique
     photo_url = bucket.get_public_url(file_name)
 
     st.success("Photo téléversée avec succès !")
 
-# Affichage de la photo si présente
 if photo_url:
     st.image(photo_url, caption=f"Photo de {nom}", width=250)
 
 st.markdown("---")
 
-# Actif = non archivé
 actif = st.checkbox("Actif", not chien.get("archive", False))
 
-# Bouton enregistrer
 if st.button("💾 Enregistrer"):
     data = {
         "nom": nom,
@@ -126,6 +130,5 @@ if st.button("💾 Enregistrer"):
 
     st.switch_page("pages/02_Chiens.py")
 
-# Bouton retour
 if st.button("Retour"):
     st.switch_page("pages/02_Chiens.py")
