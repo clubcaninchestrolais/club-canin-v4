@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 import datetime
 from supabase import create_client
 
@@ -103,4 +108,3 @@ with st.form("form_chien"):
         # Retour à la fiche du propriétaire
         st.session_state["membre_id"] = id_membre
         st.switch_page("pages/21_Fiche_Membre.py")
-
