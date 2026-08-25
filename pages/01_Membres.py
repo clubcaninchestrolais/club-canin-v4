@@ -1,11 +1,11 @@
 import streamlit as st
 from supabase_rest import supabase
-hide_streamlit_menu = """
-<style>
-[data-testid="stSidebarNav"] {
-    display: none !important;
-}
-</style>
+import streamlit as st
+from menu import hide_streamlit_menu, menu_lateral
+
+hide_streamlit_menu()
+menu_lateral()
+
 """
 st.markdown(hide_streamlit_menu, unsafe_allow_html=True)
 # Page en mode large
