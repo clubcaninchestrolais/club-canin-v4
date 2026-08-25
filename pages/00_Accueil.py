@@ -1,6 +1,12 @@
 import streamlit as st
 from menu import hide_streamlit_menu, menu_lateral
 
+# ---------------------------------------------------------
+# 🔐 SÉCURITÉ : accès réservé aux utilisateurs connectés
+# ---------------------------------------------------------
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("login.py")
+
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Club Canin – Accueil", page_icon="🏠")
 
@@ -107,7 +113,7 @@ with colV3:
     bloc("33_presence_du_jour", "👣", "Présences du jour")
 
 # ---------------------------------------------------------
-# 🏛️ ORGANISATIONS (sans accent, au pluriel)
+# 🏛️ ORGANISATIONS
 # ---------------------------------------------------------
 st.subheader("🏛️ Organisations")
 
@@ -131,4 +137,3 @@ with col16:
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
-
