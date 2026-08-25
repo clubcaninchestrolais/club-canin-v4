@@ -1,4 +1,9 @@
 import streamlit as st
+
+# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 from supabase_rest import supabase
 from datetime import datetime
 
@@ -48,3 +53,4 @@ with st.form("form_modif_recette"):
 
         st.success("Recette mise à jour.")
         st.page_link("pages/21_Recettes.py")
+
