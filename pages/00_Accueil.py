@@ -2,7 +2,7 @@ import streamlit as st
 from menu import hide_streamlit_menu, menu_lateral
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title=" Club Canin – Accueil", page_icon="🏠")
+st.set_page_config(page_title="Club Canin – Accueil", page_icon="🏠")
 
 hide_streamlit_menu()
 menu_lateral()
@@ -56,7 +56,7 @@ with col8:
     bloc("08_Modifier_Seance", "✏️", "Modifier séance")  # interne
 
 with col9:
-    bloc("11_Flux_club", "🔄", "Flux du club")  # déplacé ensuite dans Technique
+    st.write("")  # Flux retiré d'ici
 
 with col10:
     st.write("")
@@ -104,3 +104,4 @@ with col15:
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
+
