@@ -46,7 +46,7 @@ with col6:
     bloc("41_Moniteurs", "🧑‍🏫", "Moniteurs")
 
 with col7:
-    bloc("20_Cotisations", "💰", "Finances")
+    bloc("20_Cotisations", "💰", "cotisations")
 
 with col8:
     bloc("70_Abonnements", "📄", "Abonnements")
