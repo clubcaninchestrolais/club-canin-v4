@@ -88,19 +88,23 @@ bloc("33_presence_du_jour", "👣", "Validation des présences par préposé")
 # ---------------------------------------------------------
 st.subheader("🌐 Public")
 bloc("50_Inscription_En_Ligne", "🌐", "Inscription en ligne")
-
 # ---------------------------------------------------------
 # ⚙️ TECHNIQUE
 # ---------------------------------------------------------
 st.subheader("⚙️ Technique")
 
-col14, col15 = st.columns(2)
+col14, col15, col16 = st.columns(3)
 
 with col14:
     bloc("10_Parametres", "⚙️", "Paramètres")
 
 with col15:
-    bloc("11_Flux_club", "🔄", "Flux du club")  # déplacé ici
+    bloc("11_Flux_club", "🔄", "Flux du club")
+
+with col16:
+    bloc("01_Apropos", "ℹ️", "À propos")
+
+
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
