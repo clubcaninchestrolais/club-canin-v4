@@ -1,57 +1,142 @@
 import streamlit as st
 from menu import hide_streamlit_menu, menu_lateral
 
+# ---------------------------------------------------------
+# 🔐 SÉCURITÉ : accès réservé aux utilisateurs connectés
+# ---------------------------------------------------------
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
+# --- CONFIGURATION ---
+st.set_page_config(page_title="Club Canin – Accueil", page_icon="🏠")
+
 hide_streamlit_menu()
 menu_lateral()
 
-st.set_page_config(page_title="Accueil", page_icon="🏠")
+st.title("🐾 Club Canin – Accueil")
+st.write("Choisissez une section :")
 
-st.title("🏠 Accueil — Club Canin")
+# --- BLOC CLIQUABLE ---
+def bloc(page, icone, texte):
+    if st.button(f"{icone}\n{texte}", key=f"btn_{page}"):
+        st.switch_page(f"pages/{page}.py")
 
-st.markdown("### 🎯 Accès rapide aux fonctionnalités principales")
+# ---------------------------------------------------------
+# 👥 MEMBRES & CHIENS
+# ---------------------------------------------------------
+st.subheader("👥 Membres & Chiens")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.page_link("pages/10_Cours_du_jour.py", label="📅 Cours du jour")
-    st.page_link("pages/32_Inscription_Seance.py", label="📝 Inscription séance")
+    bloc("01_Membres", "👥", "Membres")
 
 with col2:
-    st.page_link("pages/70_Validation_presences.py", label="🟢 Validation des présences")   # <-- AJOUT
-    st.page_link("pages/33_presence_du_jour.py", label="👣 Présences du jour")
+    bloc("02_Chiens", "🐶", "Chiens")
 
 with col3:
-    st.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")
-    st.page_link("pages/07_Seances_Cours.py", label="🗓️ Séances des cours")
+    bloc("20_Cotisations", "💳", "Cotisations")
+
+with col4:
+    bloc("21_Abonnements", "🎫", "Abonnements")
+
+# ---------------------------------------------------------
+# 📁 ARCHIVES
+# ---------------------------------------------------------
+st.subheader("📁 Archives")
+
+colA1, colA2 = st.columns(2)
+
+with colA1:
+    bloc("03_Membres_archives", "📁", "Membres archivés")
+
+with colA2:
+    bloc("04_Chiens_archives", "📁", "Chiens archivés")
+
+# ---------------------------------------------------------
+# 📘 COURS
+# ---------------------------------------------------------
+st.subheader("📘 Gestion des cours")
+
+col5, col6, col7 = st.columns(3)
+
+with col5:
+    bloc("04_Cours", "📘", "Cours")
+
+with col6:
+    bloc("07_Seances_Cours", "🗓️", "Séances")
+
+with col7:
+    bloc("10_Cours_du_jour", "📅", "Cours du jour")
+
+col8, col9, col10 = st.columns(3)
+
+with col8:
+    bloc("08_Modifier_Seance", "✏️", "Modifier séance")
+
+with col9:
+    st.write("")
+
+with col10:
+    st.write("")
+
+# ---------------------------------------------------------
+# 💰 FINANCES
+# ---------------------------------------------------------
+st.subheader("💰 Finances")
+
+col11, col12, col13 = st.columns(3)
+
+with col11:
+    bloc("23_Depenses", "🧾", "Dépenses")
+
+with col12:
+    bloc("21_Recettes", "📈", "Recettes")
+
+with col13:
+    bloc("09_Finances", "💼", "Finances globales")
+
+# ---------------------------------------------------------
+# 🔄 FLUX DE VALIDATION
+# ---------------------------------------------------------
+st.subheader("🔄 Flux de validation")
+
+colV1, colV2, colV3, colV4 = st.columns(4)
+
+with colV1:
+    bloc("50_Inscription_En_Ligne", "🌐", "Préinscription publique")
+
+with colV2:
+    bloc("60_Validation_preinscription", "📝", "Validation préinscription")
+
+with colV3:
+    bloc("33_presence_du_jour", "👣", "Présences du jour")
+
+with colV4:
+    bloc("70_Validation_presences", "🟢", "Validation des présences")  # <-- AJOUT
+
+# ---------------------------------------------------------
+# 🏛️ ORGANISATIONS
+# ---------------------------------------------------------
+st.subheader("🏛️ Organisations")
+
+bloc("organisations", "🏛️", "Organisations")
+
+# ---------------------------------------------------------
+# ⚙️ TECHNIQUE
+# ---------------------------------------------------------
+st.subheader("⚙️ Technique")
+
+col14, col15, col16 = st.columns(3)
+
+with col14:
+    bloc("10_Parametres", "⚙️", "Paramètres")
+
+with col15:
+    bloc("11_Flux_club", "🔄", "Flux du club")
+
+with col16:
+    bloc("01_Apropos", "ℹ️", "À propos")
 
 st.markdown("---")
-
-st.markdown("### 🐶 Gestion du club")
-st.page_link("pages/01_Membres.py", label="👥 Membres")
-st.page_link("pages/02_Chiens.py", label="🐶 Chiens")
-st.page_link("pages/03_Membres_archives.py", label="📁 Membres archivés")
-st.page_link("pages/04_Chiens_archives.py", label="📁 Chiens archivés")
-
-st.markdown("---")
-
-st.markdown("### 💰 Finances")
-st.page_link("pages/20_Cotisations.py", label="💳 Cotisations")
-st.page_link("pages/21_Abonnements.py", label="🎫 Abonnements")
-st.page_link("pages/21_Recettes.py", label="📈 Recettes")
-st.page_link("pages/23_Depenses.py", label="🧾 Dépenses")
-st.page_link("pages/09_Finances.py", label="💼 Finances globales")
-
-st.markdown("---")
-
-st.markdown("### 🌐 Préinscriptions")
-st.page_link("pages/50_Inscription_En_Ligne.py", label="🌐 Préinscription publique")
-st.page_link("pages/60_Validation_preinscription.py", label="📝 Validation préinscription")
-
-st.markdown("---")
-
-st.markdown("### ⚙️ Technique")
-st.page_link("pages/10_Parametres.py", label="⚙️ Paramètres")
-st.page_link("pages/11_Flux_club.py", label="🔄 Flux du club")
-st.page_link("pages/01_Apropos.py", label="ℹ️ À propos")
-
-
+st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
