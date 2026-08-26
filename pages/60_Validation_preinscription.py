@@ -61,50 +61,23 @@ for pre in preinscriptions:
 
             try:
                 # 1️⃣ Marquer la préinscription comme validée
-                update_pre = supabase.table("preinscriptions").update(
+                supabase.table("preinscriptions").update(
                     {
                         "traitee": True,
                         "acceptee": True,
                     }
                 ).eq("id", pre["id"]).execute()
 
-                st.write("DEBUG update_pre:", update_pre)
-
-                # 2️⃣ Créer un membre temporaire (corrigé)
-                membre = supabase.table("membres").insert({
-                    "nom": pre["nom"],
-                    "prenom": pre["prenom"],
-                    "email": pre["email"],
-                    "telephone": pre["telephone"],
-                    "actif": True
-                }).execute()
-
-                st.write("DEBUG membre:", membre)
-
-                membre_id = membre.data[0]["id"]
-
-                # 3️⃣ Créer un chien temporaire
-                chien = supabase.table("chiens").insert({
-                    "nom": pre["chien_nom"],
-                    "race": pre["chien_race"],
-                    "id_membre": membre_id
-                }).execute()
-
-                st.write("DEBUG chien:", chien)
-
-                chien_id = chien.data[0]["id"]
-
-                # 4️⃣ Créer l'inscription dans la séance
-                inscription = supabase.table("cours_seances_inscriptions").insert({
+                # 2️⃣ Créer l'inscription dans la séance (EXTÉRIEUR)
+                supabase.table("cours_seances_inscriptions").insert({
                     "seance_id": pre["seance_id"],
-                    "membre_id": membre_id,
-                    "chien_id": chien_id,
+                    "membre_id": None,          # EXTÉRIEUR
+                    "chien_id": None,           # EXTÉRIEUR
+                    "type": "exterieur",
                     "present": False,
                     "commentaire": None,
                     "actif": True
                 }).execute()
-
-                st.write("DEBUG inscription:", inscription)
 
                 st.success(f"Préinscription #{pre['id']} validée et ajoutée à la séance.")
                 st.rerun()
@@ -118,14 +91,12 @@ for pre in preinscriptions:
         if st.button(f"❌ Refuser #{pre['id']}", key=f"refuser_{pre['id']}"):
 
             try:
-                refuse = supabase.table("preinscriptions").update(
+                supabase.table("preinscriptions").update(
                     {
                         "traitee": True,
                         "acceptee": False,
                     }
                 ).eq("id", pre["id"]).execute()
-
-                st.write("DEBUG refuse:", refuse)
 
                 st.warning(f"Préinscription #{pre['id']} refusée.")
                 st.rerun()
@@ -133,4 +104,3 @@ for pre in preinscriptions:
             except Exception as e:
                 st.error("ERREUR SUPABASE :")
                 st.write(e)
-
