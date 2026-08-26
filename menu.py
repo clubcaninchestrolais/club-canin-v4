@@ -56,7 +56,7 @@ def menu_lateral():
     st.sidebar.markdown("### 🔄 Flux")
     st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="🌐 Préinscription publique")
     st.sidebar.page_link("pages/60_Validation_preinscription.py", label="📝 Validation préinscription")
-    st.sidebar.page_link("pages/61_Liste_preinscriptions_exterieurs.py", label="📋 listing Préinscriptions extérieures")
+    st.sidebar.page_link("pages/61_Listeexterieurs.py", label="📋 listing Préinscriptions extérieures")
 
 
     st.sidebar.markdown("### 🏛️ Organisations")
