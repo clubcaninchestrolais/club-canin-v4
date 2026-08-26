@@ -48,6 +48,10 @@ presences = (
     .data
 )
 
+# 🔍 AJOUT DEMANDÉ : afficher ce que la page lit réellement
+st.write("DEBUG — Présences chargées :")
+st.write(presences)
+
 if not presences:
     st.info("Aucune présence à valider.")
     st.stop()
@@ -153,3 +157,4 @@ for p in presences:
 
     else:
         st.success("Présence déjà validée.")
+
