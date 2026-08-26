@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+# --- SÉCURITÉ ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
@@ -16,7 +16,6 @@ supabase: Client = create_client(url, key)
 
 st.set_page_config(page_title="Validation préinscriptions", page_icon="✅", layout="centered")
 
-# --- MENU PERSONNALISÉ ---
 hide_streamlit_menu()
 menu_lateral()
 
@@ -60,65 +59,79 @@ for pre in preinscriptions:
     with col1:
         if st.button(f"✅ Valider #{pre['id']}", key=f"valider_{pre['id']}"):
 
-            # 1️⃣ Marquer la préinscription comme validée
-            supabase.table("preinscriptions").update(
-                {
-                    "traitee": True,
-                    "acceptee": True,
-                }
-            ).eq("id", pre["id"]).execute()
+            try:
+                # 1️⃣ Marquer la préinscription comme validée
+                update_pre = supabase.table("preinscriptions").update(
+                    {
+                        "traitee": True,
+                        "acceptee": True,
+                    }
+                ).eq("id", pre["id"]).execute()
 
-            # 2️⃣ Créer un membre temporaire
-            membre = supabase.table("membres").insert({
-                "nom": pre["nom"],
-                "prenom": pre["prenom"],
-                "email": pre["email"],
-                "telephone": pre["telephone"],
-                "benevole": False,
-                "actif": True
-            }).execute()
+                st.write("DEBUG update_pre:", update_pre)
 
-            # 🔍 DEBUG : afficher la réponse Supabase
-            st.write("DEBUG membre:", membre)
+                # 2️⃣ Créer un membre temporaire
+                membre = supabase.table("membres").insert({
+                    "nom": pre["nom"],
+                    "prenom": pre["prenom"],
+                    "email": pre["email"],
+                    "telephone": pre["telephone"],
+                    "benevole": False,
+                    "actif": True
+                }).execute()
 
-            membre_id = membre.data[0]["id"]
+                st.write("DEBUG membre:", membre)
 
-            # 3️⃣ Créer un chien temporaire
-            chien = supabase.table("chiens").insert({
-                "nom": pre["chien_nom"],
-                "race": pre["chien_race"],
-                "id_membre": membre_id
-            }).execute()
+                membre_id = membre.data[0]["id"]
 
-            # 🔍 DEBUG : afficher la réponse Supabase
-            st.write("DEBUG chien:", chien)
+                # 3️⃣ Créer un chien temporaire
+                chien = supabase.table("chiens").insert({
+                    "nom": pre["chien_nom"],
+                    "race": pre["chien_race"],
+                    "id_membre": membre_id
+                }).execute()
 
-            chien_id = chien.data[0]["id"]
+                st.write("DEBUG chien:", chien)
 
-            # 4️⃣ Créer l'inscription dans la séance
-            supabase.table("cours_seances_inscriptions").insert({
-                "seance_id": pre["seance_id"],
-                "membre_id": membre_id,
-                "chien_id": chien_id,
-                "present": False,
-                "commentaire": None,
-                "actif": True
-            }).execute()
+                chien_id = chien.data[0]["id"]
 
-            st.success(f"Préinscription #{pre['id']} validée et ajoutée à la séance.")
-            st.rerun()
+                # 4️⃣ Créer l'inscription dans la séance
+                inscription = supabase.table("cours_seances_inscriptions").insert({
+                    "seance_id": pre["seance_id"],
+                    "membre_id": membre_id,
+                    "chien_id": chien_id,
+                    "present": False,
+                    "commentaire": None,
+                    "actif": True
+                }).execute()
+
+                st.write("DEBUG inscription:", inscription)
+
+                st.success(f"Préinscription #{pre['id']} validée et ajoutée à la séance.")
+                st.rerun()
+
+            except Exception as e:
+                st.error("ERREUR SUPABASE :")
+                st.write(e)
 
     # REFUS
     with col2:
         if st.button(f"❌ Refuser #{pre['id']}", key=f"refuser_{pre['id']}"):
 
-            supabase.table("preinscriptions").update(
-                {
-                    "traitee": True,
-                    "acceptee": False,
-                }
-            ).eq("id", pre["id"]).execute()
+            try:
+                refuse = supabase.table("preinscriptions").update(
+                    {
+                        "traitee": True,
+                        "acceptee": False,
+                    }
+                ).eq("id", pre["id"]).execute()
 
-            st.warning(f"Préinscription #{pre['id']} refusée.")
-            st.rerun()
+                st.write("DEBUG refuse:", refuse)
+
+                st.warning(f"Préinscription #{pre['id']} refusée.")
+                st.rerun()
+
+            except Exception as e:
+                st.error("ERREUR SUPABASE :")
+                st.write(e)
 
