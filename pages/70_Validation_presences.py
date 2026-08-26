@@ -29,7 +29,9 @@ if not seances:
 seance = seances[0]
 seance_id = seance["id"]
 
-st.subheader(f"Séance du {seance['date_seance']} — {seance['cours_nom']}")
+nom_seance = seance.get("nom_seance", "Séance")
+
+st.subheader(f"Séance du {seance['date_seance']} — {nom_seance}")
 
 # ---------------------------------------------------------
 # 2. Charger les présences (membres + extérieurs)
