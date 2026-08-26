@@ -61,7 +61,28 @@ for p in presences:
     est_exterieur = (p.get("type_inscription") == "exterieur")
 
     if est_exterieur:
-        st.write("👤 **Extérieur** — 🐶 **Chien extérieur**")
+        # 🔍 Récupérer la préinscription liée à cette séance
+        pre = (
+            supabase.table("preinscriptions")
+            .select("*")
+            .eq("seance_id", p["seance_id"])
+            .eq("traitee", True)
+            .eq("acceptee", True)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+            .data
+        )
+
+        if pre:
+            pr = pre[0]
+            nom_ext = pr.get("nom", "Extérieur")
+            prenom_ext = pr.get("prenom", "")
+            nom_chien_ext = pr.get("nom_chien", "Chien extérieur")
+            st.write(f"👤 {prenom_ext} {nom_ext} — 🐶 {nom_chien_ext}")
+        else:
+            st.write("👤 Extérieur — 🐶 Chien extérieur")
+
     else:
         # Charger le membre
         membre = None
