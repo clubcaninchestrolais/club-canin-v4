@@ -48,9 +48,10 @@ presences = (
     .data
 )
 
-# 🔍 AJOUT DEMANDÉ : afficher ce que la page lit réellement
+# 🔍 DEBUG : afficher ce que la page lit réellement
 st.write("DEBUG — Présences chargées :")
 st.write(presences)
+st.write("NOMBRE DE PRESENCES :", len(presences))
 
 if not presences:
     st.info("Aucune présence à valider.")
@@ -61,6 +62,9 @@ if not presences:
 # ---------------------------------------------------------
 for p in presences:
     st.markdown("---")
+
+    # 🔍 DEBUG ID pour vérifier l'affichage
+    st.write("DEBUG ID :", p["id"])
 
     est_exterieur = (p.get("type_inscription") == "exterieur")
 
@@ -95,7 +99,8 @@ for p in presences:
         membre_prenom = membre["prenom"] if membre else ""
         chien_nom = chien["nom"] if chien else "Chien inconnu"
 
-    st.write(f"👤 **{membre_prenom} {membre_nom}** — 🐶 {chien_nom}")
+    # 🔧 Affichage robuste même si valeurs NULL
+    st.write(f"👤 {membre_prenom or ''} {membre_nom or ''} — 🐶 {chien_nom or ''}")
 
     # ---------------------------------------------------------
     # 4. Validation de présence
@@ -158,3 +163,5 @@ for p in presences:
     else:
         st.success("Présence déjà validée.")
 
+# Fin de page pour vérifier l'affichage
+st.write("FIN DE PAGE")
