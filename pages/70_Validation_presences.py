@@ -48,10 +48,6 @@ presences = (
     .data
 )
 
-st.write("DEBUG — Présences chargées :")
-st.write(presences)
-st.write("NOMBRE DE PRESENCES :", len(presences))
-
 if not presences:
     st.info("Aucune présence à valider.")
     st.stop()
@@ -61,12 +57,10 @@ if not presences:
 # ---------------------------------------------------------
 for p in presences:
     st.markdown("---")
-    st.write("DEBUG ID :", p["id"])
 
     est_exterieur = (p.get("type_inscription") == "exterieur")
 
     if est_exterieur:
-        # 🔥 Bloc extérieur visible à 100%
         st.write("👤 **Extérieur** — 🐶 **Chien extérieur**")
     else:
         # Charger le membre
@@ -159,6 +153,4 @@ for p in presences:
 
     else:
         st.success("Présence déjà validée.")
-
-st.write("FIN DE PAGE")
 
