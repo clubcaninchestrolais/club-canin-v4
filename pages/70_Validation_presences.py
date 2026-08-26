@@ -28,7 +28,6 @@ if not seances:
 
 seance = seances[0]
 seance_id = seance["id"]
-
 nom_seance = seance.get("nom_seance", "Séance")
 
 st.subheader(f"Séance du {seance['date_seance']} — {nom_seance}")
@@ -54,9 +53,15 @@ if not presences:
 for p in presences:
     st.markdown("---")
 
-    # Charger membre si membre_id existe
-    membre = None
-    if p["membre_id"] is not None:
+    # Déterminer si c'est un extérieur via type_inscription
+    est_exterieur = (p.get("type_inscription") == "exterieur")
+
+    if est_exterieur:
+        membre_nom = "Extérieur"
+        membre_prenom = ""
+        chien_nom = "Chien extérieur"
+    else:
+        # Charger le membre
         membre = (
             supabase.table("membres")
             .select("*")
@@ -66,9 +71,7 @@ for p in presences:
         )
         membre = membre[0] if membre else None
 
-    # Charger chien si chien_id existe
-    chien = None
-    if p["chien_id"] is not None:
+        # Charger le chien
         chien = (
             supabase.table("chiens")
             .select("*")
@@ -78,15 +81,11 @@ for p in presences:
         )
         chien = chien[0] if chien else None
 
-    # Affichage
-    membre_nom = membre["nom"] if membre else "Extérieur"
-    membre_prenom = membre["prenom"] if membre else ""
-    chien_nom = chien["nom"] if chien else "Chien extérieur"
+        membre_nom = membre["nom"] if membre else "Membre inconnu"
+        membre_prenom = membre["prenom"] if membre else ""
+        chien_nom = chien["nom"] if chien else "Chien inconnu"
 
     st.write(f"👤 **{membre_prenom} {membre_nom}** — 🐶 {chien_nom}")
-
-    # Déterminer si c'est un extérieur
-    est_exterieur = (membre is None) or (membre.get("statut") == "exterieur")
 
     # ---------------------------------------------------------
     # 4. Validation de présence
@@ -94,7 +93,7 @@ for p in presences:
     if not p["present"]:
         if st.button(f"Valider présence #{p['id']}", key=f"valider_{p['id']}"):
 
-            # EXTÉRIEUR
+            # EXTÉRIEUR → validation directe
             if est_exterieur:
                 supabase.table("cours_seances_inscriptions").update({
                     "present": True
@@ -103,7 +102,7 @@ for p in presences:
                 st.success("Présence validée (extérieur).")
                 st.rerun()
 
-            # MEMBRE
+            # MEMBRE → vérifier cotisation + abonnement
             else:
                 # Vérifier cotisation active
                 cotisation = (
@@ -154,4 +153,3 @@ for p in presences:
 
     else:
         st.success("Présence déjà validée.")
-
