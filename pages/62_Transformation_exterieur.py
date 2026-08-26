@@ -1,7 +1,6 @@
 import streamlit as st
 from supabase import create_client, Client
 from menu import hide_streamlit_menu, menu_lateral
-import datetime
 
 hide_streamlit_menu()
 menu_lateral()
@@ -56,25 +55,22 @@ if st.button("Transformer en membre"):
         "actif": False
     }).execute()
 
-    # Vérification d'erreur Supabase
     if not membre_insert.data:
         st.error("❌ Supabase a refusé l'insertion du membre.")
-        st.write("Voici l'erreur retournée par Supabase :")
         st.json(membre_insert)
         st.stop()
 
     membre_id = membre_insert.data[0]["id"]
 
-    # 2️⃣ Créer le chien (minimal)
+    # 2️⃣ Créer le chien (minimal) — CORRECTION ICI
     chien_insert = supabase.table("chiens").insert({
         "nom": choix["chien_nom"],
         "race": choix["chien_race"],
-        "id_membres": membre_id
+        "id_membre": membre_id   # ✔ CORRECT : id_membre sans s
     }).execute()
 
     if not chien_insert.data:
         st.error("❌ Supabase a refusé l'insertion du chien.")
-        st.write("Voici l'erreur retournée par Supabase :")
         st.json(chien_insert)
         st.stop()
 
