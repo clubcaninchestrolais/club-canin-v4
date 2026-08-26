@@ -62,7 +62,7 @@ if st.button("Transformer en membre"):
 
     membre_id = membre_insert.data[0]["id"]
 
-    # 2️⃣ Créer le chien (minimal) — CORRECTION ICI
+    # 2️⃣ Créer le chien (minimal) — VERSION FINALE
     chien_insert = supabase.table("chiens").insert({
         "nom": choix["chien_nom"],
         "race": choix["chien_race"],
