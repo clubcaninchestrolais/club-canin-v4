@@ -68,11 +68,12 @@ for pre in preinscriptions:
                     }
                 ).eq("id", pre["id"]).execute()
 
-                # 2️⃣ Ajouter l'extérieur dans la séance
+                # 2️⃣ Ajouter l'inscription EXTÉRIEUR dans la séance
                 supabase.table("cours_seances_inscriptions").insert({
                     "seance_id": pre["seance_id"],
-                    "membre_id": None,      # EXTÉRIEUR
-                    "chien_id": None,       # EXTÉRIEUR
+                    "membre_id": 0,                 # EXTÉRIEUR
+                    "chien_id": 0,                  # EXTÉRIEUR
+                    "type_inscription": "exterieur",
                     "present": False,
                     "commentaire": None,
                     "actif": True
