@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+# --- SÉCURITÉ ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
@@ -16,7 +16,6 @@ supabase: Client = create_client(url, key)
 
 st.set_page_config(page_title="Validation préinscriptions", page_icon="✅", layout="centered")
 
-# --- MENU PERSONNALISÉ ---
 hide_streamlit_menu()
 menu_lateral()
 
@@ -68,11 +67,32 @@ for pre in preinscriptions:
                 }
             ).eq("id", pre["id"]).execute()
 
-            # 2️⃣ Créer l'inscription dans la séance
+            # 2️⃣ Créer un membre temporaire
+            membre = supabase.table("membres").insert({
+                "nom": pre["nom"],
+                "prenom": pre["prenom"],
+                "email": pre["email"],
+                "telephone": pre["telephone"],
+                "benevole": False,
+                "actif": True
+            }).execute().data[0]
+
+            membre_id = membre["id"]
+
+            # 3️⃣ Créer un chien temporaire
+            chien = supabase.table("chiens").insert({
+                "nom": pre["chien_nom"],
+                "race": pre["chien_race"],
+                "id_membre": membre_id
+            }).execute().data[0]
+
+            chien_id = chien["id"]
+
+            # 4️⃣ Créer l'inscription dans la séance
             supabase.table("cours_seances_inscriptions").insert({
                 "seance_id": pre["seance_id"],
-                "membre_id": None,          # extérieur → pas encore membre
-                "chien_id": None,           # extérieur → pas encore chien
+                "membre_id": membre_id,
+                "chien_id": chien_id,
                 "present": False,
                 "commentaire": None,
                 "actif": True
