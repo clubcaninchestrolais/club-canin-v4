@@ -13,20 +13,16 @@ supabase: Client = create_client(url, key)
 
 st.title("Validation des présences du jour")
 
-# Charger la séance du jour
+# Séance du jour
 aujourdhui = datetime.now().date().isoformat()
 
-try:
-    seances = (
-        supabase.table("cours_seances")
-        .select("*")
-        .eq("date_seance", aujourdhui)
-        .execute()
-        .data
-    )
-except Exception as e:
-    st.error("❌ Erreur Supabase lors du chargement des séances.")
-    st.stop()
+seances = (
+    supabase.table("cours_seances")
+    .select("*")
+    .eq("date_seance", aujourdhui)
+    .execute()
+    .data
+)
 
 if not seances:
     st.info("Aucune séance aujourd'hui.")
@@ -37,83 +33,30 @@ seance_id = seance["id"]
 
 st.subheader(f"Séance du {seance['date_seance']} — {seance.get('nom_seance', 'Séance')}")
 
-# Charger les présences
-try:
-    presences = (
-        supabase.table("cours_seances_inscriptions")
-        .select("*")
-        .eq("seance_id", seance_id)
-        .execute()
-        .data
-    )
-except Exception as e:
-    st.error("❌ Erreur Supabase lors du chargement des présences.")
-    st.stop()
+# EXTÉRIEURS : on lit directement les préinscriptions acceptées
+ext_preinscriptions = (
+    supabase.table("preinscriptions")
+    .select("*")
+    .eq("seance_id", seance_id)
+    .eq("acceptee", True)
+    .execute()
+    .data
+)
 
-if not presences:
-    st.info("Aucune présence à valider.")
-    st.stop()
+if not ext_preinscriptions:
+    st.info("Aucune présence extérieure à valider.")
+else:
+    st.markdown("### Présences extérieures")
+    for pre in ext_preinscriptions:
+        st.markdown("---")
+        st.write(f"👤 {pre['prenom']} {pre['nom']} — 🐶 {pre['chien_nom']}")
 
-# Affichage des présences
-for p in presences:
-    st.markdown("---")
-
-    est_exterieur = (p.get("type_inscription") == "exterieur")
-
-    # EXTÉRIEUR — lecture directe
-    if est_exterieur:
-        nom_ext = p.get("nom_exterieur", "Extérieur")
-        prenom_ext = p.get("prenom_exterieur", "")
-        chien_ext = p.get("chien_exterieur", "Chien extérieur")
-
-        st.write(f"👤 {prenom_ext} {nom_ext} — 🐶 {chien_ext}")
-
-    else:
-        # MEMBRE
-        try:
-            membre_data = (
-                supabase.table("membres")
-                .select("*")
-                .eq("id", p["membre_id"])
-                .execute()
-                .data
-            )
-            membre = membre_data[0] if membre_data else None
-        except Exception:
-            membre = None
-
-        try:
-            chien_data = (
-                supabase.table("chiens")
-                .select("*")
-                .eq("id", p["chien_id"])
-                .execute()
-                .data
-            )
-            chien = chien_data[0] if chien_data else None
-        except Exception:
-            chien = None
-
-        membre_nom = membre["nom"] if membre else "Membre inconnu"
-        membre_prenom = membre["prenom"] if membre else ""
-        chien_nom = chien["nom"] if chien else "Chien inconnu"
-
-        st.write(f"👤 {membre_prenom} {membre_nom} — 🐶 {chien_nom}")
-
-    # Validation de présence
-    if not p["present"]:
-        if st.button(f"Valider présence #{p['id']}", key=f"valider_{p['id']}"):
-
-            try:
-                supabase.table("cours_seances_inscriptions").update({
-                    "present": True
-                }).eq("id", p["id"]).execute()
-            except Exception:
-                st.error("❌ Erreur Supabase lors de la validation.")
-                st.stop()
-
-            st.success("Présence validée.")
-            st.rerun()
-
-    else:
-        st.success("Présence déjà validée.")
+        if not pre.get("presence_validee", False):
+            if st.button(f"Valider présence extérieur #{pre['id']}", key=f"ext_{pre['id']}"):
+                supabase.table("preinscriptions").update({
+                    "presence_validee": True
+                }).eq("id", pre["id"]).execute()
+                st.success("Présence extérieure validée.")
+                st.rerun()
+        else:
+            st.success("Présence déjà validée (extérieur).")
