@@ -74,7 +74,8 @@ for pre in preinscriptions:
                 "membre_id": None,          # extérieur → pas encore membre
                 "chien_id": None,           # extérieur → pas encore chien
                 "present": False,
-                "type": "exterieur"
+                "commentaire": None,
+                "actif": True
             }).execute()
 
             st.success(f"Préinscription #{pre['id']} validée et ajoutée à la séance.")
