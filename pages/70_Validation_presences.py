@@ -34,11 +34,11 @@ nom_seance = seance.get("nom_seance", "Séance")
 st.subheader(f"Séance du {seance['date_seance']} — {nom_seance}")
 
 # ---------------------------------------------------------
-# 2. Charger les présences (membres + extérieurs)
+# 2. Charger les présences SANS JOIN
 # ---------------------------------------------------------
 presences = (
     supabase.table("cours_seances_inscriptions")
-    .select("*, membres(nom, prenom, statut), chiens(nom)")
+    .select("*")
     .eq("seance_id", seance_id)
     .execute()
     .data
@@ -54,9 +54,31 @@ if not presences:
 for p in presences:
     st.markdown("---")
 
-    membre = p.get("membres")
-    chien = p.get("chiens")
+    # Charger membre si membre_id existe
+    membre = None
+    if p["membre_id"] is not None:
+        membre = (
+            supabase.table("membres")
+            .select("*")
+            .eq("id", p["membre_id"])
+            .execute()
+            .data
+        )
+        membre = membre[0] if membre else None
 
+    # Charger chien si chien_id existe
+    chien = None
+    if p["chien_id"] is not None:
+        chien = (
+            supabase.table("chiens")
+            .select("*")
+            .eq("id", p["chien_id"])
+            .execute()
+            .data
+        )
+        chien = chien[0] if chien else None
+
+    # Affichage
     membre_nom = membre["nom"] if membre else "Extérieur"
     membre_prenom = membre["prenom"] if membre else ""
     chien_nom = chien["nom"] if chien else "Chien extérieur"
@@ -72,9 +94,7 @@ for p in presences:
     if not p["present"]:
         if st.button(f"Valider présence #{p['id']}", key=f"valider_{p['id']}"):
 
-            # ---------------------------------------------------------
-            # CAS 1 : EXTÉRIEUR → autorisé sans cotisation ni abonnement
-            # ---------------------------------------------------------
+            # EXTÉRIEUR
             if est_exterieur:
                 supabase.table("cours_seances_inscriptions").update({
                     "present": True
@@ -83,9 +103,7 @@ for p in presences:
                 st.success("Présence validée (extérieur).")
                 st.rerun()
 
-            # ---------------------------------------------------------
-            # CAS 2 : MEMBRE → vérifier cotisation + abonnement
-            # ---------------------------------------------------------
+            # MEMBRE
             else:
                 # Vérifier cotisation active
                 cotisation = (
@@ -136,3 +154,4 @@ for p in presences:
 
     else:
         st.success("Présence déjà validée.")
+
