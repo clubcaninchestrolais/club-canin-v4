@@ -15,7 +15,7 @@ st.title("📋 Validation des présences du jour")
 aujourdhui = datetime.now().date().isoformat()
 
 seances = (
-    supabase.table("seances")
+    supabase.table("cours_seances")
     .select("*")
     .eq("date_seance", aujourdhui)
     .execute()
@@ -36,7 +36,7 @@ st.subheader(f"Séance du {seance['date_seance']} — {seance['cours_nom']}")
 # ---------------------------------------------------------
 presences = (
     supabase.table("cours_seances_inscriptions")
-    .select("*, membres(nom, prenom), chiens(nom)")
+    .select("*, membres(nom, prenom, statut), chiens(nom)")
     .eq("seance_id", seance_id)
     .execute()
     .data
@@ -52,14 +52,17 @@ if not presences:
 for p in presences:
     st.markdown("---")
 
-    membre_nom = p["membres"]["nom"] if p["membres"] else "Extérieur"
-    membre_prenom = p["membres"]["prenom"] if p["membres"] else ""
-    chien_nom = p["chiens"]["nom"] if p["chiens"] else "Chien extérieur"
+    membre = p.get("membres")
+    chien = p.get("chiens")
+
+    membre_nom = membre["nom"] if membre else "Extérieur"
+    membre_prenom = membre["prenom"] if membre else ""
+    chien_nom = chien["nom"] if chien else "Chien extérieur"
 
     st.write(f"👤 **{membre_prenom} {membre_nom}** — 🐶 {chien_nom}")
 
     # Déterminer si c'est un extérieur
-    est_exterieur = (p.get("type") == "exterieur") or (p["membres"] is None)
+    est_exterieur = (membre is None) or (membre.get("statut") == "exterieur")
 
     # ---------------------------------------------------------
     # 4. Validation de présence
@@ -131,4 +134,3 @@ for p in presences:
 
     else:
         st.success("Présence déjà validée.")
-
