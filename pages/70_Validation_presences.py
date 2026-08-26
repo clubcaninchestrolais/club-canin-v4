@@ -65,7 +65,6 @@ for p in presences:
         membre_prenom = ""
         chien_nom = "Chien extérieur"
     else:
-        # Charger le membre
         membre = None
         if p.get("membre_id") is not None:
             membre_data = (
@@ -77,7 +76,6 @@ for p in presences:
             )
             membre = membre_data[0] if membre_data else None
 
-        # Charger le chien
         chien = None
         if p.get("chien_id") is not None:
             chien_data = (
@@ -101,7 +99,6 @@ for p in presences:
     if not p["present"]:
         if st.button(f"Valider présence #{p['id']}", key=f"valider_{p['id']}"):
 
-            # EXTÉRIEUR → validation directe
             if est_exterieur:
                 supabase.table("cours_seances_inscriptions").update({
                     "present": True
@@ -110,7 +107,6 @@ for p in presences:
                 st.success("Présence validée (extérieur).")
                 st.rerun()
 
-            # MEMBRE → vérifier cotisation + abonnement
             else:
                 cotisation = (
                     supabase.table("cotisations")
