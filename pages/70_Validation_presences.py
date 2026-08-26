@@ -62,24 +62,28 @@ for p in presences:
         chien_nom = "Chien extérieur"
     else:
         # Charger le membre
-        membre = (
-            supabase.table("membres")
-            .select("*")
-            .eq("id", p["membre_id"])
-            .execute()
-            .data
-        )
-        membre = membre[0] if membre else None
+        membre = None
+        if p.get("membre_id") is not None:
+            membre_data = (
+                supabase.table("membres")
+                .select("*")
+                .eq("id", p["membre_id"])
+                .execute()
+                .data
+            )
+            membre = membre_data[0] if membre_data else None
 
         # Charger le chien
-        chien = (
-            supabase.table("chiens")
-            .select("*")
-            .eq("id", p["chien_id"])
-            .execute()
-            .data
-        )
-        chien = chien[0] if chien else None
+        chien = None
+        if p.get("chien_id") is not None:
+            chien_data = (
+                supabase.table("chiens")
+                .select("*")
+                .eq("id", p["chien_id"])
+                .execute()
+                .data
+            )
+            chien = chien_data[0] if chien_data else None
 
         membre_nom = membre["nom"] if membre else "Membre inconnu"
         membre_prenom = membre["prenom"] if membre else ""
@@ -153,3 +157,4 @@ for p in presences:
 
     else:
         st.success("Présence déjà validée.")
+
