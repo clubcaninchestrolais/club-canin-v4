@@ -5,7 +5,7 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
 from supabase import create_client, Client
-from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
+from menu import hide_streamlit_menu, menu_lateral
 
 # ---------------------------------------------------------
 # Connexion Supabase
@@ -16,11 +16,9 @@ supabase: Client = create_client(url, key)
 
 st.set_page_config(page_title="Validation préinscriptions", page_icon="✅", layout="centered")
 
-# --- MASQUER LE MENU AUTOMATIQUE ---
-hide_streamlit_menu()   # <-- AJOUT
-
-# --- AFFICHER LE MENU PERSONNALISÉ ---
-menu_lateral()          # <-- AJOUT
+# --- MENU PERSONNALISÉ ---
+hide_streamlit_menu()
+menu_lateral()
 
 st.title("Validation des préinscriptions extérieures")
 
@@ -32,6 +30,7 @@ res = (
     .select("*")
     .eq("type", "exterieur")
     .eq("traitee", False)
+    .eq("acceptee", False)
     .execute()
 )
 
@@ -53,7 +52,6 @@ for pre in preinscriptions:
     st.write(f"**Chien :** {pre.get('chien_nom', '')} ({pre.get('chien_race', '')})")
     st.write(f"**Cours ID :** {pre.get('cours_id', '')}")
     st.write(f"**Date préinscription :** {pre.get('date_preinscription', '')}")
-    st.write(f"**Statut actuel :** {pre.get('statut', 'En attente')}")
 
     col1, col2 = st.columns(2)
 
@@ -62,7 +60,6 @@ for pre in preinscriptions:
         if st.button(f"✅ Valider #{pre['id']}", key=f"valider_{pre['id']}"):
             supabase.table("preinscriptions").update(
                 {
-                    "statut": "valide",
                     "traitee": True,
                     "acceptee": True,
                 }
@@ -76,7 +73,6 @@ for pre in preinscriptions:
         if st.button(f"❌ Refuser #{pre['id']}", key=f"refuser_{pre['id']}"):
             supabase.table("preinscriptions").update(
                 {
-                    "statut": "refuse",
                     "traitee": True,
                     "acceptee": False,
                 }
