@@ -78,6 +78,9 @@ for pre in preinscriptions:
                 "actif": True
             }).execute()
 
+            # 🔍 DEBUG : afficher la réponse Supabase
+            st.write("DEBUG membre:", membre)
+
             membre_id = membre.data[0]["id"]
 
             # 3️⃣ Créer un chien temporaire
@@ -86,6 +89,9 @@ for pre in preinscriptions:
                 "race": pre["chien_race"],
                 "id_membre": membre_id
             }).execute()
+
+            # 🔍 DEBUG : afficher la réponse Supabase
+            st.write("DEBUG chien:", chien)
 
             chien_id = chien.data[0]["id"]
 
@@ -115,3 +121,4 @@ for pre in preinscriptions:
 
             st.warning(f"Préinscription #{pre['id']} refusée.")
             st.rerun()
+
