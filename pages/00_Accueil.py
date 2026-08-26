@@ -101,7 +101,7 @@ with col13:
 # ---------------------------------------------------------
 st.subheader("🔄 Flux de validation")
 
-colV1, colV2, colV3, colV4 = st.columns(4)
+colV1, colV2, colV3, colV4, colV5 = st.columns(5)
 
 with colV1:
     bloc("50_Inscription_En_Ligne", "🌐", "Préinscription publique")
@@ -113,7 +113,10 @@ with colV3:
     bloc("33_presence_du_jour", "👣", "Présences du jour")
 
 with colV4:
-    bloc("70_Validation_presences", "🟢", "Validation des présences")  # <-- AJOUT
+    bloc("70_Validation_presences", "🟢", "Validation des présences")
+
+with colV5:
+    bloc("61_Liste_preinscriptions_exterieurs", "📋", "Préinscriptions extérieures")
 
 # ---------------------------------------------------------
 # 🏛️ ORGANISATIONS
@@ -140,3 +143,5 @@ with col16:
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
+
+
