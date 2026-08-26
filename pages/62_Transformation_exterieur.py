@@ -62,11 +62,11 @@ if st.button("Transformer en membre"):
 
     membre_id = membre_insert.data[0]["id"]
 
-    # 2️⃣ Créer le chien (minimal) — VERSION FINALE
+    # 2️⃣ Créer le chien (minimal)
     chien_insert = supabase.table("chiens").insert({
         "nom": choix["chien_nom"],
         "race": choix["chien_race"],
-        "id_membre": membre_id   # ✔ CORRECT : id_membre sans s
+        "id_membre": membre_id   # ✔ correct pour ta base
     }).execute()
 
     if not chien_insert.data:
@@ -83,6 +83,6 @@ if st.button("Transformer en membre"):
         "chien_id": chien_id
     }).eq("id", choix["id"]).execute()
 
-        st.success("✅ L'extérieur a été transformé en membre.")
+    st.success("✅ L'extérieur a été transformé en membre.")
     st.info("Vous pouvez maintenant compléter les informations du membre via le menu 'Membres'.")
     st.rerun()
