@@ -42,7 +42,7 @@ def menu_lateral():
     st.sidebar.page_link("pages/07_Seances_Cours.py", label="🗓️ Séances des cours")
     st.sidebar.page_link("pages/10_Cours_du_jour.py", label="📅 Cours du jour")
     st.sidebar.page_link("pages/32_Inscription_Seance.py", label="📝 Inscription séance")
-    st.sidebar.page_link("pages/70_Validation_presences.py", label="🟢 Validation des présences")  # <-- AJOUT
+    st.sidebar.page_link("pages/70_validation_presence.py", label="🟢 Validation des présences")  # <-- AJOUT
     st.sidebar.page_link("pages/33_presence_du_jour.py", label="👣 Présences du jour")
     st.sidebar.page_link("pages/08_Modifier_Seance.py", label="✏️ Modifier séance")
 
