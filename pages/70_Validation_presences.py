@@ -2,7 +2,6 @@ import streamlit as st
 from supabase import create_client, Client
 import datetime
 
-# Connexion Supabase
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(url, key)
@@ -42,16 +41,40 @@ exterieurs = (
 )
 
 # ---------------------------------------------------------
-# 2️⃣ MEMBRES INSCRITS
+# 2️⃣ MEMBRES INSCRITS (jointures manuelles)
 # ---------------------------------------------------------
-membres_inscrits = (
+inscriptions = (
     supabase.table("cours_seances_inscriptions")
-    .select("*, membres(*), chiens(*)")
+    .select("*")
     .eq("seance_id", seance_id)
     .eq("actif", True)
     .execute()
     .data
 )
+
+membres_inscrits = []
+for ins in inscriptions:
+    membre = (
+        supabase.table("membres")
+        .select("*")
+        .eq("id", ins["membre_id"])
+        .execute()
+        .data
+    )
+    chien = (
+        supabase.table("chiens")
+        .select("*")
+        .eq("id", ins["chien_id"])
+        .execute()
+        .data
+    )
+
+    if membre and chien:
+        membres_inscrits.append({
+            "inscription_id": ins["id"],
+            "membre": membre[0],
+            "chien": chien[0]
+        })
 
 # ---------------------------------------------------------
 # 3️⃣ AFFICHAGE FUSIONNÉ
@@ -74,13 +97,13 @@ for ext in exterieurs:
         st.rerun()
 
 # MEMBRES
-for ins in membres_inscrits:
-    membre = ins["membres"]
-    chien = ins["chiens"]
+for item in membres_inscrits:
+    membre = item["membre"]
+    chien = item["chien"]
 
     st.write(f"🟩 Membre : {membre['prenom']} {membre['nom']} – {chien['nom']}")
 
-    if st.button(f"Valider présence membre {ins['id']}"):
+    if st.button(f"Valider présence membre {item['inscription_id']}"):
         supabase.table("cours_presences").insert({
             "membre_id": membre["id"],
             "chien_id": chien["id"],
