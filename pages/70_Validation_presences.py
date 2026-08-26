@@ -1,20 +1,16 @@
 import streamlit as st
 from supabase import create_client, Client
-from datetime import datetime
-
-# Sécurité
-if "connected" not in st.session_state or not st.session_state["connected"]:
-    st.switch_page("pages/login.py")
+import datetime
 
 # Connexion Supabase
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(url, key)
 
-st.title("Validation des présences du jour")
+st.title("Validation des présences")
 
 # Séance du jour
-aujourdhui = datetime.now().date().isoformat()
+aujourdhui = datetime.date.today().isoformat()
 
 seances = (
     supabase.table("cours_seances")
@@ -31,10 +27,12 @@ if not seances:
 seance = seances[0]
 seance_id = seance["id"]
 
-st.subheader(f"Séance du {seance['date_seance']} — {seance.get('nom_seance', 'Séance')}")
+st.subheader(f"Séance du jour : {seance['nom_seance']}")
 
-# EXTÉRIEURS : on lit directement les préinscriptions acceptées
-ext_preinscriptions = (
+# ---------------------------------------------------------
+# 1️⃣ EXTÉRIEURS VALIDÉS
+# ---------------------------------------------------------
+exterieurs = (
     supabase.table("preinscriptions")
     .select("*")
     .eq("seance_id", seance_id)
@@ -43,20 +41,52 @@ ext_preinscriptions = (
     .data
 )
 
-if not ext_preinscriptions:
-    st.info("Aucune présence extérieure à valider.")
-else:
-    st.markdown("### Présences extérieures")
-    for pre in ext_preinscriptions:
-        st.markdown("---")
-        st.write(f"👤 {pre['prenom']} {pre['nom']} — 🐶 {pre['chien_nom']}")
+# ---------------------------------------------------------
+# 2️⃣ MEMBRES INSCRITS
+# ---------------------------------------------------------
+membres_inscrits = (
+    supabase.table("cours_seances_inscriptions")
+    .select("*, membres(*), chiens(*)")
+    .eq("seance_id", seance_id)
+    .eq("actif", True)
+    .execute()
+    .data
+)
 
-        if not pre.get("presence_validee", False):
-            if st.button(f"Valider présence extérieur #{pre['id']}", key=f"ext_{pre['id']}"):
-                supabase.table("preinscriptions").update({
-                    "presence_validee": True
-                }).eq("id", pre["id"]).execute()
-                st.success("Présence extérieure validée.")
-                st.rerun()
-        else:
-            st.success("Présence déjà validée (extérieur).")
+# ---------------------------------------------------------
+# 3️⃣ AFFICHAGE FUSIONNÉ
+# ---------------------------------------------------------
+st.markdown("### Participants à valider")
+
+# EXTÉRIEURS
+for ext in exterieurs:
+    st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
+
+    if st.button(f"Valider présence extérieur {ext['id']}"):
+        supabase.table("cours_presences").insert({
+            "membre_id": ext["membre_id"],
+            "chien_id": ext["chien_id"],
+            "seance_id": seance_id,
+            "date_presence": aujourdhui,
+            "present": True
+        }).execute()
+        st.success("Présence validée.")
+        st.rerun()
+
+# MEMBRES
+for ins in membres_inscrits:
+    membre = ins["membres"]
+    chien = ins["chiens"]
+
+    st.write(f"🟩 Membre : {membre['prenom']} {membre['nom']} – {chien['nom']}")
+
+    if st.button(f"Valider présence membre {ins['id']}"):
+        supabase.table("cours_presences").insert({
+            "membre_id": membre["id"],
+            "chien_id": chien["id"],
+            "seance_id": seance_id,
+            "date_presence": aujourdhui,
+            "present": True
+        }).execute()
+        st.success("Présence validée.")
+        st.rerun()
