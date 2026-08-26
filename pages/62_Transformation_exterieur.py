@@ -83,6 +83,6 @@ if st.button("Transformer en membre"):
         "chien_id": chien_id
     }).eq("id", choix["id"]).execute()
 
-    st.success("✅ L'extérieur a été transformé en membre.")
+        st.success("✅ L'extérieur a été transformé en membre.")
     st.info("Vous pouvez maintenant compléter les informations du membre via le menu 'Membres'.")
-    st.experimental_rerun()
+    st.rerun()
