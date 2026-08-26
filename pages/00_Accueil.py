@@ -116,7 +116,7 @@ with colV4:
     bloc("70_Validation_presences", "🟢", "Validation des présences")
 
 with colV5:
-    bloc("61_Liste_preinscriptions_exterieurs", "📋", "Préinscriptions extérieures")
+    bloc("61_Listeexterieurs", "📋", "Préinscriptions extérieures")
 
 # ---------------------------------------------------------
 # 🏛️ ORGANISATIONS
