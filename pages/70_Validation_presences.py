@@ -2,21 +2,18 @@ import streamlit as st
 from supabase import create_client, Client
 from datetime import datetime
 
-# --- SÉCURITÉ ---
+# Sécurité
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
-# --- CONNEXION SUPABASE ---
+# Connexion Supabase
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(url, key)
 
-st.set_page_config(page_title="Validation des présences", page_icon="📋")
-st.title("📋 Validation des présences du jour")
+st.title("Validation des présences du jour")
 
-# ---------------------------------------------------------
-# 1. Charger la séance du jour
-# ---------------------------------------------------------
+# Charger la séance du jour
 aujourdhui = datetime.now().date().isoformat()
 
 seances = (
@@ -33,61 +30,44 @@ if not seances:
 
 seance = seances[0]
 seance_id = seance["id"]
-nom_seance = seance.get("nom_seance", "Séance")
 
-st.subheader(f"Séance du {seance['date_seance']} — {nom_seance}")
+st.subheader(f"Séance du {seance['date_seance']} — {seance.get('nom_seance', 'Séance')}")
 
-# ---------------------------------------------------------
-# 2. Charger les présences
-# ---------------------------------------------------------
-presences = (
-    supabase.table("cours_seances_inscriptions")
-    .select("*")
-    .eq("seance_id", seance_id)
-    .execute()
-    .data
-)
+# Charger les présences
+try:
+    presences = (
+        supabase.table("cours_seances_inscriptions")
+        .select("*")
+        .eq("seance_id", seance_id)
+        .execute()
+        .data
+    )
+except Exception:
+    st.error("❌ Erreur lors du chargement des présences.")
+    st.stop()
 
 if not presences:
     st.info("Aucune présence à valider.")
     st.stop()
 
-# ---------------------------------------------------------
-# 3. Affichage des présences
-# ---------------------------------------------------------
+# Affichage des présences
 for p in presences:
     st.markdown("---")
 
     est_exterieur = (p.get("type_inscription") == "exterieur")
 
-    # ---------------------------------------------------------
-    # EXTÉRIEUR — VERSION ROBUSTE (NE PEUT PAS PLANTER)
-    # ---------------------------------------------------------
+    # EXTÉRIEUR — ultra simple, zéro requête
     if est_exterieur:
-        pre = (
-            supabase.table("preinscriptions")
-            .select("*")
-            .eq("seance_id", p["seance_id"])
-            .eq("type", "exterieur")
-            .execute()
-            .data
-        )
+        nom_ext = p.get("nom_exterieur", "Extérieur")
+        prenom_ext = p.get("prenom_exterieur", "")
+        chien_ext = p.get("chien_exterieur", "Chien extérieur")
 
-        if pre:
-            pr = pre[-1]  # dernière entrée sans order()
-            nom_ext = pr.get("nom", "Extérieur")
-            prenom_ext = pr.get("prenom", "")
-            nom_chien_ext = pr.get("chien_nom", "Chien extérieur")
-            st.write(f"👤 {prenom_ext} {nom_ext} — 🐶 {nom_chien_ext}")
-        else:
-            st.write("👤 Extérieur — 🐶 Chien extérieur")
+        st.write(f"👤 {prenom_ext} {nom_ext} — 🐶 {chien_ext}")
 
-    # ---------------------------------------------------------
-    # MEMBRE
-    # ---------------------------------------------------------
     else:
+        # MEMBRE
         membre = None
-        if p.get("membre_id") is not None:
+        if p.get("membre_id"):
             membre_data = (
                 supabase.table("membres")
                 .select("*")
@@ -98,7 +78,7 @@ for p in presences:
             membre = membre_data[0] if membre_data else None
 
         chien = None
-        if p.get("chien_id") is not None:
+        if p.get("chien_id"):
             chien_data = (
                 supabase.table("chiens")
                 .select("*")
@@ -114,9 +94,7 @@ for p in presences:
 
         st.write(f"👤 {membre_prenom} {membre_nom} — 🐶 {chien_nom}")
 
-    # ---------------------------------------------------------
-    # 4. Validation de présence
-    # ---------------------------------------------------------
+    # Validation de présence
     if not p["present"]:
         if st.button(f"Valider présence #{p['id']}", key=f"valider_{p['id']}"):
 
@@ -141,7 +119,7 @@ for p in presences:
                 )
 
                 if not cotisation:
-                    st.error("❌ Cotisation non active — impossible de valider.")
+                    st.error("❌ Cotisation non active.")
                     st.stop()
 
                 abo = (
@@ -154,7 +132,7 @@ for p in presences:
                 )
 
                 if not abo:
-                    st.error("❌ Abonnement non actif — impossible de valider.")
+                    st.error("❌ Abonnement non actif.")
                     st.stop()
 
                 abonnement = abo[0]
