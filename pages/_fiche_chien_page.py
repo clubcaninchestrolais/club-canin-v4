@@ -56,15 +56,31 @@ st.markdown("### Informations générales")
 
 nom = st.text_input("Nom du chien", chien["nom"])
 race = st.text_input("Race", chien["race"])
-sexe = st.text_input("Sexe", chien["sexe"])
 
+# --- SEXE : choix Mâle / Femelle ---
+sexe_options = ["Mâle", "Femelle"]
+sexe = st.selectbox(
+    "Sexe",
+    sexe_options,
+    index=sexe_options.index(chien["sexe"]) if chien["sexe"] in sexe_options else 0
+)
+
+# --- DATE DE NAISSANCE ---
 date_naissance = (
     st.date_input("Date de naissance", chien["date_naissance"])
     if chien["date_naissance"]
     else st.date_input("Date de naissance")
 )
 
-age = st.number_input("Âge", value=chien.get("age", 0))
+# --- CALCUL AUTOMATIQUE DE L'ÂGE ---
+def calcul_age(dn):
+    if not dn:
+        return 0
+    today = date.today()
+    return today.year - dn.year - ((today.month, today.day) < (dn.month, dn.day))
+
+age = calcul_age(date_naissance)
+st.write(f"Âge : {age} ans")
 
 st.markdown("### Identification")
 
