@@ -58,7 +58,9 @@ if st.button("Transformer en membre"):
 
     # Vérification d'erreur Supabase
     if not membre_insert.data:
-        st.error("❌ Supabase a refusé l'insertion du membre. Un champ obligatoire manque dans la table 'membres'.")
+        st.error("❌ Supabase a refusé l'insertion du membre.")
+        st.write("Voici l'erreur retournée par Supabase :")
+        st.json(membre_insert)
         st.stop()
 
     membre_id = membre_insert.data[0]["id"]
@@ -72,6 +74,8 @@ if st.button("Transformer en membre"):
 
     if not chien_insert.data:
         st.error("❌ Supabase a refusé l'insertion du chien.")
+        st.write("Voici l'erreur retournée par Supabase :")
+        st.json(chien_insert)
         st.stop()
 
     chien_id = chien_insert.data[0]["id"]
