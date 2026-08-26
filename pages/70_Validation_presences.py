@@ -3,13 +3,12 @@ from menu import hide_streamlit_menu, menu_lateral
 from supabase_rest import supabase
 from datetime import datetime
 
-# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+# --- SÉCURITÉ ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
 st.set_page_config(page_title="Validation des présences", page_icon="🟢")
 
-# --- MENU PERSONNALISÉ ---
 hide_streamlit_menu()
 menu_lateral()
 
@@ -24,12 +23,7 @@ if "seance_detail" not in st.session_state:
 # ---------------------------------------------------------
 # Charger les cours
 # ---------------------------------------------------------
-cours = (
-    supabase.table("cours")
-    .select("*")
-    .execute()
-    .data
-)
+cours = supabase.table("cours").select("*").execute().data
 cours_dict = {c["id"]: c for c in cours}
 
 # ---------------------------------------------------------
@@ -89,6 +83,24 @@ if st.session_state["seance_detail"]:
         membre_nom = f"{membre['prenom']} {membre['nom']}"
         chien_nom = chien["nom"]
 
+        # ---------------------------------------------------------
+        # Vérifier si c'est un extérieur NON validé
+        # ---------------------------------------------------------
+        pre = (
+            supabase.table("preinscriptions")
+            .select("*")
+            .eq("membre_id", membre["id"])
+            .eq("seance_id", s["id"])
+            .execute()
+            .data
+        )
+
+        if pre:
+            pre = pre[0]
+            if pre["type"] == "exterieur" and pre["acceptee"] == False:
+                st.error(f"❌ {membre_nom} est un extérieur NON validé. Validation impossible.")
+                continue
+
         colA, colB, colC = st.columns([3, 2, 2])
 
         with colA:
@@ -105,48 +117,52 @@ if st.session_state["seance_detail"]:
                 if st.button("Valider présence", key=f"presence_{i['id']}"):
 
                     # ---------------------------------------------------------
-                    # Vérifier cotisation + abonnement
+                    # Vérifier cotisation + abonnement (MEMBRES UNIQUEMENT)
                     # ---------------------------------------------------------
-                    cotisations = (
-                        supabase.table("cotisations")
-                        .select("*")
-                        .eq("membre_id", membre["id"])
-                        .execute()
-                        .data
-                    )
+                    if pre and pre["type"] == "exterieur":
+                        # Extérieur validé → pas de cotisation, pas d'abonnement
+                        pass
+                    else:
+                        cotisations = (
+                            supabase.table("cotisations")
+                            .select("*")
+                            .eq("membre_id", membre["id"])
+                            .execute()
+                            .data
+                        )
 
-                    cot_active = [
-                        c for c in cotisations
-                        if c["date_expiration"] and datetime.fromisoformat(c["date_expiration"]) > datetime.now()
-                    ]
+                        cot_active = [
+                            c for c in cotisations
+                            if c["date_expiration"] and datetime.fromisoformat(c["date_expiration"]) > datetime.now()
+                        ]
 
-                    if not cot_active:
-                        st.error("❌ Cotisation non active.")
-                        st.stop()
+                        if not cot_active:
+                            st.error("❌ Cotisation non active.")
+                            st.stop()
 
-                    abo = (
-                        supabase.table("abonnements")
-                        .select("*")
-                        .eq("membre_id", membre["id"])
-                        .eq("actif", True)
-                        .execute()
-                        .data
-                    )
+                        abo = (
+                            supabase.table("abonnements")
+                            .select("*")
+                            .eq("membre_id", membre["id"])
+                            .eq("actif", True)
+                            .execute()
+                            .data
+                        )
 
-                    if not abo:
-                        st.error("❌ Abonnement non actif.")
-                        st.stop()
+                        if not abo:
+                            st.error("❌ Abonnement non actif.")
+                            st.stop()
 
-                    abonnement = abo[0]
+                        abonnement = abo[0]
 
-                    if abonnement["seances_restantes"] <= 0:
-                        st.error("❌ Plus de séances disponibles.")
-                        st.stop()
+                        if abonnement["seances_restantes"] <= 0:
+                            st.error("❌ Plus de séances disponibles.")
+                            st.stop()
 
-                    # Décrémenter l'abonnement
-                    supabase.table("abonnements").update({
-                        "seances_restantes": abonnement["seances_restantes"] - 1
-                    }).eq("id", abonnement["id"]).execute()
+                        # Décrémenter l'abonnement
+                        supabase.table("abonnements").update({
+                            "seances_restantes": abonnement["seances_restantes"] - 1
+                        }).eq("id", abonnement["id"]).execute()
 
                     # ---------------------------------------------------------
                     # Insérer présence réelle
@@ -189,5 +205,3 @@ for s in seances:
     if col3.button("Valider", key=f"voir_{s['id']}"):
         st.session_state["seance_detail"] = s
         st.rerun()
-
-    st.markdown("---")
