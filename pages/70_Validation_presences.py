@@ -16,13 +16,17 @@ st.title("Validation des présences du jour")
 # Charger la séance du jour
 aujourdhui = datetime.now().date().isoformat()
 
-seances = (
-    supabase.table("cours_seances")
-    .select("*")
-    .eq("date_seance", aujourdhui)
-    .execute()
-    .data
-)
+try:
+    seances = (
+        supabase.table("cours_seances")
+        .select("*")
+        .eq("date_seance", aujourdhui)
+        .execute()
+        .data
+    )
+except Exception as e:
+    st.error("❌ Erreur Supabase lors du chargement des séances.")
+    st.stop()
 
 if not seances:
     st.info("Aucune séance aujourd'hui.")
@@ -42,8 +46,8 @@ try:
         .execute()
         .data
     )
-except Exception:
-    st.error("❌ Erreur lors du chargement des présences.")
+except Exception as e:
+    st.error("❌ Erreur Supabase lors du chargement des présences.")
     st.stop()
 
 if not presences:
@@ -56,7 +60,7 @@ for p in presences:
 
     est_exterieur = (p.get("type_inscription") == "exterieur")
 
-    # EXTÉRIEUR — ultra simple, zéro requête
+    # EXTÉRIEUR — lecture directe
     if est_exterieur:
         nom_ext = p.get("nom_exterieur", "Extérieur")
         prenom_ext = p.get("prenom_exterieur", "")
@@ -66,8 +70,7 @@ for p in presences:
 
     else:
         # MEMBRE
-        membre = None
-        if p.get("membre_id"):
+        try:
             membre_data = (
                 supabase.table("membres")
                 .select("*")
@@ -76,9 +79,10 @@ for p in presences:
                 .data
             )
             membre = membre_data[0] if membre_data else None
+        except Exception:
+            membre = None
 
-        chien = None
-        if p.get("chien_id"):
+        try:
             chien_data = (
                 supabase.table("chiens")
                 .select("*")
@@ -87,6 +91,8 @@ for p in presences:
                 .data
             )
             chien = chien_data[0] if chien_data else None
+        except Exception:
+            chien = None
 
         membre_nom = membre["nom"] if membre else "Membre inconnu"
         membre_prenom = membre["prenom"] if membre else ""
@@ -98,59 +104,16 @@ for p in presences:
     if not p["present"]:
         if st.button(f"Valider présence #{p['id']}", key=f"valider_{p['id']}"):
 
-            # EXTÉRIEUR
-            if est_exterieur:
+            try:
                 supabase.table("cours_seances_inscriptions").update({
                     "present": True
                 }).eq("id", p["id"]).execute()
+            except Exception:
+                st.error("❌ Erreur Supabase lors de la validation.")
+                st.stop()
 
-                st.success("Présence validée (extérieur).")
-                st.rerun()
-
-            # MEMBRE
-            else:
-                cotisation = (
-                    supabase.table("cotisations")
-                    .select("*")
-                    .eq("membre_id", p["membre_id"])
-                    .eq("statut", "active")
-                    .execute()
-                    .data
-                )
-
-                if not cotisation:
-                    st.error("❌ Cotisation non active.")
-                    st.stop()
-
-                abo = (
-                    supabase.table("abonnements")
-                    .select("*")
-                    .eq("membre_id", p["membre_id"])
-                    .eq("actif", True)
-                    .execute()
-                    .data
-                )
-
-                if not abo:
-                    st.error("❌ Abonnement non actif.")
-                    st.stop()
-
-                abonnement = abo[0]
-
-                if abonnement["seances_restantes"] <= 0:
-                    st.error("❌ Plus de séances restantes.")
-                    st.stop()
-
-                supabase.table("abonnements").update({
-                    "seances_restantes": abonnement["seances_restantes"] - 1
-                }).eq("id", abonnement["id"]).execute()
-
-                supabase.table("cours_seances_inscriptions").update({
-                    "present": True
-                }).eq("id", p["id"]).execute()
-
-                st.success("Présence validée (membre).")
-                st.rerun()
+            st.success("Présence validée.")
+            st.rerun()
 
     else:
         st.success("Présence déjà validée.")
