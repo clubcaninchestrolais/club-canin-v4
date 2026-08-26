@@ -70,7 +70,7 @@ membres = (
 membre = st.selectbox("Sélectionnez un membre :", membres, format_func=lambda m: f"{m['prenom']} {m['nom']}")
 
 # ---------------------------------------------------------
-# Sélection du chien (id_membre → chien_id)
+# Sélection du chien
 # ---------------------------------------------------------
 chiens = (
     supabase.table("chiens")
@@ -81,13 +81,13 @@ chiens = (
 )
 
 if not chiens:
-    st.error("⛔ Ce membre n'a aucun chien actif. Impossible d'inscrire à une séance.")
+    st.error("⛔ Ce membre n'a aucun chien actif.")
     st.stop()
 
 chien = st.selectbox("Sélectionnez un chien :", chiens, format_func=lambda c: c["nom"])
 
 # ---------------------------------------------------------
-# Vérification abonnement (id_membre)
+# Vérification abonnement
 # ---------------------------------------------------------
 abo = (
     supabase.table("abonnements")
@@ -109,31 +109,31 @@ if abo["seances_total"] != -1 and abo["seances_restantes"] <= 0:
     st.stop()
 
 # ---------------------------------------------------------
-# Inscription
+# Inscription dans cours_seances_inscriptions
 # ---------------------------------------------------------
 if st.button("📝 Inscrire à cette séance"):
 
     # Vérifier doublon
     deja = (
-        supabase.table("cours_presences")
+        supabase.table("cours_seances_inscriptions")
         .select("*")
         .eq("membre_id", membre["id"])
+        .eq("chien_id", chien["id"])
         .eq("seance_id", seance_id)
         .execute()
         .data
     )
 
     if deja:
-        st.warning("Ce membre est déjà inscrit à cette séance.")
+        st.warning("Ce chien est déjà inscrit à cette séance.")
         st.stop()
 
-    supabase.table("cours_presences").insert({
-        "membre_id": membre["id"],     # <-- CORRECT
-        "chien_id": chien["id"],       # <-- CORRECT
-        "seance_id": seance_id,        # <-- CORRECT
-        "date_presence": seance["date_seance"],
+    supabase.table("cours_seances_inscriptions").insert({
+        "membre_id": membre["id"],
+        "chien_id": chien["id"],
+        "seance_id": seance_id,
         "present": False,
-        "statut": "absent"
+        "actif": True
     }).execute()
 
     st.success("Inscription enregistrée !")
