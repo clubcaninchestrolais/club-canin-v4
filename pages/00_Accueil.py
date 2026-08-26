@@ -143,5 +143,3 @@ with col16:
 
 st.markdown("---")
 st.write("Bienvenue dans votre tableau de bord du Club Canin 🐾")
-
-
