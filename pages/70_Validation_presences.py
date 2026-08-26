@@ -6,7 +6,7 @@ from datetime import datetime
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
-# --- CONNEXION SUPABASE (identique à la page 60) ---
+# --- CONNEXION SUPABASE ---
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(url, key)
@@ -38,7 +38,7 @@ nom_seance = seance.get("nom_seance", "Séance")
 st.subheader(f"Séance du {seance['date_seance']} — {nom_seance}")
 
 # ---------------------------------------------------------
-# 2. Charger les présences SANS JOIN
+# 2. Charger les présences
 # ---------------------------------------------------------
 presences = (
     supabase.table("cours_seances_inscriptions")
@@ -48,7 +48,6 @@ presences = (
     .data
 )
 
-# 🔍 DEBUG : afficher ce que la page lit réellement
 st.write("DEBUG — Présences chargées :")
 st.write(presences)
 st.write("NOMBRE DE PRESENCES :", len(presences))
@@ -62,17 +61,15 @@ if not presences:
 # ---------------------------------------------------------
 for p in presences:
     st.markdown("---")
-
-    # 🔍 DEBUG ID pour vérifier l'affichage
     st.write("DEBUG ID :", p["id"])
 
     est_exterieur = (p.get("type_inscription") == "exterieur")
 
     if est_exterieur:
-        membre_nom = "Extérieur"
-        membre_prenom = ""
-        chien_nom = "Chien extérieur"
+        # 🔥 Bloc extérieur visible à 100%
+        st.write("👤 **Extérieur** — 🐶 **Chien extérieur**")
     else:
+        # Charger le membre
         membre = None
         if p.get("membre_id") is not None:
             membre_data = (
@@ -84,6 +81,7 @@ for p in presences:
             )
             membre = membre_data[0] if membre_data else None
 
+        # Charger le chien
         chien = None
         if p.get("chien_id") is not None:
             chien_data = (
@@ -99,8 +97,7 @@ for p in presences:
         membre_prenom = membre["prenom"] if membre else ""
         chien_nom = chien["nom"] if chien else "Chien inconnu"
 
-    # 🔧 Affichage robuste même si valeurs NULL
-    st.write(f"👤 {membre_prenom or ''} {membre_nom or ''} — 🐶 {chien_nom or ''}")
+        st.write(f"👤 {membre_prenom} {membre_nom} — 🐶 {chien_nom}")
 
     # ---------------------------------------------------------
     # 4. Validation de présence
@@ -163,5 +160,5 @@ for p in presences:
     else:
         st.success("Présence déjà validée.")
 
-# Fin de page pour vérifier l'affichage
 st.write("FIN DE PAGE")
+
