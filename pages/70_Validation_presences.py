@@ -1,5 +1,4 @@
 import streamlit as st
-from menu import hide_streamlit_menu, menu_lateral
 from supabase_rest import supabase
 from datetime import datetime
 
@@ -7,201 +6,129 @@ from datetime import datetime
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
-st.set_page_config(page_title="Validation des présences", page_icon="🟢")
-
-hide_streamlit_menu()
-menu_lateral()
-
-st.title("🟢 Validation des présences")
+st.set_page_config(page_title="Validation des présences", page_icon="📋")
+st.title("📋 Validation des présences du jour")
 
 # ---------------------------------------------------------
-# Initialiser la séance sélectionnée
+# 1. Charger la séance du jour
 # ---------------------------------------------------------
-if "seance_detail" not in st.session_state:
-    st.session_state["seance_detail"] = None
+aujourdhui = datetime.now().date().isoformat()
 
-# ---------------------------------------------------------
-# Charger les cours
-# ---------------------------------------------------------
-cours = supabase.table("cours").select("*").execute().data
-cours_dict = {c["id"]: c for c in cours}
-
-# ---------------------------------------------------------
-# Charger les séances actives
-# ---------------------------------------------------------
 seances = (
-    supabase.table("cours_seances")
+    supabase.table("seances")
     .select("*")
-    .eq("actif", True)
-    .order("date_seance", desc=False)
+    .eq("date_seance", aujourdhui)
     .execute()
     .data
 )
 
+if not seances:
+    st.info("Aucune séance aujourd'hui.")
+    st.stop()
+
+seance = seances[0]
+seance_id = seance["id"]
+
+st.subheader(f"Séance du {seance['date_seance']} — {seance['cours_nom']}")
+
 # ---------------------------------------------------------
-# Si une séance est sélectionnée → afficher les inscrits
+# 2. Charger les présences (membres + extérieurs)
 # ---------------------------------------------------------
-if st.session_state["seance_detail"]:
+presences = (
+    supabase.table("cours_seances_inscriptions")
+    .select("*, membres(nom, prenom), chiens(nom)")
+    .eq("seance_id", seance_id)
+    .execute()
+    .data
+)
 
-    s = st.session_state["seance_detail"]
-    cours_info = cours_dict.get(s["cours_id"], {})
+if not presences:
+    st.info("Aucune présence à valider.")
+    st.stop()
 
-    st.subheader("🔍 Détail de la séance")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write(f"📅 **Date** : {s['date_seance']}")
-        st.write(f"📝 **Note** : {s.get('note', 'Aucune note')}")
-    with col2:
-        st.write(f"🐾 **Cours** : {cours_info.get('nom', 'Cours inconnu')}")
-        st.write(f"👤 **Instructeur** : {cours_info.get('instructeur', 'Non défini')}")
-        st.write(f"📌 **Niveau** : {cours_info.get('niveau', 'Non défini')}")
-
-    # ---------------------------------------------------------
-    # Charger les INSCRIPTIONS DIRECTES
-    # ---------------------------------------------------------
-    inscrits = (
-        supabase.table("cours_seances_inscriptions")
-        .select("*, membres(*), chiens(*)")
-        .eq("seance_id", s["id"])
-        .execute()
-        .data
-    )
-
+# ---------------------------------------------------------
+# 3. Affichage des présences
+# ---------------------------------------------------------
+for p in presences:
     st.markdown("---")
-    st.subheader("👥 Participants à valider")
 
-    if not inscrits:
-        st.info("Aucun inscrit pour cette séance.")
-        st.stop()
+    membre_nom = p["membres"]["nom"] if p["membres"] else "Extérieur"
+    membre_prenom = p["membres"]["prenom"] if p["membres"] else ""
+    chien_nom = p["chiens"]["nom"] if p["chiens"] else "Chien extérieur"
 
-    for i in inscrits:
+    st.write(f"👤 **{membre_prenom} {membre_nom}** — 🐶 {chien_nom}")
 
-        membre = i["membres"]
-        chien = i["chiens"]
+    # Déterminer si c'est un extérieur
+    est_exterieur = (p.get("type") == "exterieur") or (p["membres"] is None)
 
-        membre_nom = f"{membre['prenom']} {membre['nom']}"
-        chien_nom = chien["nom"]
+    # ---------------------------------------------------------
+    # 4. Validation de présence
+    # ---------------------------------------------------------
+    if not p["present"]:
+        if st.button(f"Valider présence #{p['id']}", key=f"valider_{p['id']}"):
 
-        # ---------------------------------------------------------
-        # Vérifier si c'est un extérieur NON validé
-        # ---------------------------------------------------------
-        pre = (
-            supabase.table("preinscriptions")
-            .select("*")
-            .eq("membre_id", membre["id"])
-            .eq("seance_id", s["id"])
-            .execute()
-            .data
-        )
+            # ---------------------------------------------------------
+            # CAS 1 : EXTÉRIEUR → autorisé sans cotisation ni abonnement
+            # ---------------------------------------------------------
+            if est_exterieur:
+                supabase.table("cours_seances_inscriptions").update({
+                    "present": True
+                }).eq("id", p["id"]).execute()
 
-        if pre:
-            pre = pre[0]
-            if pre["type"] == "exterieur" and pre["acceptee"] == False:
-                st.error(f"❌ {membre_nom} est un extérieur NON validé. Validation impossible.")
-                continue
+                st.success("Présence validée (extérieur).")
+                st.rerun()
 
-        colA, colB, colC = st.columns([3, 2, 2])
-
-        with colA:
-            st.write(f"- **{membre_nom}** — 🐶 {chien_nom}")
-
-        with colB:
-            if i["present"]:
-                st.write("🟢 Présence validée")
+            # ---------------------------------------------------------
+            # CAS 2 : MEMBRE → vérifier cotisation + abonnement
+            # ---------------------------------------------------------
             else:
-                st.write("⏳ En attente de validation")
+                # Vérifier cotisation active
+                cotisation = (
+                    supabase.table("cotisations")
+                    .select("*")
+                    .eq("membre_id", p["membre_id"])
+                    .eq("statut", "active")
+                    .execute()
+                    .data
+                )
 
-        with colC:
-            if not i["present"]:
-                if st.button("Valider présence", key=f"presence_{i['id']}"):
+                if not cotisation:
+                    st.error("❌ Cotisation non active — impossible de valider.")
+                    st.stop()
 
-                    # ---------------------------------------------------------
-                    # Vérifier cotisation + abonnement (MEMBRES UNIQUEMENT)
-                    # ---------------------------------------------------------
-                    if pre and pre["type"] == "exterieur":
-                        # Extérieur validé → pas de cotisation, pas d'abonnement
-                        pass
-                    else:
-                        cotisations = (
-                            supabase.table("cotisations")
-                            .select("*")
-                            .eq("membre_id", membre["id"])
-                            .execute()
-                            .data
-                        )
+                # Vérifier abonnement actif
+                abo = (
+                    supabase.table("abonnements")
+                    .select("*")
+                    .eq("membre_id", p["membre_id"])
+                    .eq("actif", True)
+                    .execute()
+                    .data
+                )
 
-                        cot_active = [
-                            c for c in cotisations
-                            if c["date_expiration"] and datetime.fromisoformat(c["date_expiration"]) > datetime.now()
-                        ]
+                if not abo:
+                    st.error("❌ Abonnement non actif — impossible de valider.")
+                    st.stop()
 
-                        if not cot_active:
-                            st.error("❌ Cotisation non active.")
-                            st.stop()
+                abonnement = abo[0]
 
-                        abo = (
-                            supabase.table("abonnements")
-                            .select("*")
-                            .eq("membre_id", membre["id"])
-                            .eq("actif", True)
-                            .execute()
-                            .data
-                        )
+                if abonnement["seances_restantes"] <= 0:
+                    st.error("❌ Plus de séances restantes.")
+                    st.stop()
 
-                        if not abo:
-                            st.error("❌ Abonnement non actif.")
-                            st.stop()
+                # Décrémenter l'abonnement
+                supabase.table("abonnements").update({
+                    "seances_restantes": abonnement["seances_restantes"] - 1
+                }).eq("id", abonnement["id"]).execute()
 
-                        abonnement = abo[0]
+                # Valider la présence
+                supabase.table("cours_seances_inscriptions").update({
+                    "present": True
+                }).eq("id", p["id"]).execute()
 
-                        if abonnement["seances_restantes"] <= 0:
-                            st.error("❌ Plus de séances disponibles.")
-                            st.stop()
+                st.success("Présence validée (membre).")
+                st.rerun()
 
-                        # Décrémenter l'abonnement
-                        supabase.table("abonnements").update({
-                            "seances_restantes": abonnement["seances_restantes"] - 1
-                        }).eq("id", abonnement["id"]).execute()
+    else:
+        st.success("Présence déjà validée.")
 
-                    # ---------------------------------------------------------
-                    # Insérer présence réelle
-                    # ---------------------------------------------------------
-                    supabase.table("cours_presences").insert({
-                        "seance_id": s["id"],
-                        "membre_id": membre["id"],
-                        "chien_id": chien["id"],
-                        "date_presence": s["date_seance"],
-                        "present": True
-                    }).execute()
-
-                    # ---------------------------------------------------------
-                    # Marquer l'inscription comme validée
-                    # ---------------------------------------------------------
-                    supabase.table("cours_seances_inscriptions").update({
-                        "present": True
-                    }).eq("id", i["id"]).execute()
-
-                    st.success(f"Présence validée pour {membre_nom}.")
-                    st.rerun()
-
-    st.markdown("---")
-
-# ---------------------------------------------------------
-# Liste des séances actives
-# ---------------------------------------------------------
-st.subheader("📅 Séances actives")
-
-for s in seances:
-
-    cours_info = cours_dict.get(s["cours_id"], {})
-    nom_cours = cours_info.get("nom", "Cours inconnu")
-
-    col1, col2, col3 = st.columns([2, 2, 1])
-
-    col1.write(f"📅 {s['date_seance']}")
-    col2.write(f"🐾 {nom_cours}")
-
-    if col3.button("Valider", key=f"voir_{s['id']}"):
-        st.session_state["seance_detail"] = s
-        st.rerun()
