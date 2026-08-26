@@ -60,21 +60,21 @@ for p in presences:
 
     est_exterieur = (p.get("type_inscription") == "exterieur")
 
+    # ---------------------------------------------------------
+    # EXTÉRIEUR — VERSION ROBUSTE (NE PEUT PAS PLANTER)
+    # ---------------------------------------------------------
     if est_exterieur:
-        # 🔍 Récupérer la préinscription extérieure liée à cette séance
         pre = (
             supabase.table("preinscriptions")
             .select("*")
             .eq("seance_id", p["seance_id"])
             .eq("type", "exterieur")
-            .order("created_at", desc=True)
-            .limit(1)
             .execute()
             .data
         )
 
         if pre:
-            pr = pre[0]
+            pr = pre[-1]  # dernière entrée sans order()
             nom_ext = pr.get("nom", "Extérieur")
             prenom_ext = pr.get("prenom", "")
             nom_chien_ext = pr.get("chien_nom", "Chien extérieur")
@@ -82,8 +82,10 @@ for p in presences:
         else:
             st.write("👤 Extérieur — 🐶 Chien extérieur")
 
+    # ---------------------------------------------------------
+    # MEMBRE
+    # ---------------------------------------------------------
     else:
-        # Charger le membre
         membre = None
         if p.get("membre_id") is not None:
             membre_data = (
@@ -95,7 +97,6 @@ for p in presences:
             )
             membre = membre_data[0] if membre_data else None
 
-        # Charger le chien
         chien = None
         if p.get("chien_id") is not None:
             chien_data = (
@@ -119,6 +120,7 @@ for p in presences:
     if not p["present"]:
         if st.button(f"Valider présence #{p['id']}", key=f"valider_{p['id']}"):
 
+            # EXTÉRIEUR
             if est_exterieur:
                 supabase.table("cours_seances_inscriptions").update({
                     "present": True
@@ -127,6 +129,7 @@ for p in presences:
                 st.success("Présence validée (extérieur).")
                 st.rerun()
 
+            # MEMBRE
             else:
                 cotisation = (
                     supabase.table("cotisations")
