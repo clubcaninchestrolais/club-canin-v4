@@ -40,7 +40,7 @@ seances = (
 )
 
 # ---------------------------------------------------------
-# Si une séance est sélectionnée → afficher les participants
+# Si une séance est sélectionnée → afficher les inscrits
 # ---------------------------------------------------------
 if st.session_state["seance_detail"]:
 
@@ -59,13 +59,12 @@ if st.session_state["seance_detail"]:
         st.write(f"📌 **Niveau** : {cours_info.get('niveau', 'Non défini')}")
 
     # ---------------------------------------------------------
-    # Charger les préinscriptions validées
+    # Charger les INSCRIPTIONS DIRECTES
     # ---------------------------------------------------------
-    preinscrits = (
-        supabase.table("preinscriptions")
-        .select("*")
+    inscrits = (
+        supabase.table("cours_seances_inscriptions")
+        .select("*, membres(*), chiens(*)")
         .eq("seance_id", s["id"])
-        .eq("acceptee", True)
         .execute()
         .data
     )
@@ -73,60 +72,40 @@ if st.session_state["seance_detail"]:
     st.markdown("---")
     st.subheader("👥 Participants à valider")
 
-    if not preinscrits:
-        st.info("Aucun participant pour cette séance.")
+    if not inscrits:
+        st.info("Aucun inscrit pour cette séance.")
         st.stop()
 
-    for p in preinscrits:
+    for i in inscrits:
 
-        # ---------------------------------------------------------
-        # Infos membre ou extérieur
-        # ---------------------------------------------------------
-        if p["type"] == "membre":
-            membre = (
-                supabase.table("membres")
-                .select("*")
-                .eq("id", p["membre_id"])
-                .execute()
-                .data
-            )
-            membre_nom = f"{membre[0]['prenom']} {membre[0]['nom']}" if membre else "Membre inconnu"
+        membre = i["membres"]
+        chien = i["chiens"]
 
-            chien = (
-                supabase.table("chiens")
-                .select("*")
-                .eq("id", p["chien_id"])
-                .execute()
-                .data
-            )
-            chien_nom = chien[0]["nom"] if chien else "Chien inconnu"
-
-        else:
-            membre_nom = f"{p['prenom']} {p['nom']}"
-            chien_nom = p["chien_nom"]
+        membre_nom = f"{membre['prenom']} {membre['nom']}"
+        chien_nom = chien["nom"]
 
         colA, colB, colC = st.columns([3, 2, 2])
 
         with colA:
-            st.write(f"- **{membre_nom}** — 🐶 {chien_nom} ({p['type']})")
+            st.write(f"- **{membre_nom}** — 🐶 {chien_nom}")
 
         with colB:
-            st.write("⏳ En attente de validation")
+            if i["present"]:
+                st.write("🟢 Présence validée")
+            else:
+                st.write("⏳ En attente de validation")
 
         with colC:
-            if st.button("Valider présence", key=f"presence_{p['id']}"):
+            if not i["present"]:
+                if st.button("Valider présence", key=f"presence_{i['id']}"):
 
-                # ---------------------------------------------------------
-                # Membres : vérifier cotisation + abonnement
-                # ---------------------------------------------------------
-                if p["type"] == "membre":
-
-                    membre_id = p["membre_id"]
-
+                    # ---------------------------------------------------------
+                    # Vérifier cotisation + abonnement
+                    # ---------------------------------------------------------
                     cotisations = (
                         supabase.table("cotisations")
                         .select("*")
-                        .eq("membre_id", membre_id)
+                        .eq("membre_id", membre["id"])
                         .execute()
                         .data
                     )
@@ -143,7 +122,7 @@ if st.session_state["seance_detail"]:
                     abo = (
                         supabase.table("abonnements")
                         .select("*")
-                        .eq("membre_id", membre_id)
+                        .eq("membre_id", membre["id"])
                         .eq("actif", True)
                         .execute()
                         .data
@@ -159,39 +138,31 @@ if st.session_state["seance_detail"]:
                         st.error("❌ Plus de séances disponibles.")
                         st.stop()
 
+                    # Décrémenter l'abonnement
                     supabase.table("abonnements").update({
                         "seances_restantes": abonnement["seances_restantes"] - 1
                     }).eq("id", abonnement["id"]).execute()
 
-                # ---------------------------------------------------------
-                # Insérer présence réelle (membre ou extérieur)
-                # ---------------------------------------------------------
-                membre_id = p["membre_id"] if p["type"] == "membre" else 99999
-                chien_id = p["chien_id"] if p["type"] == "membre" else 99999
+                    # ---------------------------------------------------------
+                    # Insérer présence réelle
+                    # ---------------------------------------------------------
+                    supabase.table("cours_presences").insert({
+                        "seance_id": s["id"],
+                        "membre_id": membre["id"],
+                        "chien_id": chien["id"],
+                        "date_presence": s["date_seance"],
+                        "present": True
+                    }).execute()
 
-                supabase.table("cours_presences").insert({
-                    "seance_id": s["id"],
-                    "membre_id": membre_id,
-                    "chien_id": chien_id,
-                    "date_presence": s["date_seance"],
-                    "present": True
-                }).execute()
-
-                # ---------------------------------------------------------
-                # Mettre à jour cours_seances_inscriptions.present (membres)
-                # ---------------------------------------------------------
-                if p["type"] == "membre":
+                    # ---------------------------------------------------------
+                    # Marquer l'inscription comme validée
+                    # ---------------------------------------------------------
                     supabase.table("cours_seances_inscriptions").update({
                         "present": True
-                    }).eq("seance_id", s["id"]).eq("chien_id", p["chien_id"]).execute()
+                    }).eq("id", i["id"]).execute()
 
-                # ---------------------------------------------------------
-                # Supprimer la préinscription → disparition immédiate
-                # ---------------------------------------------------------
-                supabase.table("preinscriptions").delete().eq("id", p["id"]).execute()
-
-                st.success(f"Présence validée pour {membre_nom}.")
-                st.rerun()
+                    st.success(f"Présence validée pour {membre_nom}.")
+                    st.rerun()
 
     st.markdown("---")
 
@@ -214,6 +185,4 @@ for s in seances:
         st.session_state["seance_detail"] = s
         st.rerun()
 
-
     st.markdown("---")
-
