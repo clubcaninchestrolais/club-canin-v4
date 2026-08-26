@@ -1,10 +1,15 @@
 import streamlit as st
-from supabase_rest import supabase
+from supabase import create_client, Client
 from datetime import datetime
 
 # --- SÉCURITÉ ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
+
+# --- CONNEXION SUPABASE (identique à la page 60) ---
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(url, key)
 
 st.set_page_config(page_title="Validation des présences", page_icon="📋")
 st.title("📋 Validation des présences du jour")
@@ -53,7 +58,6 @@ if not presences:
 for p in presences:
     st.markdown("---")
 
-    # Déterminer si c'est un extérieur via type_inscription
     est_exterieur = (p.get("type_inscription") == "exterieur")
 
     if est_exterieur:
@@ -108,7 +112,6 @@ for p in presences:
 
             # MEMBRE → vérifier cotisation + abonnement
             else:
-                # Vérifier cotisation active
                 cotisation = (
                     supabase.table("cotisations")
                     .select("*")
@@ -122,7 +125,6 @@ for p in presences:
                     st.error("❌ Cotisation non active — impossible de valider.")
                     st.stop()
 
-                # Vérifier abonnement actif
                 abo = (
                     supabase.table("abonnements")
                     .select("*")
@@ -142,12 +144,10 @@ for p in presences:
                     st.error("❌ Plus de séances restantes.")
                     st.stop()
 
-                # Décrémenter l'abonnement
                 supabase.table("abonnements").update({
                     "seances_restantes": abonnement["seances_restantes"] - 1
                 }).eq("id", abonnement["id"]).execute()
 
-                # Valider la présence
                 supabase.table("cours_seances_inscriptions").update({
                     "present": True
                 }).eq("id", p["id"]).execute()
@@ -157,4 +157,3 @@ for p in presences:
 
     else:
         st.success("Présence déjà validée.")
-
