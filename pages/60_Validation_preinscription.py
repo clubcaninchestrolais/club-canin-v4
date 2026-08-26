@@ -70,13 +70,12 @@ for pre in preinscriptions:
 
                 st.write("DEBUG update_pre:", update_pre)
 
-                # 2️⃣ Créer un membre temporaire
+                # 2️⃣ Créer un membre temporaire (corrigé)
                 membre = supabase.table("membres").insert({
                     "nom": pre["nom"],
                     "prenom": pre["prenom"],
                     "email": pre["email"],
                     "telephone": pre["telephone"],
-                    "benevole": False,
                     "actif": True
                 }).execute()
 
