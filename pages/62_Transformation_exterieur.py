@@ -12,12 +12,16 @@ supabase: Client = create_client(url, key)
 
 st.title("🔁 Transformation d'un extérieur en membre")
 
-# --- Charger les préinscriptions extérieures ---
+# ---------------------------------------------------------
+# Charger uniquement les extérieurs encore à traiter
+# ---------------------------------------------------------
 preins = (
     supabase.table("preinscriptions")
     .select("*")
     .eq("type", "exterieur")
-    .order("date_seance")
+    .eq("traitee", True)
+    .eq("acceptee", True)
+    .eq("present_exterieur", True)
     .execute()
     .data
 )
@@ -26,7 +30,9 @@ if not preins:
     st.info("Aucun extérieur à transformer.")
     st.stop()
 
-# --- Sélection ---
+# ---------------------------------------------------------
+# Sélection
+# ---------------------------------------------------------
 choix = st.selectbox(
     "Sélectionner un extérieur",
     options=preins,
@@ -43,7 +49,7 @@ st.write(f"**Chien :** {choix['chien_nom']} ({choix['chien_race']})")
 st.markdown("---")
 
 # ---------------------------------------------------------
-# 1️⃣ BOUTON : TRANSFORMER EN MEMBRE
+# 1️⃣ TRANSFORMER EN MEMBRE
 # ---------------------------------------------------------
 if st.button("Transformer en membre"):
 
@@ -57,11 +63,6 @@ if st.button("Transformer en membre"):
         "actif": False
     }).execute()
 
-    if not membre_insert.data:
-        st.error("❌ Supabase a refusé l'insertion du membre.")
-        st.json(membre_insert)
-        st.stop()
-
     membre_id = membre_insert.data[0]["id"]
 
     # Créer le chien
@@ -71,16 +72,10 @@ if st.button("Transformer en membre"):
         "id_membre": membre_id
     }).execute()
 
-    if not chien_insert.data:
-        st.error("❌ Supabase a refusé l'insertion du chien.")
-        st.json(chien_insert)
-        st.stop()
-
     chien_id = chien_insert.data[0]["id"]
 
     # Mise à jour de la préinscription
     supabase.table("preinscriptions").update({
-        "present_exterieur": choix["present_exterieur"] or False,
         "membre_id": membre_id,
         "chien_id": chien_id,
         "type": "membre"
@@ -90,12 +85,13 @@ if st.button("Transformer en membre"):
     st.rerun()
 
 # ---------------------------------------------------------
-# 2️⃣ BOUTON : CLÔTURER LA PRÉINSCRIPTION (ARRÊT)
+# 2️⃣ CLÔTURER LA PRÉINSCRIPTION (ARRÊT)
 # ---------------------------------------------------------
 if st.button("Clôturer la préinscription (arrêt)"):
 
+    # On change simplement le type pour que la ligne disparaisse
     supabase.table("preinscriptions").update({
-        "present_exterieur": choix["present_exterieur"] or False
+        "type": "cloturee"
     }).eq("id", choix["id"]).execute()
 
     st.warning("🗂️ La préinscription a été clôturée.")
