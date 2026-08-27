@@ -74,16 +74,49 @@ for ins in inscriptions:
         membres_inscrits.append({
             "inscription_id": ins["id"],
             "membre": membre[0],
-            "chien": chien[0]
+            "chien": chien[0],
+            "cours": seance["nom_seance"]
         })
 
 # ---------------------------------------------------------
-# 3️⃣ AFFICHAGE FUSIONNÉ
+# 🔍 FILTRE TEXTE
+# ---------------------------------------------------------
+filtre = st.text_input("🔍 Rechercher un membre (nom, prénom, chien)")
+
+if filtre:
+    f = filtre.lower()
+    membres_inscrits = [
+        m for m in membres_inscrits
+        if f in m["membre"]["nom"].lower()
+        or f in m["membre"]["prenom"].lower()
+        or f in m["chien"]["nom"].lower()
+    ]
+
+# ---------------------------------------------------------
+# 🅰️ TRI ALPHABÉTIQUE
+# ---------------------------------------------------------
+membres_inscrits = sorted(
+    membres_inscrits,
+    key=lambda x: (x["membre"]["nom"].lower(), x["membre"]["prenom"].lower())
+)
+
+# ---------------------------------------------------------
+# 🐾 REGROUPEMENT PAR COURS
+# ---------------------------------------------------------
+cours_groupes = {}
+for item in membres_inscrits:
+    cours = item["cours"]
+    if cours not in cours_groupes:
+        cours_groupes[cours] = []
+    cours_groupes[cours].append(item)
+
+# ---------------------------------------------------------
+# AFFICHAGE
 # ---------------------------------------------------------
 st.markdown("### Participants à valider")
 
 # ---------------------------------------------------------
-# EXTÉRIEURS — OPTION B
+# EXTÉRIEURS
 # ---------------------------------------------------------
 for ext in exterieurs:
     st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
@@ -105,121 +138,124 @@ for ext in exterieurs:
         )
 
         if insertion.data:
-            st.success("Présence extérieur validée (premier cours).")
+            st.success("Présence extérieur validée.")
             st.rerun()
         else:
             st.error("❌ Erreur lors de la validation.")
             st.write(insertion)
 
 # ---------------------------------------------------------
-# MEMBRES — Validation normale
+# 🐾 MEMBRES PAR COURS
 # ---------------------------------------------------------
-for item in membres_inscrits:
-    membre = item["membre"]
-    chien = item["chien"]
+for cours, liste in cours_groupes.items():
 
-    st.write(f"🟩 Membre : {membre['prenom']} {membre['nom']} – {chien['nom']}")
+    st.markdown(f"## 🐾 {cours}")
 
-    # ---------------------------------------------------------
-    # 🔍 Vérifier COTISATION ACTIVE
-    # ---------------------------------------------------------
-    cotisations = (
-        supabase.table("cotisations")
-        .select("*")
-        .eq("membre_id", membre["id"])
-        .execute()
-        .data
-    )
+    for item in liste:
+        membre = item["membre"]
+        chien = item["chien"]
 
-    cot_active = [
-        c for c in cotisations
-        if c["statut"] == "active" and c["paye"] == True
-    ]
+        # ---------------------------------------------------------
+        # 💳 Vérifier cotisation active
+        # ---------------------------------------------------------
+        cotisations = (
+            supabase.table("cotisations")
+            .select("*")
+            .eq("membre_id", membre["id"])
+            .execute()
+            .data
+        )
 
-    if cot_active:
-        st.info("💳 Cotisation : Active")
-    else:
-        st.error("❌ Cotisation non active ou non payée")
-        st.warning("Validation impossible.")
-        continue
+        cot_active = [
+            c for c in cotisations
+            if c["statut"] == "active" and c["paye"] == True
+        ]
 
-    # ---------------------------------------------------------
-    # 🔍 Vérifier ABONNEMENT ACTIF
-    # ---------------------------------------------------------
-    abos = (
-        supabase.table("abonnements")
-        .select("*")
-        .eq("membre_id", membre["id"])
-        .order("id", desc=True)
-        .execute()
-        .data
-    )
+        cot_msg = "💳 Cotisation active" if cot_active else "❌ Cotisation non active"
 
-    if abos:
-        abo = abos[0]  # dernier abonnement
-        rest = abo["seances_restantes"]
+        # ---------------------------------------------------------
+        # 🎫 Vérifier abonnement actif
+        # ---------------------------------------------------------
+        abos = (
+            supabase.table("abonnements")
+            .select("*")
+            .eq("membre_id", membre["id"])
+            .order("id", desc=True)
+            .execute()
+            .data
+        )
 
-        # Couleur + message
-        if rest == 0:
-            couleur = "#ffcccc"
-            message = "❌ Abonnement terminé — validation impossible"
-        elif rest <= 2:
-            couleur = "#ffe6cc"
-            message = f"⚠️ Il reste {rest} séance(s)"
+        if abos:
+            abo = abos[0]
+            rest = abo["seances_restantes"]
+
+            if rest == 0:
+                couleur = "#ffcccc"
+                abo_msg = "❌ Abonnement terminé"
+            elif rest <= 2:
+                couleur = "#ffe6cc"
+                abo_msg = f"⚠️ {rest} séance(s) restante(s)"
+            else:
+                couleur = "#e6ffe6"
+                abo_msg = f"🟢 {rest} séances restantes"
         else:
-            couleur = "#e6ffe6"
-            message = f"🟢 Séances restantes : {rest}"
+            couleur = "#ffcccc"
+            abo_msg = "❌ Aucun abonnement"
 
+        # ---------------------------------------------------------
+        # Vérifier si déjà validé
+        # ---------------------------------------------------------
+        presence = (
+            supabase.table("cours_presences")
+            .select("*")
+            .eq("membre_id", membre["id"])
+            .eq("chien_id", chien["id"])
+            .eq("seance_id", seance_id)
+            .execute()
+            .data
+        )
+
+        deja = bool(presence)
+
+        # ---------------------------------------------------------
+        # AFFICHAGE COMPACT
+        # ---------------------------------------------------------
         st.markdown(
-            f"<div style='background:{couleur};padding:10px;border-radius:6px;'>"
-            f"<b>{message}</b>"
-            "</div>",
+            f"""
+            <div style='background:{couleur};padding:10px;border-radius:6px;margin-bottom:6px;'>
+            <b>{membre['prenom']} {membre['nom']}</b> – {chien['nom']}  
+            <br>{cot_msg} | {abo_msg}
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
-        # Blocage si terminé
-        if rest == 0:
+        # ---------------------------------------------------------
+        # BOUTON
+        # ---------------------------------------------------------
+        if deja:
+            st.success("Présence déjà validée.")
             continue
 
-    else:
-        st.error("❌ Aucun abonnement trouvé — validation impossible")
-        continue
+        if "terminé" in abo_msg.lower():
+            st.error("Validation impossible : abonnement terminé.")
+            continue
 
-    # ---------------------------------------------------------
-    # Vérifier si déjà validé
-    # ---------------------------------------------------------
-    presence = (
-        supabase.table("cours_presences")
-        .select("*")
-        .eq("membre_id", membre["id"])
-        .eq("chien_id", chien["id"])
-        .eq("seance_id", seance_id)
-        .execute()
-        .data
-    )
+        if st.button(
+            f"Valider présence {item['inscription_id']}",
+            key=f"btn_membre_{item['inscription_id']}"
+        ):
+            insertion = supabase.table("cours_presences").insert({
+                "membre_id": membre["id"],
+                "chien_id": chien["id"],
+                "seance_id": seance_id,
+                "date_presence": aujourdhui,
+                "present": True
+            }).execute()
 
-    if presence:
-        st.success("Présence déjà validée.")
-        continue
-
-    # ---------------------------------------------------------
-    # BOUTON DE VALIDATION
-    # ---------------------------------------------------------
-    if st.button(
-        f"Valider présence membre {item['inscription_id']}",
-        key=f"btn_membre_{item['inscription_id']}"
-    ):
-        insertion = supabase.table("cours_presences").insert({
-            "membre_id": membre["id"],
-            "chien_id": chien["id"],
-            "seance_id": seance_id,
-            "date_presence": aujourdhui,
-            "present": True
-        }).execute()
-
-        if insertion.data:
-            st.success("Présence membre validée.")
-            st.rerun()
-        else:
-            st.error("❌ Erreur lors de l'enregistrement.")
-            st.write(insertion)
+            if insertion.data:
+                st.success("Présence validée.")
+                st.rerun()
+            else:
+                st.error("❌ Erreur lors de l'enregistrement.")
+                st.write(insertion)
