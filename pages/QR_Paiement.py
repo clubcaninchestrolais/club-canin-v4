@@ -1,5 +1,6 @@
 import streamlit as st
-import segno
+from PIL import Image
+import qrcode
 from io import BytesIO
 
 st.title("Génération QR Paiement SEPA")
@@ -24,11 +25,20 @@ SCT
 EUR{montant}
 {communication}"""
 
-        qr = segno.make(epc_text)
+        # Génération du QR via PIL (aucune dépendance externe)
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(epc_text)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
 
         buf = BytesIO()
-        qr.save(buf, kind="png", scale=8)
+        img.save(buf, format="PNG")
         buf.seek(0)
 
-        st.image(buf, caption="QR Code SEPA", use_column_width=True)
+        st.image(buf, caption="QR Code SEPA", width=300)
         st.success("QR Code généré ! Le membre peut le scanner directement.")
