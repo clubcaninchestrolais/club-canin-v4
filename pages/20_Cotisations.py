@@ -95,7 +95,8 @@ if st.session_state.get("go_renew", False):
             "date_paiement": str(date_paiement),
             "mode_de_paiement": mode_de_paiement,
             "date_expiration": str(nouvelle_echeance),
-            "paye": True
+            "paye": True,
+            "statut": "active"   # ⭐ obligatoire dans TA table
         }).eq("id", cot["id"]).execute()
 
         st.success("Cotisation renouvelée avec succès.")
