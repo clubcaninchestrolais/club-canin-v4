@@ -64,6 +64,11 @@ for seance in seances:
 
     membres_inscrits = []
     for ins in inscriptions:
+
+        # 🔒 Protection anti-NULL
+        if not ins["membre_id"] or not ins["chien_id"]:
+            continue
+
         membre = (
             supabase.table("membres")
             .select("*")
@@ -79,13 +84,16 @@ for seance in seances:
             .data
         )
 
-        if membre and chien:
-            membres_inscrits.append({
-                "inscription_id": ins["id"],
-                "membre": membre[0],
-                "chien": chien[0],
-                "cours": nom_seance
-            })
+        # 🔒 Protection anti-membre ou chien manquant
+        if not membre or not chien:
+            continue
+
+        membres_inscrits.append({
+            "inscription_id": ins["id"],
+            "membre": membre[0],
+            "chien": chien[0],
+            "cours": nom_seance
+        })
 
     # ---------------------------------------------------------
     # 🔍 FILTRE TEXTE
@@ -116,6 +124,11 @@ for seance in seances:
     # AFFICHAGE EXTÉRIEURS
     # ---------------------------------------------------------
     for ext in exterieurs:
+
+        # 🔒 Protection anti-extérieurs incomplets
+        if not ext["nom"] or not ext["prenom"] or not ext["chien_nom"]:
+            continue
+
         st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
 
         if ext.get("present_exterieur"):
@@ -252,3 +265,4 @@ for seance in seances:
             else:
                 st.error("❌ Erreur lors de l'enregistrement.")
                 st.write(insertion)
+
