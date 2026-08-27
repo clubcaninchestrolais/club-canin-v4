@@ -78,13 +78,14 @@ if st.button("Transformer en membre"):
 
     chien_id = chien_insert.data[0]["id"]
 
-    # Mettre à jour la préinscription
+    # Mise à jour de la préinscription
     supabase.table("preinscriptions").update({
-        "type": "membre",
+        "archive": True,
+        "actif": False,
+        "present_exterieur": choix["present_exterieur"] or False,
         "membre_id": membre_id,
         "chien_id": chien_id,
-        "archive": True,      # ✔ On clôture l'extérieur
-        "actif": False        # ✔ Il n'est plus extérieur actif
+        "type": "membre"
     }).eq("id", choix["id"]).execute()
 
     st.success("✅ L'extérieur a été transformé en membre.")
@@ -92,17 +93,15 @@ if st.button("Transformer en membre"):
     st.rerun()
 
 # ---------------------------------------------------------
-# 2️⃣ BOUTON : CLÔTURER LA PRÉINSCRIPTION (NOUVEAU)
+# 2️⃣ BOUTON : CLÔTURER LA PRÉINSCRIPTION (ARRÊT)
 # ---------------------------------------------------------
 if st.button("Clôturer la préinscription (arrêt)"):
 
     supabase.table("preinscriptions").update({
-        "archive": True,      # ✔ On archive
-        "actif": False,       # ✔ Il n'est plus actif
-        "type": "exterieur",  # ✔ On garde la trace comme extérieur
-        "membre_id": None,    # ✔ Pas de membre
-        "chien_id": None      # ✔ Pas de chien membre
+        "archive": True,
+        "actif": False,
+        "present_exterieur": choix["present_exterieur"] or False
     }).eq("id", choix["id"]).execute()
 
-    st.warning("🗂️ La préinscription a été clôturée. L'extérieur ne continue pas les cours.")
+    st.warning("🗂️ La préinscription a été clôturée.")
     st.rerun()
