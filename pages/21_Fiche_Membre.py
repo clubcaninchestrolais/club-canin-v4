@@ -202,3 +202,15 @@ if not mode_creation:
             {actif_ab}  
             📝 **Note :** {a.get('note', 'N/A')}
             """)
+
+# ---------------------------------------------------------
+# ⭐ AJOUT : BOUTON HISTORIQUE DES PRÉSENCES
+# ---------------------------------------------------------
+
+if not mode_creation:
+    st.markdown("---")
+    st.markdown("## Historique des présences")
+
+    if st.button("📅 Voir l’historique des présences", key=f"histo_{membre_id}"):
+        st.session_state["historique_membre_id"] = membre_id
+        st.switch_page("pages/XX_Historique_Presences.py")
