@@ -32,6 +32,41 @@ def safe_date(value):
     return None
 
 # ---------------------------------------------------------
+# 🔄 RENOUVELLEMENT — PLACÉ EN TÊTE DE PAGE
+# ---------------------------------------------------------
+if st.session_state.get("go_renew", False):
+
+    cot = st.session_state["renew_cot"]
+    st.session_state["go_renew"] = False
+
+    st.markdown("---")
+    st.subheader("🔄 Nouvelle cotisation (renouvellement)")
+
+    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
+    date_paiement = st.date_input("Date de paiement", value=date.today())
+
+    ancienne_echeance = safe_date(cot["date_expiration"]).date()
+    nouvelle_date_debut = ancienne_echeance
+    nouvelle_expiration = nouvelle_date_debut.replace(year=nouvelle_date_debut.year + 1)
+
+    if st.button("Confirmer"):
+
+        supabase.table("cotisations").insert({
+            "membre_id": cot["membre_id"],
+            "montant": cot["montant"],
+            "type": cot["type"],
+            "date_paiement": str(date_paiement),
+            "mode_de_paiement": mode_de_paiement,
+            "date_expiration": str(nouvelle_expiration),
+            "statut": "active",
+            "paye": True,
+            "remarques": ""
+        }).execute()
+
+        st.success("Nouvelle cotisation créée.")
+        st.rerun()
+
+# ---------------------------------------------------------
 # Charger les membres
 # ---------------------------------------------------------
 membres = supabase.table("membres").select("*").order("nom").execute().data
@@ -72,53 +107,6 @@ if choix != "-- Tous les membres --":
         c for c in cotisations
         if c["nom"] == nom_sel and c["prenom"] == prenom_sel
     ]
-
-# ---------------------------------------------------------
-# 🔄 Renouvellement = création d’une nouvelle cotisation
-# ---------------------------------------------------------
-if st.session_state.get("go_renew", False):
-
-    cot = st.session_state["renew_cot"]
-    st.session_state["go_renew"] = False
-
-    st.markdown("---")
-    st.subheader("🔄 Renouvellement de la cotisation")
-
-    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
-    date_paiement = st.date_input("Date de paiement", value=date.today())
-
-    # Ancienne échéance
-    ancienne_echeance = safe_date(cot["date_expiration"]).date()
-
-    # Nouvelle cotisation démarre à l’échéance précédente
-    nouvelle_date_debut = ancienne_echeance
-
-    # Nouvelle expiration = +1 an
-    nouvelle_expiration = nouvelle_date_debut.replace(year=nouvelle_date_debut.year + 1)
-
-    if st.button("Confirmer le renouvellement"):
-
-        supabase.table("cotisations").insert({
-            "membre_id": cot["membre_id"],
-            "montant": cot["montant"],
-            "type": cot["type"],
-            "date_paiement": str(date_paiement),
-            "mode_de_paiement": mode_de_paiement,
-            "date_expiration": str(nouvelle_expiration),
-            "statut": "active",
-            "paye": True,
-            "remarques": ""
-        }).execute()
-
-        st.success("Nouvelle cotisation créée avec succès.")
-        st.rerun()
-
-# ---------------------------------------------------------
-# Navigation vers fiche détail
-# ---------------------------------------------------------
-if st.session_state.get("go_detail", False):
-    st.session_state["go_detail"] = False
-    st.switch_page("pages/32_Fiche_Cotisation.py")
 
 # ---------------------------------------------------------
 # AFFICHAGE
