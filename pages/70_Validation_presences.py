@@ -88,7 +88,10 @@ st.markdown("### Participants à valider")
 for ext in exterieurs:
     st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
 
-    if st.button(f"Valider présence extérieur {ext['id']}"):
+    if st.button(
+        f"Valider présence extérieur {ext['id']}",
+        key=f"btn_ext_{ext['id']}"
+    ):
         insertion = (
             supabase.table("preinscriptions")
             .update({"present_exterieur": True})
@@ -113,10 +116,13 @@ for item in membres_inscrits:
 
     st.write(f"🟩 Membre : {membre['prenom']} {membre['nom']} – {chien['nom']}")
 
-    if st.button(f"Valider présence membre {item['inscription_id']}"):
+    if st.button(
+        f"Valider présence membre {item['inscription_id']}",
+        key=f"btn_membre_{item['inscription_id']}"
+    ):
         insertion = supabase.table("cours_presences").insert({
-            "membre_id": membre["id"],      # ✔ correction
-            "chien_id": chien["id"],        # ✔ correction
+            "membre_id": membre["id"],
+            "chien_id": chien["id"],
             "seance_id": seance_id,
             "date_presence": aujourdhui,
             "present": True
@@ -128,4 +134,3 @@ for item in membres_inscrits:
         else:
             st.error("❌ Erreur lors de l'enregistrement.")
             st.write(insertion)
-
