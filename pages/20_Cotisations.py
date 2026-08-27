@@ -1,11 +1,11 @@
 import streamlit as st
+from supabase_rest import supabase
+from datetime import datetime, date
 
 # --- SÉCURITÉ ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
-from supabase_rest import supabase
-from datetime import datetime, date
 from menu import hide_streamlit_menu, menu_lateral
 
 st.set_page_config(page_title="Cotisations", page_icon="💳", layout="wide")
@@ -14,6 +14,9 @@ menu_lateral()
 
 st.title("💳 Gestion des cotisations")
 
+# ---------------------------------------------------------
+# Fonction de conversion sécurisée
+# ---------------------------------------------------------
 def safe_date(value):
     if value is None:
         return None
@@ -31,38 +34,26 @@ def safe_date(value):
 # ---------------------------------------------------------
 # Charger les membres
 # ---------------------------------------------------------
-membres = (
-    supabase.table("membres")
-    .select("*")
-    .order("nom")
-    .execute()
-    .data
-)
+membres = supabase.table("membres").select("*").order("nom").execute().data
 
 options = ["-- Tous les membres --"] + [
     f"{m['nom']} {m['prenom']}" for m in membres
 ]
 
 choix = st.selectbox("Sélectionner un membre", options)
-
 st.markdown("---")
 
 # ---------------------------------------------------------
 # Charger les cotisations
 # ---------------------------------------------------------
-raw_cot = (
-    supabase.table("cotisations")
-    .select("*")
-    .order("id", desc=True)
-    .execute()
-    .data
-)
+raw_cot = supabase.table("cotisations").select("*").order("id", desc=True).execute().data
 
 # ---------------------------------------------------------
-# RECONSTRUCTION PROPRE DES COTISATIONS
+# Reconstruction propre
 # ---------------------------------------------------------
 cotisations = []
 for cot in raw_cot:
+
     membre = next((m for m in membres if m["id"] == cot["membre_id"]), None)
     cot["nom"] = membre["nom"] if membre else ""
     cot["prenom"] = membre["prenom"] if membre else ""
@@ -72,7 +63,9 @@ for cot in raw_cot:
 
     cotisations.append(cot)
 
+# ---------------------------------------------------------
 # Filtrer si un membre est sélectionné
+# ---------------------------------------------------------
 if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
     cotisations = [
@@ -91,39 +84,43 @@ if cotisations:
         date_pay = safe_date(cot.get("date_paiement"))
         date_exp = safe_date(cot.get("date_expiration"))
 
-        if cot.get("paye"):
-            couleur = "#e6ffe6"
-        else:
-            if date_exp:
-                jours = (date_exp - datetime.now()).days
-                if jours < 0:
-                    couleur = "#ffcccc"
-                elif jours <= 30:
-                    couleur = "#ffe6cc"
-                else:
-                    couleur = "#ffcccc"
-            else:
-                couleur = "#ffcccc"
+        # ---------------------------------------------------------
+        # BADGES
+        # ---------------------------------------------------------
+        badge_paye = (
+            "<span style='background:#c8f7c5;padding:3px;border-radius:4px;'>Payé</span>"
+            if cot.get("paye") else
+            "<span style='background:#f7c5c5;padding:3px;border-radius:4px;'>Impayé</span>"
+        )
 
+        if date_exp:
+            jours = (date_exp - datetime.now()).days
+            if jours < 0:
+                badge_exp = "<span style='background:#ff9999;padding:3px;border-radius:4px;'>Expirée</span>"
+                couleur = "#ffcccc"
+            elif jours <= 30:
+                badge_exp = "<span style='background:#ffd699;padding:3px;border-radius:4px;'>Bientôt expirée</span>"
+                couleur = "#ffe6cc"
+            else:
+                badge_exp = "<span style='background:#c8f7c5;padding:3px;border-radius:4px;'>Valide</span>"
+                couleur = "#e6ffe6"
+        else:
+            badge_exp = "<span style='background:#ff9999;padding:3px;border-radius:4px;'>Erreur date</span>"
+            couleur = "#ffcccc"
+
+        # ---------------------------------------------------------
+        # Colonnes
+        # ---------------------------------------------------------
         col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([2,2,2,2,2,2,2,2])
 
         with col1:
-            st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['nom']}</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['nom']}</div>", unsafe_allow_html=True)
 
         with col2:
-            st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['prenom']}</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['prenom']}</div>", unsafe_allow_html=True)
 
         with col3:
-            st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['montant']} €</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['montant']} €</div>", unsafe_allow_html=True)
 
         with col4:
             st.markdown(
@@ -146,16 +143,21 @@ if cotisations:
             )
 
         with col7:
-            if st.button("Voir détail", key=f"detail_{cot['id']}"):
-                st.session_state["cot_id"] = cot["id"]
-                st.session_state["go_detail"] = True
-                st.rerun()
+            st.markdown(badge_paye, unsafe_allow_html=True)
 
         with col8:
-            if st.button("Renouveler", key=f"renew_{cot['id']}"):
-                st.session_state["renew_cot"] = cot
-                st.session_state["go_renew"] = True
-                st.rerun()
+            st.markdown(badge_exp, unsafe_allow_html=True)
+
+        # Boutons
+        if st.button("Voir détail", key=f"detail_{cot['id']}"):
+            st.session_state["cot_id"] = cot["id"]
+            st.session_state["go_detail"] = True
+            st.rerun()
+
+        if st.button("Renouveler", key=f"renew_{cot['id']}"):
+            st.session_state["renew_cot"] = cot
+            st.session_state["go_renew"] = True
+            st.rerun()
 
 else:
     st.info("Aucune cotisation trouvée.")
@@ -166,99 +168,3 @@ else:
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
     st.switch_page("pages/32_Fiche_Cotisation.py")
-
-# ---------------------------------------------------------
-# Renouvellement d’une cotisation
-# ---------------------------------------------------------
-if st.session_state.get("go_renew", False):
-
-    cot = st.session_state["renew_cot"]
-    st.session_state["go_renew"] = False
-
-    st.markdown("---")
-    st.subheader("🔄 Renouvellement de la cotisation")
-
-    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
-    date_paiement = st.date_input("Date de paiement", value=date.today())
-
-    ancienne_echeance = safe_date(cot["date_expiration"])
-    nouvelle_echeance = ancienne_echeance.replace(year=ancienne_echeance.year + 1)
-
-    if st.button("Confirmer le renouvellement"):
-        supabase.table("cotisations").update({
-            "date_paiement": str(date_paiement),
-            "mode_de_paiement": mode_de_paiement,
-            "date_expiration": str(nouvelle_echeance),
-            "paye": True,
-            "statut": "renouvelée"
-        }).eq("id", cot["id"]).execute()
-
-        st.success("Cotisation renouvelée avec succès.")
-        st.rerun()
-
-st.markdown("---")
-
-# ---------------------------------------------------------
-# Création d’une cotisation
-# ---------------------------------------------------------
-if choix != "-- Tous les membres --":
-
-    st.subheader("➕ Créer une cotisation")
-
-    membre_sel = next(
-        (m for m in membres if f"{m['nom']} {m['prenom']}" == choix),
-        None
-    )
-
-    montant = st.number_input("Montant (€)", min_value=0, value=45)
-    type_cot = st.selectbox("Type de cotisation", ["annuelle", "gratuite", "speciale"])
-    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
-
-    paye_maintenant = st.checkbox("Le membre a payé maintenant ?", value=False)
-    date_paiement = st.date_input("Date de paiement", value=date.today()) if paye_maintenant else None
-
-    date_expiration = st.date_input(
-        "Date d'expiration",
-        value=date.today().replace(year=date.today().year + 1)
-    )
-
-    remarques = st.text_area("Remarques (optionnel)", "")
-
-    if st.button("Créer la cotisation"):
-
-        cot_active = (
-            supabase.table("cotisations")
-            .select("*")
-            .eq("membre_id", membre_sel["id"])
-            .execute()
-            .data
-        )
-
-        cot_active = [
-            c for c in cot_active
-            if safe_date(c["date_expiration"]) and safe_date(c["date_expiration"]) > datetime.now()
-        ]
-
-        if cot_active:
-            st.error("❌ Ce membre possède déjà une cotisation active.")
-            st.stop()
-
-        supabase.table("cotisations").insert({
-            "membre_id": membre_sel["id"],
-            "montant": montant,
-            "type": type_cot,
-            "date_paiement": str(date_paiement) if date_paiement else None,
-            "mode_de_paiement": mode_de_paiement,
-            "date_expiration": str(date_expiration),
-            "remarques": remarques,
-            "paye": paye_maintenant,
-            "statut": "active"
-        }).execute()
-
-        supabase.table("membres").update({
-            "statut": "membre",
-            "actif": True
-        }).eq("id", membre_sel["id"]).execute()
-
-        st.success("🎉 Cotisation créée.")
-        st.rerun()
