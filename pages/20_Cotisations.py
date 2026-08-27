@@ -11,10 +11,7 @@ from menu import hide_streamlit_menu, menu_lateral
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Cotisations", page_icon="💳", layout="wide")
 
-# --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
-
-# --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
 st.title("💳 Gestion des cotisations")
@@ -65,9 +62,7 @@ cotisations = (
     .execute()
     .data
 )
-# ⭐ AJOUTER LE DEBUG ICI
-st.write("DEBUG cotisations :")
-st.write(cotisations)
+
 # ---------------------------------------------------------
 # Ajouter nom + prénom + sécuriser mode_de_paiement
 # ---------------------------------------------------------
@@ -78,7 +73,7 @@ for cot in cotisations:
         cot["prenom"] = membre["prenom"]
 
     # ⭐ Correction : garantir que la clé existe pour l'affichage
-    if "mode_de_paiement" not in cot or cot["mode_de_paiement"] is None:
+    if cot.get("mode_de_paiement") is None:
         cot["mode_de_paiement"] = ""
 
 # Filtrer si un membre est sélectionné
@@ -115,49 +110,28 @@ if cotisations:
             else:
                 couleur = "#ffcccc"
 
-        # 8 colonnes pour inclure le mode de paiement
+        # ⭐ 8 colonnes pour inclure le mode de paiement
         col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([2, 2, 2, 2, 2, 2, 2, 2])
 
         with col1:
-            st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{cot.get('nom', '')}</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['nom']}</div>", unsafe_allow_html=True)
 
         with col2:
-            st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{cot.get('prenom', '')}</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['prenom']}</div>", unsafe_allow_html=True)
 
         with col3:
-            st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{cot.get('montant', 0)} €</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['montant']} €</div>", unsafe_allow_html=True)
 
         with col4:
-            st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{date_pay.strftime('%d/%m/%Y') if date_pay else ''}</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_pay.strftime('%d/%m/%Y') if date_pay else ''}</div>", unsafe_allow_html=True)
 
         with col5:
-            st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{date_exp.strftime('%d/%m/%Y') if date_exp else ''}</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_exp.strftime('%d/%m/%Y') if date_exp else ''}</div>", unsafe_allow_html=True)
 
-        # ⭐ MODE DE PAIEMENT — enfin visible !
+        # ⭐ MODE DE PAIEMENT — garanti visible
         with col6:
             st.markdown(
-                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
-                f"{cot.get('mode_de_paiement', '')}</div>",
+                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['mode_de_paiement']}</div>",
                 unsafe_allow_html=True
             )
 
@@ -194,21 +168,11 @@ if st.session_state.get("go_renew", False):
     st.markdown("---")
     st.subheader("🔄 Renouvellement de la cotisation")
 
-    mode_de_paiement = st.selectbox(
-        "Mode de paiement",
-        ["cash", "virement", "QRCode"]
-    )
-
-    date_paiement = st.date_input(
-        "Date de paiement",
-        value=date.today(),
-        help="Encoder la date du paiement"
-    )
+    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
+    date_paiement = st.date_input("Date de paiement", value=date.today())
 
     ancienne_echeance = safe_date(cot["date_expiration"])
-    nouvelle_echeance = ancienne_echeance.replace(
-        year=ancienne_echeance.year + 1
-    )
+    nouvelle_echeance = ancienne_echeance.replace(year=ancienne_echeance.year + 1)
 
     if st.button("Confirmer le renouvellement"):
         supabase.table("cotisations").update({
@@ -231,36 +195,20 @@ if choix != "-- Tous les membres --":
 
     st.subheader("➕ Créer une cotisation")
 
-    membre_sel = next(
-        (m for m in membres if f"{m['nom']} {m['prenom']}" == choix),
-        None
-    )
+    membre_sel = next((m for m in membres if f"{m['nom']} {m['prenom']}" == choix), None)
 
     montant = st.number_input("Montant (€)", min_value=0, value=45)
     type_cot = st.selectbox("Type de cotisation", ["annuelle", "gratuite", "speciale"])
-
-    mode_de_paiement = st.selectbox(
-        "Mode de paiement",
-        ["cash", "virement", "QRCode"]
-    )
+    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
 
     paye_maintenant = st.checkbox("Le membre a payé maintenant ?", value=False)
+    date_paiement = st.date_input("Date de paiement", value=date.today()) if paye_maintenant else None
 
-    if paye_maintenant:
-        date_paiement = st.date_input("Date de paiement", value=date.today())
-    else:
-        date_paiement = None
-
-    date_expiration = st.date_input(
-        "Date d'expiration",
-        value=date.today().replace(year=date.today().year + 1)
-    )
-
+    date_expiration = st.date_input("Date d'expiration", value=date.today().replace(year=date.today().year + 1))
     remarques = st.text_area("Remarques (optionnel)", "")
 
     if st.button("Créer la cotisation"):
 
-        # Vérifier cotisation active existante
         cot_active = (
             supabase.table("cotisations")
             .select("*")
@@ -278,7 +226,6 @@ if choix != "-- Tous les membres --":
             st.error("❌ Ce membre possède déjà une cotisation active.")
             st.stop()
 
-        # Créer la cotisation
         supabase.table("cotisations").insert({
             "membre_id": membre_sel["id"],
             "montant": montant,
@@ -291,7 +238,6 @@ if choix != "-- Tous les membres --":
             "statut": "active"
         }).execute()
 
-        # Activer le membre
         supabase.table("membres").update({
             "statut": "membre",
             "actif": True
@@ -299,4 +245,5 @@ if choix != "-- Tous les membres --":
 
         st.success("🎉 Cotisation créée.")
         st.rerun()
+
 
