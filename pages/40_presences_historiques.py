@@ -49,11 +49,17 @@ if "historique_membre_id" in st.session_state:
         st.info("Aucune présence enregistrée pour ce membre.")
         st.stop()
 
+    # ---------------------------------------------------------
+    # Compteur global
+    # ---------------------------------------------------------
+    total_presences = len(presences)
+    st.success(f"Total des présences : {total_presences}")
+
     st.markdown("---")
     st.subheader("Séances")
 
     # ---------------------------------------------------------
-    # Affichage de l'historique
+    # Affichage compact
     # ---------------------------------------------------------
     for p in presences:
 
@@ -82,7 +88,6 @@ if "historique_membre_id" in st.session_state:
             .execute()
             .data
         )
-
         cours_nom = cours[0]["nom"] if cours else "Cours inconnu"
 
         # Récupérer le chien
@@ -98,11 +103,13 @@ if "historique_membre_id" in st.session_state:
         else:
             chien_nom = "Bénévole (pas de chien)"
 
-        # Affichage
-        st.write(f"📅 **{date_seance}** — *{cours_nom}*")
-        st.write(f"🐶 **{chien_nom}**")
-        st.write(f"Présent : {'✅ Oui' if p['present'] else '❌ Non'}")
-        st.write("---")
+        # Affichage compact
+        st.write(
+            f"📅 **{date_seance}** — "
+            f"**{cours_nom}** — "
+            f"🐶 {chien_nom} — "
+            f"Présent : {'✅ Oui' if p['present'] else '❌ Non'}"
+        )
 
     st.stop()
 
@@ -141,10 +148,14 @@ if not presences:
     st.info("Aucune présence enregistrée pour ce membre.")
     st.stop()
 
-st.markdown("---")
-st.header("Historique des séances")
+# Compteur global
+total_presences = len(presences)
+st.success(f"Total des présences : {total_presences}")
 
-# Affichage
+st.markdown("---")
+st.header("Séances")
+
+# Affichage compact
 for p in presences:
 
     seance = (
@@ -170,7 +181,6 @@ for p in presences:
         .execute()
         .data
     )
-
     cours_nom = cours[0]["nom"] if cours else "Cours inconnu"
 
     if p["chien_id"]:
@@ -185,7 +195,9 @@ for p in presences:
     else:
         chien_nom = "Bénévole (pas de chien)"
 
-    st.write(f"📅 **{date_seance}** — *{cours_nom}*")
-    st.write(f"🐶 **{chien_nom}**")
-    st.write(f"Présent : {'✅ Oui' if p['present'] else '❌ Non'}")
-    st.write("---")
+    st.write(
+        f"📅 **{date_seance}** — "
+        f"**{cours_nom}** — "
+        f"🐶 {chien_nom} — "
+        f"Présent : {'✅ Oui' if p['present'] else '❌ Non'}"
+    )
