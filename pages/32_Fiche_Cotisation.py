@@ -1,6 +1,6 @@
 import streamlit as st
 from supabase_rest import supabase
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from menu import hide_streamlit_menu, menu_lateral
 
 # --- SÉCURITÉ ---
@@ -52,14 +52,14 @@ st.markdown("---")
 # ---------------------------------------------------------
 st.subheader("💰 Paiement")
 
-# Champ mode de paiement
+# Mode de paiement
 mode_de_paiement = st.selectbox(
     "Mode de paiement",
     ["cash", "virement", "QRCode"],
     index=0 if mode_pay is None else ["cash", "virement", "QRCode"].index(mode_pay)
 )
 
-# Champ date de paiement
+# Date de paiement
 if date_pay:
     try:
         date_paiement_init = datetime.fromisoformat(date_pay).date()
@@ -72,10 +72,15 @@ date_paiement = st.date_input("Date de paiement", value=date_paiement_init)
 
 # Bouton de mise à jour
 if st.button("Mettre à jour le paiement"):
+
+    # ⭐ Calcul automatique de la date d'expiration
+    nouvelle_expiration = date_paiement.replace(year=date_paiement.year + 1)
+
     supabase.table("cotisations").update({
         "paye": True,
         "date_paiement": str(date_paiement),
-        "mode_de_paiement": mode_de_paiement
+        "mode_de_paiement": mode_de_paiement,
+        "date_expiration": str(nouvelle_expiration)
     }).eq("id", cot_id).execute()
 
     st.success("Paiement mis à jour.")
