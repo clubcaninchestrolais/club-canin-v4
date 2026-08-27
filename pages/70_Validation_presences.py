@@ -29,7 +29,7 @@ if not seances:
 st.markdown("## 🐾 Séances du jour")
 
 # ---------------------------------------------------------
-# 🔁 BOUCLE SUR TOUS LES COURS DU JOUR
+# 🔁 BOUCLE SUR TOUTES LES SÉANCES DU JOUR
 # ---------------------------------------------------------
 for seance in seances:
 
@@ -196,7 +196,7 @@ for seance in seances:
             abo_msg = "❌ Aucun abonnement"
 
         # ---------------------------------------------------------
-        # Vérifier si déjà validé
+        # Vérifier si déjà validé (cours_presences)
         # ---------------------------------------------------------
         presence = (
             supabase.table("cours_presences")
