@@ -12,10 +12,12 @@ st.title("Validation des présences")
 # Séance du jour
 aujourdhui = datetime.date.today().isoformat()
 
+# Charger TOUTES les séances du jour
 seances = (
     supabase.table("cours_seances")
     .select("*")
     .eq("date_seance", aujourdhui)
+    .order("id")
     .execute()
     .data
 )
@@ -24,134 +26,125 @@ if not seances:
     st.info("Aucune séance aujourd'hui.")
     st.stop()
 
-seance = seances[0]
-seance_id = seance["id"]
-
-st.subheader(f"Séance du jour : {seance['nom_seance']}")
+st.markdown("## 🐾 Séances du jour")
 
 # ---------------------------------------------------------
-# 1️⃣ EXTÉRIEURS VALIDÉS
+# 🔁 BOUCLE SUR TOUS LES COURS DU JOUR
 # ---------------------------------------------------------
-exterieurs = (
-    supabase.table("preinscriptions")
-    .select("*")
-    .eq("seance_id", seance_id)
-    .eq("acceptee", True)
-    .execute()
-    .data
-)
+for seance in seances:
 
-# ---------------------------------------------------------
-# 2️⃣ MEMBRES INSCRITS
-# ---------------------------------------------------------
-inscriptions = (
-    supabase.table("cours_seances_inscriptions")
-    .select("*")
-    .eq("seance_id", seance_id)
-    .eq("actif", True)
-    .execute()
-    .data
-)
+    seance_id = seance["id"]
+    nom_seance = seance["nom_seance"]
 
-membres_inscrits = []
-for ins in inscriptions:
-    membre = (
-        supabase.table("membres")
+    st.markdown(f"### 🐾 {nom_seance} — {seance['date_seance']}")
+
+    # ---------------------------------------------------------
+    # 1️⃣ EXTÉRIEURS VALIDÉS
+    # ---------------------------------------------------------
+    exterieurs = (
+        supabase.table("preinscriptions")
         .select("*")
-        .eq("id", ins["membre_id"])
-        .execute()
-        .data
-    )
-    chien = (
-        supabase.table("chiens")
-        .select("*")
-        .eq("id", ins["chien_id"])
+        .eq("seance_id", seance_id)
+        .eq("acceptee", True)
         .execute()
         .data
     )
 
-    if membre and chien:
-        membres_inscrits.append({
-            "inscription_id": ins["id"],
-            "membre": membre[0],
-            "chien": chien[0],
-            "cours": seance["nom_seance"]
-        })
+    # ---------------------------------------------------------
+    # 2️⃣ MEMBRES INSCRITS
+    # ---------------------------------------------------------
+    inscriptions = (
+        supabase.table("cours_seances_inscriptions")
+        .select("*")
+        .eq("seance_id", seance_id)
+        .eq("actif", True)
+        .execute()
+        .data
+    )
 
-# ---------------------------------------------------------
-# 🔍 FILTRE TEXTE
-# ---------------------------------------------------------
-filtre = st.text_input("🔍 Rechercher un membre (nom, prénom, chien)")
-
-if filtre:
-    f = filtre.lower()
-    membres_inscrits = [
-        m for m in membres_inscrits
-        if f in m["membre"]["nom"].lower()
-        or f in m["membre"]["prenom"].lower()
-        or f in m["chien"]["nom"].lower()
-    ]
-
-# ---------------------------------------------------------
-# 🅰️ TRI ALPHABÉTIQUE
-# ---------------------------------------------------------
-membres_inscrits = sorted(
-    membres_inscrits,
-    key=lambda x: (x["membre"]["nom"].lower(), x["membre"]["prenom"].lower())
-)
-
-# ---------------------------------------------------------
-# 🐾 REGROUPEMENT PAR COURS
-# ---------------------------------------------------------
-cours_groupes = {}
-for item in membres_inscrits:
-    cours = item["cours"]
-    if cours not in cours_groupes:
-        cours_groupes[cours] = []
-    cours_groupes[cours].append(item)
-
-# ---------------------------------------------------------
-# AFFICHAGE
-# ---------------------------------------------------------
-st.markdown("### Participants à valider")
-
-# ---------------------------------------------------------
-# EXTÉRIEURS
-# ---------------------------------------------------------
-for ext in exterieurs:
-    st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
-
-    if ext.get("present_exterieur"):
-        st.success("Présence déjà validée.")
-        continue
-
-    if st.button(
-        f"Valider présence extérieur {ext['id']}",
-        key=f"btn_ext_{ext['id']}"
-    ):
-        insertion = (
-            supabase.table("preinscriptions")
-            .update({"present_exterieur": True})
-            .eq("id", ext["id"])
+    membres_inscrits = []
+    for ins in inscriptions:
+        membre = (
+            supabase.table("membres")
             .select("*")
+            .eq("id", ins["membre_id"])
             .execute()
+            .data
+        )
+        chien = (
+            supabase.table("chiens")
+            .select("*")
+            .eq("id", ins["chien_id"])
+            .execute()
+            .data
         )
 
-        if insertion.data:
-            st.success("Présence extérieur validée.")
-            st.rerun()
-        else:
-            st.error("❌ Erreur lors de la validation.")
-            st.write(insertion)
+        if membre and chien:
+            membres_inscrits.append({
+                "inscription_id": ins["id"],
+                "membre": membre[0],
+                "chien": chien[0],
+                "cours": nom_seance
+            })
 
-# ---------------------------------------------------------
-# 🐾 MEMBRES PAR COURS
-# ---------------------------------------------------------
-for cours, liste in cours_groupes.items():
+    # ---------------------------------------------------------
+    # 🔍 FILTRE TEXTE
+    # ---------------------------------------------------------
+    filtre = st.text_input(
+        f"🔍 Rechercher un membre dans {nom_seance}",
+        key=f"filtre_{seance_id}"
+    )
 
-    st.markdown(f"## 🐾 {cours}")
+    if filtre:
+        f = filtre.lower()
+        membres_inscrits = [
+            m for m in membres_inscrits
+            if f in m["membre"]["nom"].lower()
+            or f in m["membre"]["prenom"].lower()
+            or f in m["chien"]["nom"].lower()
+        ]
 
-    for item in liste:
+    # ---------------------------------------------------------
+    # 🅰️ TRI ALPHABÉTIQUE
+    # ---------------------------------------------------------
+    membres_inscrits = sorted(
+        membres_inscrits,
+        key=lambda x: (x["membre"]["nom"].lower(), x["membre"]["prenom"].lower())
+    )
+
+    # ---------------------------------------------------------
+    # AFFICHAGE EXTÉRIEURS
+    # ---------------------------------------------------------
+    for ext in exterieurs:
+        st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
+
+        if ext.get("present_exterieur"):
+            st.success("Présence déjà validée.")
+            continue
+
+        if st.button(
+            f"Valider présence extérieur {ext['id']}",
+            key=f"btn_ext_{ext['id']}"
+        ):
+            insertion = (
+                supabase.table("preinscriptions")
+                .update({"present_exterieur": True})
+                .eq("id", ext["id"])
+                .select("*")
+                .execute()
+            )
+
+            if insertion.data:
+                st.success("Présence extérieur validée.")
+                st.rerun()
+            else:
+                st.error("❌ Erreur lors de la validation.")
+                st.write(insertion)
+
+    # ---------------------------------------------------------
+    # AFFICHAGE MEMBRES
+    # ---------------------------------------------------------
+    for item in membres_inscrits:
         membre = item["membre"]
         chien = item["chien"]
 
@@ -161,7 +154,7 @@ for cours, liste in cours_groupes.items():
         cotisations = (
             supabase.table("cotisations")
             .select("*")
-            .eq("membre_id", membre["id"])
+            .eq("id_membre", membre["id"])
             .execute()
             .data
         )
@@ -179,7 +172,7 @@ for cours, liste in cours_groupes.items():
         abos = (
             supabase.table("abonnements")
             .select("*")
-            .eq("membre_id", membre["id"])
+            .eq("id_membre", membre["id"])
             .order("id", desc=True)
             .execute()
             .data
