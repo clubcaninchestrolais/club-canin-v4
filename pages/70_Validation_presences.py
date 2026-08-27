@@ -88,6 +88,11 @@ st.markdown("### Participants à valider")
 for ext in exterieurs:
     st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
 
+    # Si déjà validé → on n'affiche plus le bouton
+    if ext.get("present_exterieur"):
+        st.success("Présence déjà validée.")
+        continue
+
     if st.button(
         f"Valider présence extérieur {ext['id']}",
         key=f"btn_ext_{ext['id']}"
@@ -115,6 +120,21 @@ for item in membres_inscrits:
     chien = item["chien"]
 
     st.write(f"🟩 Membre : {membre['prenom']} {membre['nom']} – {chien['nom']}")
+
+    # Vérifier si déjà validé
+    presence = (
+        supabase.table("cours_presences")
+        .select("*")
+        .eq("membre_id", membre["id"])
+        .eq("chien_id", chien["id"])
+        .eq("seance_id", seance_id)
+        .execute()
+        .data
+    )
+
+    if presence:
+        st.success("Présence déjà validée.")
+        continue
 
     if st.button(
         f"Valider présence membre {item['inscription_id']}",
