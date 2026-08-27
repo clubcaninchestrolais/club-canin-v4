@@ -107,6 +107,7 @@ if cotisations:
             else:
                 couleur = "#ffcccc"
 
+        # 8 colonnes pour inclure le mode de paiement
         col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([2, 2, 2, 2, 2, 2, 2, 2])
 
         with col1:
@@ -144,6 +145,7 @@ if cotisations:
                 unsafe_allow_html=True
             )
 
+        # ⭐ MODE DE PAIEMENT — enfin visible !
         with col6:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
@@ -289,4 +291,3 @@ if choix != "-- Tous les membres --":
 
         st.success("🎉 Cotisation créée.")
         st.rerun()
-
