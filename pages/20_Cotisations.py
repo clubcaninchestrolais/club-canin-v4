@@ -168,3 +168,32 @@ else:
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
     st.switch_page("pages/32_Fiche_Cotisation.py")
+
+# ---------------------------------------------------------
+# Renouvellement d’une cotisation
+# ---------------------------------------------------------
+if st.session_state.get("go_renew", False):
+
+    cot = st.session_state["renew_cot"]
+    st.session_state["go_renew"] = False
+
+    st.markdown("---")
+    st.subheader("🔄 Renouvellement de la cotisation")
+
+    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
+    date_paiement = st.date_input("Date de paiement", value=date.today())
+
+    ancienne_echeance = safe_date(cot["date_expiration"])
+    nouvelle_echeance = ancienne_echeance.replace(year=ancienne_echeance.year + 1)
+
+    if st.button("Confirmer le renouvellement"):
+        supabase.table("cotisations").update({
+            "date_paiement": str(date_paiement),
+            "mode_de_paiement": mode_de_paiement,
+            "date_expiration": str(nouvelle_echeance),
+            "paye": True,
+            "statut": "renouvelée"
+        }).eq("id", cot["id"]).execute()
+
+        st.success("Cotisation renouvelée avec succès.")
+        st.rerun()
