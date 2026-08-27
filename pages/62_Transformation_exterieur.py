@@ -80,8 +80,6 @@ if st.button("Transformer en membre"):
 
     # Mise à jour de la préinscription
     supabase.table("preinscriptions").update({
-        "archive": True,
-        "actif": False,
         "present_exterieur": choix["present_exterieur"] or False,
         "membre_id": membre_id,
         "chien_id": chien_id,
@@ -89,7 +87,6 @@ if st.button("Transformer en membre"):
     }).eq("id", choix["id"]).execute()
 
     st.success("✅ L'extérieur a été transformé en membre.")
-    st.info("Vous pouvez maintenant compléter les informations du membre via le menu 'Membres'.")
     st.rerun()
 
 # ---------------------------------------------------------
@@ -98,8 +95,6 @@ if st.button("Transformer en membre"):
 if st.button("Clôturer la préinscription (arrêt)"):
 
     supabase.table("preinscriptions").update({
-        "archive": True,
-        "actif": False,
         "present_exterieur": choix["present_exterieur"] or False
     }).eq("id", choix["id"]).execute()
 
