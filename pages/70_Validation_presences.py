@@ -42,7 +42,7 @@ exterieurs = (
 )
 
 # ---------------------------------------------------------
-# 2️⃣ MEMBRES INSCRITS (jointures manuelles)
+# 2️⃣ MEMBRES INSCRITS
 # ---------------------------------------------------------
 inscriptions = (
     supabase.table("cours_seances_inscriptions")
@@ -88,11 +88,14 @@ st.markdown("### Participants à valider")
 for ext in exterieurs:
     st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
 
-    # Bouton de validation du premier cours (sans transformation)
     if st.button(f"Valider présence extérieur {ext['id']}"):
-        insertion = supabase.table("preinscriptions").update({
-            "present_exterieur": True
-        }).eq("id", ext["id"]).execute()
+        insertion = (
+            supabase.table("preinscriptions")
+            .update({"present_exterieur": True})
+            .eq("id", ext["id"])
+            .select("*")
+            .execute()
+        )
 
         if insertion.data:
             st.success("Présence extérieur validée (premier cours).")
@@ -112,8 +115,8 @@ for item in membres_inscrits:
 
     if st.button(f"Valider présence membre {item['inscription_id']}"):
         insertion = supabase.table("cours_presences").insert({
-            "id_membres": membre["id"],
-            "id_chiens": chien["id"],
+            "membre_id": membre["id"],      # ✔ correction
+            "chien_id": chien["id"],        # ✔ correction
             "seance_id": seance_id,
             "date_presence": aujourdhui,
             "present": True
@@ -125,3 +128,4 @@ for item in membres_inscrits:
         else:
             st.error("❌ Erreur lors de l'enregistrement.")
             st.write(insertion)
+
