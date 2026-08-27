@@ -82,32 +82,28 @@ for ins in inscriptions:
 # ---------------------------------------------------------
 st.markdown("### Participants à valider")
 
-# EXTÉRIEURS
+# ---------------------------------------------------------
+# EXTÉRIEURS — OPTION B
+# ---------------------------------------------------------
 for ext in exterieurs:
     st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
 
-    # Extérieur non transformé → impossible de valider
-    if ext["membre_id"] is None or ext["chien_id"] is None:
-        st.warning("⚠ Cet extérieur doit être transformé en membre avant validation.")
-        continue
-
+    # Bouton de validation du premier cours (sans transformation)
     if st.button(f"Valider présence extérieur {ext['id']}"):
-        insertion = supabase.table("cours_presences").insert({
-            "id_membres": ext["membre_id"],   # ✔ correction
-            "id_chiens": ext["chien_id"],     # ✔ correction
-            "seance_id": seance_id,
-            "date_presence": aujourdhui,
-            "present": True
-        }).execute()
+        insertion = supabase.table("preinscriptions").update({
+            "present_exterieur": True
+        }).eq("id", ext["id"]).execute()
 
         if insertion.data:
-            st.success("Présence validée.")
+            st.success("Présence extérieur validée (premier cours).")
             st.rerun()
         else:
-            st.error("❌ Erreur lors de l'enregistrement.")
+            st.error("❌ Erreur lors de la validation.")
             st.write(insertion)
 
-# MEMBRES
+# ---------------------------------------------------------
+# MEMBRES — Validation normale
+# ---------------------------------------------------------
 for item in membres_inscrits:
     membre = item["membre"]
     chien = item["chien"]
@@ -116,17 +112,16 @@ for item in membres_inscrits:
 
     if st.button(f"Valider présence membre {item['inscription_id']}"):
         insertion = supabase.table("cours_presences").insert({
-            "id_membres": membre["id"],      # ✔ correction
-            "id_chiens": chien["id"],        # ✔ correction
+            "id_membres": membre["id"],
+            "id_chiens": chien["id"],
             "seance_id": seance_id,
             "date_presence": aujourdhui,
             "present": True
         }).execute()
 
         if insertion.data:
-            st.success("Présence validée.")
+            st.success("Présence membre validée.")
             st.rerun()
         else:
             st.error("❌ Erreur lors de l'enregistrement.")
             st.write(insertion)
-
