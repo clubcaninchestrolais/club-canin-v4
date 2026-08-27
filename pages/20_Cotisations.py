@@ -66,12 +66,18 @@ cotisations = (
     .data
 )
 
-# Ajouter nom + prénom
+# ---------------------------------------------------------
+# Ajouter nom + prénom + sécuriser mode_de_paiement
+# ---------------------------------------------------------
 for cot in cotisations:
     membre = next((m for m in membres if m["id"] == cot["membre_id"]), None)
     if membre:
         cot["nom"] = membre["nom"]
         cot["prenom"] = membre["prenom"]
+
+    # ⭐ Correction : garantir que la clé existe pour l'affichage
+    if "mode_de_paiement" not in cot or cot["mode_de_paiement"] is None:
+        cot["mode_de_paiement"] = ""
 
 # Filtrer si un membre est sélectionné
 if choix != "-- Tous les membres --":
@@ -291,3 +297,4 @@ if choix != "-- Tous les membres --":
 
         st.success("🎉 Cotisation créée.")
         st.rerun()
+
