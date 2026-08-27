@@ -265,4 +265,3 @@ for seance in seances:
             else:
                 st.error("❌ Erreur lors de l'enregistrement.")
                 st.write(insertion)
-
