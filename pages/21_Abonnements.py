@@ -28,6 +28,17 @@ choix = st.selectbox("Sélectionner un membre", options)
 st.markdown("---")
 
 # ---------------------------------------------------------
+# Filtre Actifs / Terminés / Tous
+# ---------------------------------------------------------
+filtre = st.radio(
+    "Afficher",
+    ["Tous les abonnements", "Actifs uniquement", "Terminés uniquement"],
+    horizontal=True
+)
+
+st.markdown("---")
+
+# ---------------------------------------------------------
 # Charger les abonnements
 # ---------------------------------------------------------
 abos = (
@@ -54,6 +65,15 @@ if choix != "-- Tous les membres --":
     ]
 
 # ---------------------------------------------------------
+# Appliquer le filtre
+# ---------------------------------------------------------
+if filtre == "Actifs uniquement":
+    abos = [a for a in abos if a["seances_restantes"] > 0]
+
+elif filtre == "Terminés uniquement":
+    abos = [a for a in abos if a["seances_restantes"] == 0]
+
+# ---------------------------------------------------------
 # Affichage ultra-compact
 # ---------------------------------------------------------
 st.subheader("📋 Liste des abonnements")
@@ -64,11 +84,15 @@ if "abo_id" not in st.session_state:
 if abos:
     for abo in abos:
 
+        rest = abo["seances_restantes"]
+
         # Déterminer la couleur
-        if abo["seances_restantes"] > 0:
-            couleur = "#e6ffe6"  # vert = actif
-        else:
+        if rest == 0:
             couleur = "#ffcccc"  # rouge = terminé
+        elif rest <= 2:
+            couleur = "#ffe6cc"  # orange = alerte
+        else:
+            couleur = "#e6ffe6"  # vert = OK
 
         col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 2])
 
@@ -113,7 +137,8 @@ if abos:
             with b1:
                 if st.button("+1", key=f"plus_{abo['id']}"):
                     supabase.table("abonnements").update({
-                        "seances_restantes": abo["seances_restantes"] + 1
+                        "seances_restantes": abo["seances_restantes"] + 1,
+                        "statut": "actif"
                     }).eq("id", abo["id"]).execute()
                     st.rerun()
 
@@ -185,7 +210,8 @@ if st.session_state["abo_id"] is not None:
         with col1:
             if st.button("➕ Ajouter une séance", key="fiche_plus"):
                 supabase.table("abonnements").update({
-                    "seances_restantes": abo["seances_restantes"] + 1
+                    "seances_restantes": abo["seances_restantes"] + 1,
+                    "statut": "actif"
                 }).eq("id", abo_id).execute()
                 st.success("Séance ajoutée.")
                 st.rerun()
@@ -262,4 +288,3 @@ else:
 
         st.success("🎉 Abonnement créé avec succès.")
         st.rerun()
-
