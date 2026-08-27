@@ -2,6 +2,7 @@ import streamlit as st
 from supabase import create_client, Client
 import datetime
 
+# Connexion Supabase
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(url, key)
@@ -85,16 +86,26 @@ st.markdown("### Participants à valider")
 for ext in exterieurs:
     st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
 
+    # Extérieur non transformé → impossible de valider
+    if ext["membre_id"] is None or ext["chien_id"] is None:
+        st.warning("⚠ Cet extérieur doit être transformé en membre avant validation.")
+        continue
+
     if st.button(f"Valider présence extérieur {ext['id']}"):
-        supabase.table("cours_presences").insert({
-            "membre_id": ext["membre_id"],
-            "chien_id": ext["chien_id"],
+        insertion = supabase.table("cours_presences").insert({
+            "id_membres": ext["membre_id"],   # ✔ correction
+            "id_chiens": ext["chien_id"],     # ✔ correction
             "seance_id": seance_id,
             "date_presence": aujourdhui,
             "present": True
         }).execute()
-        st.success("Présence validée.")
-        st.rerun()
+
+        if insertion.data:
+            st.success("Présence validée.")
+            st.rerun()
+        else:
+            st.error("❌ Erreur lors de l'enregistrement.")
+            st.write(insertion)
 
 # MEMBRES
 for item in membres_inscrits:
@@ -104,12 +115,18 @@ for item in membres_inscrits:
     st.write(f"🟩 Membre : {membre['prenom']} {membre['nom']} – {chien['nom']}")
 
     if st.button(f"Valider présence membre {item['inscription_id']}"):
-        supabase.table("cours_presences").insert({
-            "membre_id": membre["id"],
-            "chien_id": chien["id"],
+        insertion = supabase.table("cours_presences").insert({
+            "id_membres": membre["id"],      # ✔ correction
+            "id_chiens": chien["id"],        # ✔ correction
             "seance_id": seance_id,
             "date_presence": aujourdhui,
             "present": True
         }).execute()
-        st.success("Présence validée.")
-        st.rerun()
+
+        if insertion.data:
+            st.success("Présence validée.")
+            st.rerun()
+        else:
+            st.error("❌ Erreur lors de l'enregistrement.")
+            st.write(insertion)
+
