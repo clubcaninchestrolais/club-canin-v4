@@ -103,9 +103,7 @@ st.markdown("---")
 # ---------------------------------------------------------
 cotisations = supabase.table("cotisations").select("*").order("id", desc=True).execute().data
 
-# ---------------------------------------------------------
-# Ajouter nom + prénom + sécuriser mode_de_paiement
-# ---------------------------------------------------------
+# Ajouter nom + prénom
 for cot in cotisations:
     membre = next((m for m in membres if m["id"] == cot["membre_id"]), None)
     if membre:
@@ -115,16 +113,12 @@ for cot in cotisations:
     if not cot.get("mode_de_paiement"):
         cot["mode_de_paiement"] = ""
 
-# ---------------------------------------------------------
 # Filtrer par membre
-# ---------------------------------------------------------
 if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
     cotisations = [c for c in cotisations if c["nom"] == nom_sel and c["prenom"] == prenom_sel]
 
-# ---------------------------------------------------------
 # Déterminer la cotisation active
-# ---------------------------------------------------------
 if cotisations:
     cot_sorted = sorted(
         cotisations,
@@ -135,9 +129,7 @@ if cotisations:
 else:
     cot_active = None
 
-# ---------------------------------------------------------
-# Appliquer le filtre d'affichage
-# ---------------------------------------------------------
+# Appliquer le filtre
 if filtre == "Cotisation active uniquement" and cot_active:
     cotisations = [c for c in cotisations if c["id"] == cot_active]
 
@@ -152,9 +144,7 @@ if cotisations:
         date_pay = safe_date(cot.get("date_paiement"))
         date_exp = safe_date(cot.get("date_expiration"))
 
-        # ---------------------------------------------------------
         # Statut automatique
-        # ---------------------------------------------------------
         if cot["id"] == cot_active:
             statut = "active"
         elif date_exp and date_exp < datetime.now():
@@ -162,9 +152,7 @@ if cotisations:
         else:
             statut = "historique"
 
-        # ---------------------------------------------------------
         # Code couleur
-        # ---------------------------------------------------------
         if date_exp:
             jours_restants = (date_exp - datetime.now()).days
 
@@ -177,9 +165,6 @@ if cotisations:
         else:
             couleur = "#ffcccc"
 
-        # ---------------------------------------------------------
-        # Colonnes
-        # ---------------------------------------------------------
         col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([2,2,2,2,2,2,2,2,2])
 
         with col1:
@@ -224,3 +209,33 @@ else:
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
     st.switch_page("pages/32_Fiche_Cotisation.py")
+
+# ---------------------------------------------------------
+# SECTION TOUJOURS VISIBLE : CRÉER UNE COTISATION
+# ---------------------------------------------------------
+st.markdown("---")
+st.subheader("➕ Créer une cotisation")
+
+if choix == "-- Tous les membres --":
+    st.info("Sélectionnez un membre pour créer une cotisation.")
+else:
+    montant = st.number_input("Montant (€)", min_value=0, value=45)
+    date_paiement = st.date_input("Date de paiement", value=date.today())
+    mode = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
+
+    if st.button("Créer la cotisation"):
+        membre_id = next(m["id"] for m in membres if f"{m['nom']} {m['prenom']}" == choix)
+
+        supabase.table("cotisations").insert({
+            "membre_id": membre_id,
+            "montant": montant,
+            "date_paiement": str(date_paiement),
+            "mode_de_paiement": mode,
+            "date_expiration": str(date_paiement.replace(year=date_paiement.year + 1)),
+            "statut": "active",
+            "paye": True,
+            "remarques": ""
+        }).execute()
+
+        st.success("Cotisation créée.")
+        st.rerun()
