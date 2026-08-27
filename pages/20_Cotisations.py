@@ -74,7 +74,7 @@ if choix != "-- Tous les membres --":
     ]
 
 # ---------------------------------------------------------
-# 🔄 Renouvellement d’une cotisation (mise à jour)
+# 🔄 Renouvellement = création d’une nouvelle cotisation
 # ---------------------------------------------------------
 if st.session_state.get("go_renew", False):
 
@@ -87,20 +87,30 @@ if st.session_state.get("go_renew", False):
     mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
     date_paiement = st.date_input("Date de paiement", value=date.today())
 
-    ancienne_echeance = safe_date(cot["date_expiration"])
-    nouvelle_echeance = ancienne_echeance.replace(year=ancienne_echeance.year + 1)
+    # Ancienne échéance
+    ancienne_echeance = safe_date(cot["date_expiration"]).date()
+
+    # Nouvelle cotisation démarre à l’échéance précédente
+    nouvelle_date_debut = ancienne_echeance
+
+    # Nouvelle expiration = +1 an
+    nouvelle_expiration = nouvelle_date_debut.replace(year=nouvelle_date_debut.year + 1)
 
     if st.button("Confirmer le renouvellement"):
 
-        supabase.table("cotisations").update({
+        supabase.table("cotisations").insert({
+            "membre_id": cot["membre_id"],
+            "montant": cot["montant"],
+            "type": cot["type"],
             "date_paiement": str(date_paiement),
             "mode_de_paiement": mode_de_paiement,
-            "date_expiration": str(nouvelle_echeance),
+            "date_expiration": str(nouvelle_expiration),
+            "statut": "active",
             "paye": True,
-            "statut": "active"
-        }).eq("id", cot["id"]).execute()
+            "remarques": ""
+        }).execute()
 
-        st.success("Cotisation renouvelée avec succès.")
+        st.success("Nouvelle cotisation créée avec succès.")
         st.rerun()
 
 # ---------------------------------------------------------
