@@ -109,7 +109,6 @@ if cotisations:
 
         col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([2, 2, 2, 2, 2, 2, 2, 2])
 
-
         with col1:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
@@ -146,12 +145,19 @@ if cotisations:
             )
 
         with col6:
+            st.markdown(
+                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
+                f"{cot.get('mode_de_paiement', '')}</div>",
+                unsafe_allow_html=True
+            )
+
+        with col7:
             if st.button("Voir détail", key=f"detail_{cot['id']}"):
                 st.session_state["cot_id"] = cot["id"]
                 st.session_state["go_detail"] = True
                 st.rerun()
 
-        with col7:
+        with col8:
             if st.button("Renouveler", key=f"renew_{cot['id']}"):
                 st.session_state["renew_cot"] = cot
                 st.session_state["go_renew"] = True
@@ -283,3 +289,4 @@ if choix != "-- Tous les membres --":
 
         st.success("🎉 Cotisation créée.")
         st.rerun()
+
