@@ -65,7 +65,9 @@ cotisations = (
     .execute()
     .data
 )
-
+# ⭐ AJOUTER LE DEBUG ICI
+st.write("DEBUG cotisations :")
+st.write(cotisations)
 # ---------------------------------------------------------
 # Ajouter nom + prénom + sécuriser mode_de_paiement
 # ---------------------------------------------------------
