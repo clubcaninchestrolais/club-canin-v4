@@ -107,7 +107,7 @@ if cotisations:
             else:
                 couleur = "#ffcccc"
 
-        col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 2])
+        col1, col2, col3, col4, col5, col6, col7 = st.columns([2, 2, 2, 2, 2, 2, 2])
 
         with col1:
             st.markdown(
@@ -150,6 +150,12 @@ if cotisations:
                 st.session_state["go_detail"] = True
                 st.rerun()
 
+        with col7:
+            if st.button("Renouveler", key=f"renew_{cot['id']}"):
+                st.session_state["renew_cot"] = cot
+                st.session_state["go_renew"] = True
+                st.rerun()
+
 else:
     st.info("Aucune cotisation trouvée.")
 
@@ -160,10 +166,49 @@ if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
     st.switch_page("pages/32_Fiche_Cotisation.py")
 
+# ---------------------------------------------------------
+# Renouvellement d’une cotisation
+# ---------------------------------------------------------
+if st.session_state.get("go_renew", False):
+
+    cot = st.session_state["renew_cot"]
+    st.session_state["go_renew"] = False
+
+    st.markdown("---")
+    st.subheader("🔄 Renouvellement de la cotisation")
+
+    mode_de_paiement = st.selectbox(
+        "Mode de paiement",
+        ["cash", "virement", "QRCode"]
+    )
+
+    date_paiement = st.date_input(
+        "Date de paiement",
+        value=date.today(),
+        help="Encoder la date du paiement"
+    )
+
+    ancienne_echeance = safe_date(cot["date_expiration"])
+    nouvelle_echeance = ancienne_echeance.replace(
+        year=ancienne_echeance.year + 1
+    )
+
+    if st.button("Confirmer le renouvellement"):
+        supabase.table("cotisations").update({
+            "date_paiement": str(date_paiement),
+            "mode_de_paiement": mode_de_paiement,
+            "date_expiration": str(nouvelle_echeance),
+            "paye": True,
+            "statut": "renouvelée"
+        }).eq("id", cot["id"]).execute()
+
+        st.success("Cotisation renouvelée avec succès.")
+        st.rerun()
+
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Création d’une cotisation (IMPAYÉS GÉRÉS)
+# Création d’une cotisation
 # ---------------------------------------------------------
 if choix != "-- Tous les membres --":
 
@@ -176,6 +221,11 @@ if choix != "-- Tous les membres --":
 
     montant = st.number_input("Montant (€)", min_value=0, value=45)
     type_cot = st.selectbox("Type de cotisation", ["annuelle", "gratuite", "speciale"])
+
+    mode_de_paiement = st.selectbox(
+        "Mode de paiement",
+        ["cash", "virement", "QRCode"]
+    )
 
     paye_maintenant = st.checkbox("Le membre a payé maintenant ?", value=False)
 
@@ -217,6 +267,7 @@ if choix != "-- Tous les membres --":
             "montant": montant,
             "type": type_cot,
             "date_paiement": str(date_paiement) if date_paiement else None,
+            "mode_de_paiement": mode_de_paiement,
             "date_expiration": str(date_expiration),
             "remarques": remarques,
             "paye": paye_maintenant,
@@ -229,5 +280,5 @@ if choix != "-- Tous les membres --":
             "actif": True
         }).eq("id", membre_sel["id"]).execute()
 
-        st.success("🎉 Cotisation créée (paiement en attente si non payé).")
+        st.success("🎉 Cotisation créée.")
         st.rerun()
