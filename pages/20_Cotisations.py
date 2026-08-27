@@ -37,6 +37,45 @@ def safe_date(value):
     return None
 
 # ---------------------------------------------------------
+# Renouvellement d’une cotisation
+# ---------------------------------------------------------
+if st.session_state.get("go_renew", False):
+
+    cot = st.session_state["renew_cot"]
+    st.session_state["go_renew"] = False
+
+    st.markdown("---")
+    st.subheader("🔄 Renouvellement de la cotisation")
+
+    mode_de_paiement = st.selectbox(
+        "Mode de paiement",
+        ["cash", "virement", "QRCode"]
+    )
+
+    date_paiement = st.date_input(
+        "Date de paiement",
+        value=date.today(),
+        help="Encoder la date du paiement"
+    )
+
+    ancienne_echeance = safe_date(cot["date_expiration"])
+    nouvelle_echeance = ancienne_echeance.replace(
+        year=ancienne_echeance.year + 1
+    )
+
+    if st.button("Confirmer le renouvellement"):
+        supabase.table("cotisations").update({
+            "date_paiement": str(date_paiement),
+            "mode_de_paiement": mode_de_paiement,
+            "date_expiration": str(nouvelle_echeance),
+            "paye": True,
+            "statut": "renouvelée"
+        }).eq("id", cot["id"]).execute()
+
+        st.success("Cotisation renouvelée avec succès.")
+        st.rerun()
+
+# ---------------------------------------------------------
 # Charger les membres
 # ---------------------------------------------------------
 membres = (
@@ -75,7 +114,6 @@ for cot in cotisations:
         cot["nom"] = membre["nom"]
         cot["prenom"] = membre["prenom"]
 
-    # ⭐ Correction : garantir que la clé existe pour l'affichage
     if "mode_de_paiement" not in cot or cot["mode_de_paiement"] is None:
         cot["mode_de_paiement"] = ""
 
@@ -88,7 +126,7 @@ if choix != "-- Tous les membres --":
     ]
 
 # ---------------------------------------------------------
-# Affichage ultra-compact avec couleur impayés
+# Affichage ultra-compact avec couleur impayés / expirés
 # ---------------------------------------------------------
 st.subheader("📋 Liste des cotisations")
 
@@ -98,20 +136,26 @@ if cotisations:
         date_pay = safe_date(cot.get("date_paiement"))
         date_exp = safe_date(cot.get("date_expiration"))
 
-        # Couleur selon paiement / échéance
-        if cot.get("paye"):
-            couleur = "#e6ffe6"  # vert = payé
-        else:
-            if date_exp:
-                jours_restants = (date_exp - datetime.now()).days
-                if jours_restants < 0:
-                    couleur = "#ffcccc"  # rouge = expirée impayée
-                elif jours_restants <= 30:
-                    couleur = "#ffe6cc"  # orange = bientôt expirée impayée
-                else:
-                    couleur = "#ffcccc"
+        # ---------------------------------------------------------
+        # CODE COULEUR CORRIGÉ
+        # ---------------------------------------------------------
+        if date_exp:
+            jours_restants = (date_exp - datetime.now()).days
+
+            if jours_restants < 0:
+                # Expirée
+                couleur = "#ffcccc"  # rouge
+            elif jours_restants <= 30:
+                # Bientôt expirée
+                couleur = "#ffe6cc"  # orange
             else:
-                couleur = "#ffcccc"
+                # Encore valide
+                if cot.get("paye"):
+                    couleur = "#e6ffe6"  # vert = payée et valide
+                else:
+                    couleur = "#ffffcc"  # jaune = impayée mais valide
+        else:
+            couleur = "#ffcccc"  # erreur date → rouge
 
         # 8 colonnes pour inclure le mode de paiement
         col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([2, 2, 2, 2, 2, 2, 2, 2])
@@ -151,7 +195,6 @@ if cotisations:
                 unsafe_allow_html=True
             )
 
-        # ⭐ MODE DE PAIEMENT — enfin visible !
         with col6:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>"
@@ -180,45 +223,6 @@ else:
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
     st.switch_page("pages/32_Fiche_Cotisation.py")
-
-# ---------------------------------------------------------
-# Renouvellement d’une cotisation
-# ---------------------------------------------------------
-if st.session_state.get("go_renew", False):
-
-    cot = st.session_state["renew_cot"]
-    st.session_state["go_renew"] = False
-
-    st.markdown("---")
-    st.subheader("🔄 Renouvellement de la cotisation")
-
-    mode_de_paiement = st.selectbox(
-        "Mode de paiement",
-        ["cash", "virement", "QRCode"]
-    )
-
-    date_paiement = st.date_input(
-        "Date de paiement",
-        value=date.today(),
-        help="Encoder la date du paiement"
-    )
-
-    ancienne_echeance = safe_date(cot["date_expiration"])
-    nouvelle_echeance = ancienne_echeance.replace(
-        year=ancienne_echeance.year + 1
-    )
-
-    if st.button("Confirmer le renouvellement"):
-        supabase.table("cotisations").update({
-            "date_paiement": str(date_paiement),
-            "mode_de_paiement": mode_de_paiement,
-            "date_expiration": str(nouvelle_echeance),
-            "paye": True,
-            "statut": "renouvelée"
-        }).eq("id", cot["id"]).execute()
-
-        st.success("Cotisation renouvelée avec succès.")
-        st.rerun()
 
 st.markdown("---")
 
