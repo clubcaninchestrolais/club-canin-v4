@@ -51,8 +51,8 @@ if st.session_state.get("go_renew", False):
 
     if st.button("Confirmer le renouvellement"):
 
-        # Nouvelle cotisation active
-        supabase.table("cotisations").insert({
+        # Création nouvelle cotisation active
+        nouvelle = supabase.table("cotisations").insert({
             "membre_id": cot["membre_id"],
             "montant": cot["montant"],
             "type": cot["type"],
@@ -64,7 +64,19 @@ if st.session_state.get("go_renew", False):
             "remarques": ""
         }).execute()
 
-        st.success("Nouvelle cotisation créée.")
+        nouvelle_id = nouvelle.data[0]["id"]
+
+        # Mettre toutes les anciennes cotisations en historique
+        supabase.table("cotisations").update({
+            "statut": "historique"
+        }).eq("membre_id", cot["membre_id"]).execute()
+
+        # Mettre la nouvelle cotisation en active
+        supabase.table("cotisations").update({
+            "statut": "active"
+        }).eq("id", nouvelle_id).execute()
+
+        st.success("Nouvelle cotisation créée et statut mis à jour.")
         st.rerun()
 
 # ---------------------------------------------------------
