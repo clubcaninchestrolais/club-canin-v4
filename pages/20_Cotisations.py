@@ -74,7 +74,7 @@ if choix != "-- Tous les membres --":
     ]
 
 # ---------------------------------------------------------
-# 🔄 Renouvellement d’une cotisation (PLACÉ AVANT switch_page)
+# 🔄 Renouvellement d’une cotisation (mise à jour)
 # ---------------------------------------------------------
 if st.session_state.get("go_renew", False):
 
@@ -91,19 +91,20 @@ if st.session_state.get("go_renew", False):
     nouvelle_echeance = ancienne_echeance.replace(year=ancienne_echeance.year + 1)
 
     if st.button("Confirmer le renouvellement"):
+
         supabase.table("cotisations").update({
             "date_paiement": str(date_paiement),
             "mode_de_paiement": mode_de_paiement,
             "date_expiration": str(nouvelle_echeance),
             "paye": True,
-            "statut": "active"   # ⭐ obligatoire dans TA table
+            "statut": "active"
         }).eq("id", cot["id"]).execute()
 
         st.success("Cotisation renouvelée avec succès.")
         st.rerun()
 
 # ---------------------------------------------------------
-# Navigation vers fiche détail (PLACÉ APRÈS le renouvellement)
+# Navigation vers fiche détail
 # ---------------------------------------------------------
 if st.session_state.get("go_detail", False):
     st.session_state["go_detail"] = False
