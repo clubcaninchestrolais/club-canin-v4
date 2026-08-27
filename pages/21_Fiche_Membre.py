@@ -213,4 +213,4 @@ if not mode_creation:
 
     if st.button("📅 Voir l’historique des présences", key=f"histo_{membre_id}"):
         st.session_state["historique_membre_id"] = membre_id
-        st.switch_page("pages/XX_Historique_Presences.py")
+        st.switch_page("pages/40_presences_historiques.py")
