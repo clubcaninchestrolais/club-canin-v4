@@ -88,7 +88,6 @@ st.markdown("### Participants à valider")
 for ext in exterieurs:
     st.write(f"🟦 Extérieur : {ext['prenom']} {ext['nom']} – {ext['chien_nom']}")
 
-    # Si déjà validé → on n'affiche plus le bouton
     if ext.get("present_exterieur"):
         st.success("Présence déjà validée.")
         continue
@@ -121,7 +120,74 @@ for item in membres_inscrits:
 
     st.write(f"🟩 Membre : {membre['prenom']} {membre['nom']} – {chien['nom']}")
 
+    # ---------------------------------------------------------
+    # 🔍 Vérifier COTISATION ACTIVE
+    # ---------------------------------------------------------
+    cotisations = (
+        supabase.table("cotisations")
+        .select("*")
+        .eq("membre_id", membre["id"])
+        .execute()
+        .data
+    )
+
+    cot_active = [
+        c for c in cotisations
+        if c["statut"] == "active" and c["paye"] == True
+    ]
+
+    if cot_active:
+        st.info("💳 Cotisation : Active")
+    else:
+        st.error("❌ Cotisation non active ou non payée")
+        st.warning("Validation impossible.")
+        continue
+
+    # ---------------------------------------------------------
+    # 🔍 Vérifier ABONNEMENT ACTIF
+    # ---------------------------------------------------------
+    abos = (
+        supabase.table("abonnements")
+        .select("*")
+        .eq("membre_id", membre["id"])
+        .order("id", desc=True)
+        .execute()
+        .data
+    )
+
+    if abos:
+        abo = abos[0]  # dernier abonnement
+        rest = abo["seances_restantes"]
+
+        # Couleur + message
+        if rest == 0:
+            couleur = "#ffcccc"
+            message = "❌ Abonnement terminé — validation impossible"
+        elif rest <= 2:
+            couleur = "#ffe6cc"
+            message = f"⚠️ Il reste {rest} séance(s)"
+        else:
+            couleur = "#e6ffe6"
+            message = f"🟢 Séances restantes : {rest}"
+
+        st.markdown(
+            f"<div style='background:{couleur};padding:10px;border-radius:6px;'>"
+            f"<b>{message}</b>"
+            "</div>",
+            unsafe_allow_html=True
+        )
+
+        # Blocage si terminé
+        if rest == 0:
+            continue
+
+    else:
+        st.error("❌ Aucun abonnement trouvé — validation impossible")
+        continue
+
+    # ---------------------------------------------------------
     # Vérifier si déjà validé
+    # ---------------------------------------------------------
     presence = (
         supabase.table("cours_presences")
         .select("*")
@@ -136,6 +202,9 @@ for item in membres_inscrits:
         st.success("Présence déjà validée.")
         continue
 
+    # ---------------------------------------------------------
+    # BOUTON DE VALIDATION
+    # ---------------------------------------------------------
     if st.button(
         f"Valider présence membre {item['inscription_id']}",
         key=f"btn_membre_{item['inscription_id']}"
