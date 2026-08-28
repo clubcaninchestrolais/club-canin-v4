@@ -95,6 +95,8 @@ with col12:
 
 with col13:
     bloc("09_Finances", "💼", "Finances globales")
+with col14:
+    bloc("QR_Paiement", "🔲", "QR Paiement")
 
 # ---------------------------------------------------------
 # 🔄 FLUX DE VALIDATION
