@@ -38,13 +38,12 @@ def menu_lateral():
 
     # --- Cours & Séances ---
     st.sidebar.page_link("pages/04_Cours.py", label="📘 Cours")
-    st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")
+    
     
     st.sidebar.page_link("pages/10_Cours_du_jour.py", label="📅 Cours du jour")
-    st.sidebar.page_link("pages/32_Inscription_Seance.py", label="📝 Inscription séance")
     st.sidebar.page_link("pages/70_Validation_presences.py", label="🟢 Validation des présences")  # <-- corrigé
     st.sidebar.page_link("pages/33_presence_du_jour.py", label="👣 Présences du jour")
-    st.sidebar.page_link("pages/08_Modifier_Seance.py", label="✏️ Modifier séance")
+    
 
     st.sidebar.markdown("### 💰 Finances")
     st.sidebar.page_link("pages/20_Cotisations.py", label="💳 Cotisations")
