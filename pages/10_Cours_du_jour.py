@@ -140,9 +140,9 @@ st.markdown("---")
 # ---------------------------------------------------------
 # 4. Charger les inscrits via cours_inscriptions
 # ---------------------------------------------------------
-inscrits = (
+inscrits_raw = (
     supabase.table("cours_inscriptions")
-    .select("*, membres(*), chiens(*)")
+    .select("*")
     .eq("seance_id", seance["id"])
     .execute()
     .data
@@ -153,14 +153,31 @@ st.markdown("### 👥 Chiens inscrits")
 # ---------------------------------------------------------
 # 5. Afficher les inscrits
 # ---------------------------------------------------------
-if not inscrits:
+if not inscrits_raw:
     st.info("Aucun inscrit pour cette séance.")
 else:
-    for i in inscrits:
-        membre = i["membres"]
-        chien = i["chiens"]
+    for ins in inscrits_raw:
+
+        # Charger le membre
+        membre = (
+            supabase.table("membres")
+            .select("*")
+            .eq("id", ins["membre_id"])
+            .execute()
+            .data[0]
+        )
+
+        # Charger le chien
+        chien = (
+            supabase.table("chiens")
+            .select("*")
+            .eq("id", ins["chien_id"])
+            .execute()
+            .data[0]
+        )
 
         st.write(
             f"- **{membre['prenom']} {membre['nom']}** — "
             f"{chien['nom']} ({chien['race']})"
         )
+
