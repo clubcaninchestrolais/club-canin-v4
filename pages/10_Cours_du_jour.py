@@ -19,7 +19,7 @@ menu_lateral()
 st.title("📅 Cours du jour")
 
 # ---------------------------------------------------------
-# 1. Trouver les séances actives FUTURES (requête simple)
+# 1. Trouver les séances actives FUTURES
 # ---------------------------------------------------------
 
 today = date.today().isoformat()
@@ -33,16 +33,13 @@ seances_raw = (
     .data
 )
 
-# ---------------------------------------------------------
-# 2. Filtrer côté Python (compatible supabase_rest)
-# ---------------------------------------------------------
-
+# Filtrage Python
 seances = [
     s for s in seances_raw
-    if s["date_seance"]                     # pas vide
-    and isinstance(s["date_seance"], str)   # format string
-    and len(s["date_seance"]) == 10         # format YYYY-MM-DD
-    and s["date_seance"] >= today           # future ou aujourd'hui
+    if s["date_seance"]
+    and isinstance(s["date_seance"], str)
+    and len(s["date_seance"]) == 10
+    and s["date_seance"] >= today
 ]
 
 if not seances:
@@ -55,7 +52,7 @@ seance = seances[0]
 st.subheader(f"Séance du {seance['date_seance']}")
 
 # ---------------------------------------------------------
-# 3. Charger le cours lié à cette séance
+# 2. Charger le cours lié à cette séance
 # ---------------------------------------------------------
 cours = (
     supabase.table("cours")
@@ -75,7 +72,7 @@ st.markdown("---")
 st.write(f"### 🐾 {cours['categorie']} (ID {cours['id']})")
 
 # ---------------------------------------------------------
-# 4. INSCRIPTION DIRECTE À LA SÉANCE
+# 3. INSCRIPTION DIRECTE À LA SÉANCE
 # ---------------------------------------------------------
 st.markdown("### ➕ Inscrire un chien à cette séance")
 
@@ -112,9 +109,9 @@ else:
         format_func=lambda c: f"{c['nom']} ({c['race']})"
     )
 
-    # Vérifier si déjà inscrit
+    # Vérifier si déjà inscrit (cours_inscriptions)
     deja_inscrit = (
-        supabase.table("cours_seances_inscriptions")
+        supabase.table("cours_inscriptions")
         .select("*")
         .eq("seance_id", seance["id"])
         .eq("chien_id", chien_select["id"])
@@ -126,12 +123,13 @@ else:
         st.warning("⚠️ Ce chien est déjà inscrit à cette séance.")
     else:
         if st.button("Inscrire ce chien"):
-            supabase.table("cours_seances_inscriptions").insert({
+            supabase.table("cours_inscriptions").insert({
                 "seance_id": seance["id"],
                 "membre_id": membre_select["id"],
                 "chien_id": chien_select["id"],
-                "present": False,
-                "actif": True
+                "statut": "inscrit",
+                "type": "normal",
+                "date_inscription": date.today().isoformat()
             }).execute()
 
             st.success(f"🐶 {chien_select['nom']} a été inscrit à la séance.")
@@ -140,10 +138,10 @@ else:
 st.markdown("---")
 
 # ---------------------------------------------------------
-# 5. Charger les inscrits via cours_seances_inscriptions
+# 4. Charger les inscrits via cours_inscriptions
 # ---------------------------------------------------------
 inscrits = (
-    supabase.table("cours_seances_inscriptions")
+    supabase.table("cours_inscriptions")
     .select("*, membres(*), chiens(*)")
     .eq("seance_id", seance["id"])
     .execute()
@@ -153,7 +151,7 @@ inscrits = (
 st.markdown("### 👥 Chiens inscrits")
 
 # ---------------------------------------------------------
-# 6. Afficher les inscrits (sans st.stop)
+# 5. Afficher les inscrits
 # ---------------------------------------------------------
 if not inscrits:
     st.info("Aucun inscrit pour cette séance.")
