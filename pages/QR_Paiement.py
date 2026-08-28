@@ -70,13 +70,16 @@ if st.button("Générer le QR Code"):
             f"{communication_clean}"
         )
 
+        # Encodage ISO-8859-1 obligatoire pour la Belgique
+        epc_bytes = epc_text.encode("iso-8859-1")
+
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
             box_size=6,
             border=4,
         )
-        qr.add_data(epc_text)
+        qr.add_data(epc_bytes)
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="white")
 
