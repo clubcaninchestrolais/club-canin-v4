@@ -21,7 +21,7 @@ st.title("📚 Types de cours")
 # Bouton : Ajouter un cours
 # ---------------------------------------------------------
 if st.button("➕ Ajouter un cours"):
-    st.switch_page("pages/05_Ajouter_Cours.py")
+    st.switch_page("pages/05_Ajouter_cours.py")
 
 st.markdown("---")
 
