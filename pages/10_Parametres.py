@@ -5,15 +5,12 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
 from supabase_rest import supabase
-from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
+from menu import hide_streamlit_menu, menu_lateral
 
 st.set_page_config(page_title="Paramètres du club", page_icon="⚙️")
 
-# --- MASQUER LE MENU AUTOMATIQUE ---
-hide_streamlit_menu()   # <-- AJOUT
-
-# --- AFFICHER LE MENU PERSONNALISÉ ---
-menu_lateral()          # <-- AJOUT
+hide_streamlit_menu()
+menu_lateral()
 
 st.title("⚙️ Paramètres du club")
 
@@ -36,6 +33,25 @@ params["iban_club"] = col2.text_input("IBAN", params.get("iban_club", ""))
 params["responsable_club"] = col1.text_input("Responsable", params.get("responsable_club", ""))
 params["horaire_club"] = col2.text_input("Horaire", params.get("horaire_club", ""))
 params["message_accueil"] = st.text_area("Message d’accueil", params.get("message_accueil", ""))
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# Paramètres – Paiements (NOUVEAU)
+# ---------------------------------------------------------
+st.subheader("💳 Paramètres – Paiements")
+
+colP1, colP2 = st.columns(2)
+
+params["nom_beneficiaire"] = colP1.text_input(
+    "Nom du bénéficiaire (QR Paiement)",
+    params.get("nom_beneficiaire", "Club Canin Chestrolais de Neufchâteau")
+)
+
+params["iban_beneficiaire"] = colP2.text_input(
+    "IBAN du bénéficiaire (QR Paiement)",
+    params.get("iban_beneficiaire", "BE36068954592181")
+)
 
 st.markdown("---")
 
