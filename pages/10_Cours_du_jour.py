@@ -19,11 +19,12 @@ menu_lateral()
 st.title("📅 Cours du jour")
 
 # ---------------------------------------------------------
-# 1. Trouver la prochaine séance
+# 1. Trouver la prochaine séance ACTIVE
 # ---------------------------------------------------------
 seances = (
     supabase.table("cours_seances")
     .select("*")
+    .eq("actif", True)  # <-- CORRECTION ESSENTIELLE
     .gte("date_seance", date.today().isoformat())
     .order("date_seance", desc=False)
     .limit(1)
@@ -32,7 +33,7 @@ seances = (
 )
 
 if not seances:
-    st.warning("Aucune séance future trouvée.")
+    st.warning("Aucune séance future active trouvée.")
     st.stop()
 
 seance = seances[0]
