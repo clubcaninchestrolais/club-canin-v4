@@ -9,9 +9,9 @@ import re
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
-st.set_page_config(page_title="QR Paiement SEPA", page_icon="🔲")
+st.set_page_config(page_title="QR Paiement SEPA (Belgique)", page_icon="🔲")
 
-st.title("🔲 Génération QR Paiement SEPA")
+st.title("🔲 QR Paiement SEPA – Version Belgique")
 
 # Charger paramètres
 params = supabase.table("parametres").select("*").execute().data[0]
@@ -58,10 +58,10 @@ if st.button("Générer le QR Code"):
 
         communication_clean = clean_text(communication)
 
-        # Format EPC strict
+        # Format SEPA BELGIQUE (ligne 2 = 002)
         epc_text = (
             "BCD\n"
-            "001\n"
+            "002\n"          # <-- VERSION BELGE
             "1\n"
             "SCT\n"
             f"{beneficiaire_clean}\n"
@@ -84,8 +84,8 @@ if st.button("Générer le QR Code"):
         img.save(buf, format="PNG")
         buf.seek(0)
 
-        st.image(buf, caption="QR Code SEPA", use_container_width=False)
-        st.success("QR Code SEPA généré et conforme EPC.")
+        st.image(buf, caption="QR Code SEPA (Belgique)", use_container_width=False)
+        st.success("QR SEPA BELGE généré et compatible Belfius / CBC / ING / BNP.")
 
     except Exception as e:
         st.error("Erreur lors de la génération du QR Code.")
