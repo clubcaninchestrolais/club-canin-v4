@@ -5,7 +5,7 @@ st.set_page_config(page_title="Ajout membre", page_icon="👤")
 st.title("👤 Ajouter un membre")
 
 # ---------------------------------------------------------
-# Protection anti double-clic
+# Protection anti double-clic + message persistant
 # ---------------------------------------------------------
 if st.session_state.get("membre_ajoute", False):
     st.success(st.session_state["membre_ajoute"])
@@ -25,6 +25,9 @@ statut = st.selectbox(
     ["normal", "benevole"]
 )
 
+# ---------------------------------------------------------
+# Bouton d'ajout
+# ---------------------------------------------------------
 if st.button("Ajouter le membre"):
     if not prenom or not nom:
         st.error("Le prénom et le nom sont obligatoires.")
@@ -52,14 +55,18 @@ if st.button("Ajouter le membre"):
 
         # Cotisation gratuite
         supabase.table("cotisations").upsert({
-            "id_membre": membre_id,
+            "membre_id": membre_id,
             "date_expiration": "2035-01-01",
-            "type": "gratuit"
+            "type": "gratuit",
+            "statut": "gratuit",
+            "montant": 0,
+            "paye": True,
+            "mode_de_paiement": "gratuit"
         }).execute()
 
         # Abonnement gratuit illimité
         supabase.table("abonnements").upsert({
-            "id_membre": membre_id,
+            "membre_id": membre_id,
             "actif": True,
             "seances_total": -1,
             "seances_restantes": -1,
