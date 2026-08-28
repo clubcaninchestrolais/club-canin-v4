@@ -44,25 +44,31 @@ if st.button("Générer le QR Code"):
 
         # Format montant EPC : toujours 2 décimales
         montant_clean = montant.replace(",", ".").strip()
+
+        # Si pas de décimales → ajouter .00
         if "." not in montant_clean:
-            montant_clean += ".00"
+            montant_clean = montant_clean + ".00"
         else:
             # Forcer deux décimales
             parts = montant_clean.split(".")
             if len(parts[1]) == 1:
-                montant_clean += "0"
+                montant_clean = montant_clean + "0"
+            elif len(parts[1]) > 2:
+                montant_clean = parts[0] + "." + parts[1][:2]
 
         communication_clean = clean_text(communication)
 
         # Format EPC strict
-        epc_text = f"""BCD
-001
-1
-SCT
-{beneficiaire_clean}
-{iban_clean}
-EUR{montant_clean}
-{communication_clean}"""
+        epc_text = (
+            "BCD\n"
+            "001\n"
+            "1\n"
+            "SCT\n"
+            f"{beneficiaire_clean}\n"
+            f"{iban_clean}\n"
+            f"EUR{montant_clean}\n"
+            f"{communication_clean}"
+        )
 
         qr = qrcode.QRCode(
             version=1,
