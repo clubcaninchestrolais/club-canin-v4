@@ -5,10 +5,18 @@ st.set_page_config(page_title="Ajout membre", page_icon="👤")
 st.title("👤 Ajouter un membre")
 
 # ---------------------------------------------------------
+# Protection anti double-clic
+# ---------------------------------------------------------
+if st.session_state.get("membre_ajoute", False):
+    st.success(st.session_state["membre_ajoute"])
+    st.session_state["membre_ajoute"] = False
+    st.stop()
+
+# ---------------------------------------------------------
 # Formulaire simple
 # ---------------------------------------------------------
-nom = st.text_input("Nom")          # ← inversé
-prenom = st.text_input("Prénom")    # ← inversé
+nom = st.text_input("Nom")
+prenom = st.text_input("Prénom")
 email = st.text_input("Email")
 telephone = st.text_input("Téléphone")
 
@@ -58,11 +66,13 @@ if st.button("Ajouter le membre"):
             "type": "gratuit"
         }).execute()
 
-        st.success("Membre bénévole ajouté avec cotisation + abonnement gratuits !")
+        st.session_state["membre_ajoute"] = (
+            "Membre bénévole ajouté avec cotisation + abonnement gratuits !"
+        )
         st.rerun()
 
     # ---------------------------------------------------------
     # Cas normal
     # ---------------------------------------------------------
-    st.success("Membre ajouté avec succès.")
+    st.session_state["membre_ajoute"] = "Membre ajouté avec succès."
     st.rerun()
