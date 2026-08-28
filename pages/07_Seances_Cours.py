@@ -25,7 +25,6 @@ cours_id = st.session_state.get("cours_id")
 if not cours_id:
     st.info("Sélectionnez un cours pour afficher ses séances.")
 
-    # Charger les cours
     cours_list = (
         supabase.table("cours")
         .select("*")
@@ -40,8 +39,6 @@ if not cours_id:
 
     choix = st.selectbox("Cours :", cours_list, format_func=lambda c: c["nom"])
     cours_id = choix["id"]
-
-    # Stocker pour navigation interne
     st.session_state["cours_id"] = cours_id
 
 st.markdown("---")
@@ -73,21 +70,37 @@ with colB:
     if st.button("⬅️ Retour aux cours"):
         st.switch_page("pages/04_Cours.py")
 
+st.markdown("---")
+
 # ---------------------------------------------------------
-# Charger les séances
+# Filtre : afficher les séances archivées ?
 # ---------------------------------------------------------
-seances = (
+afficher_archives = st.toggle("Afficher les séances archivées", value=False)
+
+# ---------------------------------------------------------
+# Charger les séances selon le filtre
+# ---------------------------------------------------------
+query = (
     supabase.table("cours_seances")
     .select("*")
     .eq("cours_id", cours_id)
-    .eq("actif", True)
-    .order("date_seance")
-    .execute()
-    .data
 )
 
+if afficher_archives:
+    query = query.eq("actif", False)
+else:
+    query = query.eq("actif", True)
+
+seances = query.order("date_seance").execute().data
+
+# ---------------------------------------------------------
+# Si aucune séance
+# ---------------------------------------------------------
 if not seances:
-    st.info("Aucune séance active pour ce cours.")
+    if afficher_archives:
+        st.info("Aucune séance archivée pour ce cours.")
+    else:
+        st.info("Aucune séance active pour ce cours.")
     st.stop()
 
 # ---------------------------------------------------------
@@ -95,7 +108,8 @@ if not seances:
 # ---------------------------------------------------------
 for seance in seances:
     with st.container():
-        st.write(f"📅 **{seance['date_seance']}**")
+        statut = "🟢 Active" if seance["actif"] else "📦 Archivée"
+        st.write(f"📅 **{seance['date_seance']}** — {statut}")
 
         col1, col2, col3, col4 = st.columns(4)
 
@@ -109,13 +123,18 @@ for seance in seances:
         with col2:
             if st.button(f"📝 Inscriptions", key=f"inscr_{seance['id']}"):
                 st.session_state["seance_id"] = seance["id"]
-                st.switch_page("pages/32_Inscription_Seance.py")   # <-- CORRECTION FINALE
+                st.switch_page("pages/32_Inscription_Seance.py")
 
-        # --- Archiver ---
+        # --- Archiver / Réactiver ---
         with col3:
-            if st.button(f"📦 Archiver", key=f"archive_{seance['id']}"):
-                supabase.table("cours_seances").update({"actif": False}).eq("id", seance["id"]).execute()
-                st.rerun()
+            if seance["actif"]:
+                if st.button(f"📦 Archiver", key=f"archive_{seance['id']}"):
+                    supabase.table("cours_seances").update({"actif": False}).eq("id", seance["id"]).execute()
+                    st.rerun()
+            else:
+                if st.button(f"🔄 Réactiver", key=f"reactive_{seance['id']}"):
+                    supabase.table("cours_seances").update({"actif": True}).eq("id", seance["id"]).execute()
+                    st.rerun()
 
         # --- Supprimer ---
         with col4:
