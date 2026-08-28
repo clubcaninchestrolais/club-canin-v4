@@ -16,7 +16,7 @@ st.title("🔲 Génération QR Paiement SEPA")
 # ---------------------------------------------------------
 params = supabase.table("parametres").select("*").execute().data[0]
 
-# Sécurisation des valeurs
+# Sécurisation des valeurs (évite les None)
 beneficiaire_defaut = params.get("nom_beneficiaire") or "Club Canin Chestrolais de Neufchâteau"
 iban_defaut = params.get("iban_beneficiaire") or "BE36068954592181"
 
@@ -59,7 +59,7 @@ EUR{montant}
             img.save(buf, format="PNG")
             buf.seek(0)
 
-            st.image(buf, caption="QR Code SEPA", use_column_width=True)
+            st.image(buf, caption="QR Code SEPA", use_container_width=True)
             st.success("QR Code généré ! Le membre peut le scanner directement.")
 
         except Exception as e:
