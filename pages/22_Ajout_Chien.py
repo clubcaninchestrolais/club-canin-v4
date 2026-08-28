@@ -19,6 +19,14 @@ supabase = create_client(url, key)
 st.title("🐶 Ajouter un chien")
 
 # ---------------------------------------------------------
+# Protection anti double-clic + message persistant
+# ---------------------------------------------------------
+if st.session_state.get("chien_ajoute", False):
+    st.success(st.session_state["chien_ajoute"])
+    st.session_state["chien_ajoute"] = False
+    st.stop()
+
+# ---------------------------------------------------------
 # Charger les membres pour choisir le propriétaire
 # ---------------------------------------------------------
 membres = (
@@ -103,8 +111,6 @@ with st.form("form_chien"):
             "archive": False
         }).execute()
 
-        st.success("🐶 Chien ajouté avec succès !")
-
-        # Retour à la fiche du propriétaire
-        st.session_state["membre_id"] = id_membre
-        st.switch_page("pages/21_Fiche_Membre.py")
+        # Message persistant + anti double-clic
+        st.session_state["chien_ajoute"] = "🐶 Chien ajouté avec succès !"
+        st.rerun()
