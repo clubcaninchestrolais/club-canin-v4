@@ -3,3 +3,5 @@ supabase
 requests
 python-dotenv
 fpdf2
+qrcode[pil]
+Pillow
