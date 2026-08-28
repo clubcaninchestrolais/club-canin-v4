@@ -85,7 +85,7 @@ with col10:
 # ---------------------------------------------------------
 st.subheader("💰 Finances")
 
-col11, col12, col13 = st.columns(3)
+col11, col12, col13, col14 = st.columns(4)
 
 with col11:
     bloc("23_Depenses", "🧾", "Dépenses")
