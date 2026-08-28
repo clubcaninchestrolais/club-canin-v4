@@ -65,3 +65,104 @@ cours = (
     .data
 )
 
+if not cours:
+    st.info("Aucun cours trouvé pour cette séance.")
+    st.stop()
+
+cours = cours[0]
+
+st.markdown("---")
+st.write(f"### 🐾 {cours['categorie']} (ID {cours['id']})")
+
+# ---------------------------------------------------------
+# 4. INSCRIPTION DIRECTE À LA SÉANCE
+# ---------------------------------------------------------
+st.markdown("### ➕ Inscrire un chien à cette séance")
+
+# Charger les membres
+membres = (
+    supabase.table("membres")
+    .select("*")
+    .order("prenom")
+    .execute()
+    .data
+)
+
+membre_select = st.selectbox(
+    "Choisir un membre",
+    membres,
+    format_func=lambda m: f"{m['prenom']} {m['nom']}"
+)
+
+# Charger les chiens du membre
+chiens = (
+    supabase.table("chiens")
+    .select("*")
+    .eq("id_membre", membre_select["id"])
+    .execute()
+    .data
+)
+
+if not chiens:
+    st.info("Ce membre n'a aucun chien enregistré.")
+else:
+    chien_select = st.selectbox(
+        "Choisir un chien",
+        chiens,
+        format_func=lambda c: f"{c['nom']} ({c['race']})"
+    )
+
+    # Vérifier si déjà inscrit
+    deja_inscrit = (
+        supabase.table("cours_seances_inscriptions")
+        .select("*")
+        .eq("seance_id", seance["id"])
+        .eq("chien_id", chien_select["id"])
+        .execute()
+        .data
+    )
+
+    if deja_inscrit:
+        st.warning("⚠️ Ce chien est déjà inscrit à cette séance.")
+    else:
+        if st.button("Inscrire ce chien"):
+            supabase.table("cours_seances_inscriptions").insert({
+                "seance_id": seance["id"],
+                "membre_id": membre_select["id"],
+                "chien_id": chien_select["id"],
+                "present": False,
+                "actif": True
+            }).execute()
+
+            st.success(f"🐶 {chien_select['nom']} a été inscrit à la séance.")
+            st.rerun()
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# 5. Charger les inscrits via cours_seances_inscriptions
+# ---------------------------------------------------------
+inscrits = (
+    supabase.table("cours_seances_inscriptions")
+    .select("*, membres(*), chiens(*)")
+    .eq("seance_id", seance["id"])
+    .execute()
+    .data
+)
+
+st.markdown("### 👥 Chiens inscrits")
+
+# ---------------------------------------------------------
+# 6. Afficher les inscrits (sans st.stop)
+# ---------------------------------------------------------
+if not inscrits:
+    st.info("Aucun inscrit pour cette séance.")
+else:
+    for i in inscrits:
+        membre = i["membres"]
+        chien = i["chiens"]
+
+        st.write(
+            f"- **{membre['prenom']} {membre['nom']}** — "
+            f"{chien['nom']} ({chien['race']})"
+        )
