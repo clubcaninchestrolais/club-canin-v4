@@ -10,7 +10,7 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
 
 st.set_page_config(page_title="QR Paiement Belgique", page_icon="🔲")
 
-st.title("🔲 QR Paiement – Compatible Belgique (sans Payconiq)")
+st.title("🔲 QR Paiement – Compatible Belgique (QR Texte)")
 
 # Charger paramètres
 params = supabase.table("parametres").select("*").execute().data[0]
@@ -28,9 +28,16 @@ if st.button("Générer le QR Code"):
     try:
         iban_clean = iban.replace(" ", "").strip()
         communication_clean = urllib.parse.quote(communication.strip())
+        montant_clean = montant.strip()
 
-        # QR compatible Belgique : URL interprétée par les apps bancaires
-        url = f"https://payment.belgium/transfer?iban={iban_clean}&message={communication_clean}&amount={montant}"
+        # QR TEXTE compatible Belgique
+        # Le montant est inclus mais ignoré par les banques (normal)
+        url = (
+            f"banktransfer://?"
+            f"iban={iban_clean}"
+            f"&message={communication_clean}"
+            f"&amount={montant_clean}"
+        )
 
         qr = qrcode.QRCode(
             version=1,
@@ -46,8 +53,8 @@ if st.button("Générer le QR Code"):
         img.save(buf, format="PNG")
         buf.seek(0)
 
-        st.image(buf, caption="QR Paiement Belgique", use_container_width=False)
-        st.success("QR compatible Belgique généré. Scannable par Belfius / CBC / ING / BNP.")
+        st.image(buf, caption="QR Paiement (Texte – Compatible Belgique)", use_container_width=False)
+        st.success("QR texte généré. Compatible Belfius / CBC / ING / BNP / Hello Bank.")
 
     except Exception as e:
         st.error("Erreur lors de la génération du QR.")
