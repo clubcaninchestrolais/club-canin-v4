@@ -35,7 +35,7 @@ for seance in seances:
     seance_id = seance["id"]
     cours_id = seance["cours_id"]
 
-    # Membres inscrits à cette séance (CORRECT)
+    # Membres inscrits à cette séance
     inscriptions = (
         supabase.table("cours_inscriptions")
         .select("*")
@@ -53,7 +53,7 @@ for seance in seances:
                 "membre": membre[0],
                 "chien": chien[0],
                 "cours_id": cours_id,
-                "cours_nom": cours_dict[cours_id]["nom_cours"],
+                "cours_nom": cours_dict.get(cours_id, {}).get("nom_cours", "Cours inconnu"),
                 "seance_id": seance_id,
                 "seance_nom": seance["nom_seance"],
                 "inscription_id": ins["id"]
