@@ -37,15 +37,11 @@ def menu_lateral():
     st.sidebar.page_link("pages/04_Chiens_archives.py", label="📁 Chiens archivés")
     st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")
 
-
     # --- Cours & Séances ---
     st.sidebar.page_link("pages/04_Cours.py", label="📘 Cours")
-    
-    
     st.sidebar.page_link("pages/10_Cours_du_jour.py", label="📅 Cours du jour")
-    st.sidebar.page_link("pages/70_Validation_presences.py", label="🟢 Validation des présences")  # <-- corrigé
+    st.sidebar.page_link("pages/70_Validation_presences.py", label="🟢 Validation des présences")
     st.sidebar.page_link("pages/33_presence_du_jour.py", label="👣 Présences du jour")
-    
 
     st.sidebar.markdown("### 💰 Finances")
     st.sidebar.page_link("pages/20_Cotisations.py", label="💳 Cotisations")
@@ -60,8 +56,6 @@ def menu_lateral():
     st.sidebar.page_link("pages/61_Listeexterieurs.py", label="📋 listing Préinscriptions extérieures")
     st.sidebar.page_link("pages/62_Transformation_exterieur.py", label="🔁 Transformation extérieur → membre")
 
-
-
     st.sidebar.markdown("### 🏛️ Organisations")
     st.sidebar.page_link("pages/organisations.py", label="🏛️ Organisations")
 
@@ -69,9 +63,9 @@ def menu_lateral():
     st.sidebar.page_link("pages/10_Parametres.py", label="⚙️ Paramètres")
     st.sidebar.page_link("pages/11_Flux_club.py", label="🔄 Flux du club")
     st.sidebar.page_link("pages/01_Apropos.py", label="ℹ️ À propos")
+
     # --- Page réservée à l'admin ---
     if st.session_state.get("role") == "admin":
-    st.sidebar.page_link("pages/gestion_utilisateurs.py", label="🔐 Gestion utilisateurs")
-
+        st.sidebar.page_link("pages/gestion_utilisateurs.py", label="🔐 Gestion utilisateurs")
 
     st.sidebar.markdown("---")
