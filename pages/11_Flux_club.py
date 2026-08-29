@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
+# --- SÉCURITÉ ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
@@ -13,156 +13,100 @@ menu_lateral()
 
 st.title("❓ Aide — Comprendre les flux du club")
 
-st.markdown("""
-## 🐕 Pourquoi cette page ?
+# ---------------------------------------------------------
+# Texte segmenté pour éviter les erreurs de syntaxe
+# ---------------------------------------------------------
 
-Cette page explique **le fonctionnement réel du système du club**,  
-tel qu’il est aujourd’hui dans l’application :  
-flux intérieur, flux extérieur, validation, transformation, sécurité, et logique des pages.
+st.markdown("## 🐕 Pourquoi cette page ?")
+st.markdown(
+    "Cette page explique le fonctionnement réel du système du club, "
+    "tel qu’il est aujourd’hui dans l’application : flux intérieur, flux extérieur, "
+    "validation, transformation, sécurité, et logique des pages."
+)
 
-Elle sert de guide officiel pour les utilisateurs du comité.
+st.markdown("---")
+st.markdown("# 🔄 Vue d’ensemble des flux du club")
 
----
+st.markdown("### 🟦 Flux intérieur (membres du club)")
+st.markdown("1. Membres\n2. Chiens\n3. Séances\n4. Inscriptions\n5. Présences")
 
-# 🔄 Vue d’ensemble des flux du club
+st.markdown("### 🟧 Flux extérieur (préinscriptions via Facebook)")
+st.markdown("1. Préinscription\n2. Validation\n3. Transformation\n4. Membre + chien\n5. Nettoyage automatique")
 
-Le club fonctionne avec **2 flux principaux** :
+st.markdown("---")
+st.markdown("## 🟦 Flux intérieur — fonctionnement complet")
 
-### 🟦 Flux intérieur (membres du club)
-1. **Membres**
-2. **Chiens**
-3. **Séances**
-4. **Inscriptions**
-5. **Présences**
+st.markdown("### 1️⃣ Membres")
+st.markdown(
+    "Un membre doit être créé en premier. "
+    "Sans membre → impossible d’ajouter un chien."
+)
 
-### 🟧 Flux extérieur (préinscriptions via Facebook)
-1. **Préinscription extérieure**
-2. **Validation (accepter / refuser)**
-3. **Transformation en membre**
-4. **Création automatique du chien**
-5. **Fin du flux extérieur**
+st.markdown("### 2️⃣ Chiens")
+st.markdown(
+    "Chaque chien est lié à un membre. "
+    "Sans chien → impossible d’inscrire à une séance."
+)
 
-Les deux flux sont **séparés**, mais se rejoignent lorsque l’extérieur devient membre.
+st.markdown("### 3️⃣ Séances")
+st.markdown(
+    "Les séances sont créées par le club. "
+    "Sans séance → impossible d’inscrire un membre."
+)
 
----
+st.markdown("### 4️⃣ Inscriptions")
+st.markdown(
+    "Une inscription = membre + chien + séance. "
+    "Sans inscription → impossible d’enregistrer une présence."
+)
 
-# 🟦 Flux intérieur — fonctionnement complet
+st.markdown("### 5️⃣ Présences")
+st.markdown(
+    "La présence est enregistrée le jour du cours. "
+    "Elle permet de suivre l’assiduité et les statistiques."
+)
 
-## 1️⃣ Membres
-Un membre doit être créé en premier.
+st.markdown("---")
+st.markdown("## 🟧 Flux extérieur — fonctionnement complet")
 
-Un membre contient :
-- Nom
-- Adresse
-- Contact
-- Statut (actif / inactif)
+st.markdown("### 1️⃣ Préinscription extérieure")
+st.markdown(
+    "Un non‑membre remplit un formulaire public. "
+    "Cela crée une préinscription."
+)
 
-Sans membre → impossible d’ajouter un chien.
+st.markdown("### 2️⃣ Validation")
+st.markdown(
+    "Le préposé accepte ou refuse.\n\n"
+    "✔ Accepté → transformation possible\n"
+    "❌ Refusé → supprimé automatiquement"
+)
 
----
+st.markdown("### 3️⃣ Transformation")
+st.markdown(
+    "La transformation crée un membre + un chien, "
+    "et archive la préinscription."
+)
 
-## 2️⃣ Chiens
-Chaque chien doit être **lié à un membre**.
+st.markdown("### 4️⃣ Nettoyage automatique")
+st.markdown(
+    "Les refusés et transformés sont supprimés automatiquement "
+    "pour éviter la pollution Facebook."
+)
 
-Un chien contient :
-- Nom
-- Race
-- Date de naissance
-- Propriétaire (membre)
+st.markdown("---")
+st.markdown("## 🔐 Sécurité et rôles")
 
-Sans chien → impossible d’inscrire à une séance.
+st.markdown(
+    "Toutes les pages sont protégées par un contrôle de session. "
+    "Les rôles permettent de limiter l’accès aux pages sensibles."
+)
 
----
+st.markdown("---")
+st.markdown("## 🧭 Résumé final")
 
-## 3️⃣ Séances
-Les séances sont créées par le club.
+st.markdown("### 🟦 Flux intérieur")
+st.markdown("1. Membre\n2. Chien\n3. Séance\n4. Inscription\n5. Présence")
 
-Une séance contient :
-- Date
-- Moniteur
-- Type de cours
-- Groupe
-
-Sans séance → impossible d’inscrire un membre.
-
----
-
-## 4️⃣ Inscriptions
-Une inscription = **membre + chien + séance**
-
-Elle permet :
-- de réserver la place
-- de préparer la liste des participants
-
-Sans inscription → impossible d’enregistrer une présence.
-
----
-
-## 5️⃣ Présences
-La présence est enregistrée **le jour du cours**.
-
-Elle permet :
-- de comptabiliser la participation
-- de suivre l’assiduité
-- de générer les statistiques
-
----
-
-# 🟧 Flux extérieur — fonctionnement complet
-
-## 1️⃣ Préinscription extérieure
-Un non‑membre remplit un formulaire public (Facebook).
-
-Cela crée :
-- un **non_membre**
-- un **chien non lié**
-- une **préinscription**
-
----
-
-## 2️⃣ Validation
-Le préposé valide ou refuse.
-
-### ✔ Si accepté :
-- `traitee = True`
-- `acceptee = True`
-- `statut = "valide"`
-- La préinscription apparaît dans **Transformation**
-
-### ❌ Si refusé :
-- `traitee = True`
-- `acceptee = False`
-- `statut = "archive"`
-- La préinscription est **supprimée automatiquement** (nettoyage)
-
----
-
-## 3️⃣ Transformation
-Si accepté, le préposé transforme l’extérieur en membre.
-
-La transformation :
-- crée un **membre**
-- crée un **chien lié**
-- archive la préinscription
-- supprime les données extérieures inutiles
-
----
-
-## 4️⃣ Nettoyage automatique
-Chaque chargement de la page 61 supprime :
-- les refusés
-- les transformés
-- les préinscriptions inutiles
-
-Le flux extérieur reste propre.
-
----
-
-# 🔐 Sécurité et rôles
-
-L’accès aux pages est protégé par :
-
-```python
-if "connected" not in st.session_state or not st.session_state["connected"]:
-    st.switch_page("pages/login.py")
-
+st.markdown("### 🟧 Flux extérieur")
+st.markdown("1. Préinscription\n2. Validation\n3. Transformation\n4. Membre + chien\n5. Nettoyage automatique")
