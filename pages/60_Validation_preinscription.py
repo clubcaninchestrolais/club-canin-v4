@@ -31,13 +31,32 @@ for pre in preinscriptions:
     st.write(f"🐶 {pre['chien_nom']}")
     st.write(f"📅 Séance ID : {pre['seance_id']}")
 
-    if st.button(f"Valider préinscription #{pre['id']}", key=f"valider_{pre['id']}"):
+    col1, col2 = st.columns(2)
 
-        # On ne touche plus à cours_seances_inscriptions
-        supabase.table("preinscriptions").update({
-            "traitee": True,
-            "acceptee": True
-        }).eq("id", pre["id"]).execute()
+    # -----------------------------
+    # BOUTON VALIDER
+    # -----------------------------
+    with col1:
+        if st.button(f"Valider #{pre['id']}", key=f"valider_{pre['id']}"):
+            supabase.table("preinscriptions").update({
+                "traitee": True,
+                "acceptee": True,
+                "statut": "valide"
+            }).eq("id", pre["id"]).execute()
 
-        st.success("Préinscription validée (extérieur).")
-        st.rerun()
+            st.success("Préinscription validée.")
+            st.rerun()
+
+    # -----------------------------
+    # BOUTON REJETER / ARCHIVER
+    # -----------------------------
+    with col2:
+        if st.button(f"Rejeter #{pre['id']}", key=f"rejeter_{pre['id']}"):
+            supabase.table("preinscriptions").update({
+                "traitee": True,
+                "acceptee": False,
+                "statut": "archive"
+            }).eq("id", pre["id"]).execute()
+
+            st.warning("Préinscription rejetée et archivée.")
+            st.rerun()
