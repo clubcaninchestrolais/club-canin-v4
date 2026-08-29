@@ -10,86 +10,94 @@ st.title("Validation des présences")
 
 aujourdhui = datetime.date.today().isoformat()
 
-# Charger toutes les séances du jour
+# Charger les cours du jour
 seances = (
     supabase.table("cours_seances")
     .select("*")
     .eq("date_seance", aujourdhui)
-    .order("id")
+    .order("cours_id")
     .execute()
     .data
 )
 
 if not seances:
-    st.info("Aucune séance aujourd'hui.")
+    st.info("Aucun cours aujourd'hui.")
     st.stop()
 
-for seance in seances:
+# Regrouper par cours
+cours_groupes = {}
+for s in seances:
+    cid = s["cours_id"]
+    cours_groupes.setdefault(cid, []).append(s)
 
-    seance_id = seance["id"]
+# Charger les cours
+cours_raw = supabase.table("cours").select("*").execute().data
+cours_dict = {c["id"]: c for c in cours_raw}
 
-    st.markdown(f"### 🐾 {seance['nom_seance']} — {seance['date_seance']}")
+# Parcours des cours du jour
+for cours_id, liste_seances in cours_groupes.items():
 
-    # 🔵 Charger les inscriptions validées (membres)
+    cours_nom = cours_dict[cours_id]["nom_cours"]
+
+    st.markdown(f"## 🐾 {cours_nom}")
+
+    # Charger toutes les inscriptions du cours
     inscriptions = (
         supabase.table("cours_inscriptions")
         .select("*")
-        .eq("seance_id", seance_id)
+        .eq("cours_id", cours_id)
         .execute()
         .data
     )
 
-    # 🔵 Charger les extérieurs validés
+    # Charger les extérieurs validés
     exterieurs = (
         supabase.table("preinscriptions")
         .select("*")
-        .eq("seance_id", seance_id)
+        .eq("cours_id", cours_id)
         .eq("acceptee", True)
         .execute()
         .data
     )
 
-    # Fusion propre
     participants = []
 
-    # Membres inscrits
+    # Membres
     for ins in inscriptions:
         membre = supabase.table("membres").select("*").eq("id", ins["membre_id"]).execute().data
         chien = supabase.table("chiens").select("*").eq("id", ins["chien_id"]).execute().data
-
         if membre and chien:
             participants.append({
-                "type": "membre",
                 "membre": membre[0],
                 "chien": chien[0],
+                "seance_id": ins["seance_id"],
                 "inscription_id": ins["id"]
             })
 
-    # Extérieurs validés
+    # Extérieurs
     for ext in exterieurs:
         membre = supabase.table("membres").select("*").eq("id", ext["membre_id"]).execute().data
         chien = supabase.table("chiens").select("*").eq("id", ext["chien_id"]).execute().data
-
         if membre and chien:
             participants.append({
-                "type": "exterieur",
                 "membre": membre[0],
                 "chien": chien[0],
+                "seance_id": ext["seance_id"],
                 "inscription_id": ext["id"]
             })
 
-    # Aucun participant ?
     if not participants:
-        st.warning("Aucun participant inscrit pour cette séance.")
+        st.warning("Aucun inscrit pour ce cours.")
         continue
 
-    # 🔥 AFFICHAGE + VALIDATION
+    # Affichage des participants
     for p in participants:
 
         membre = p["membre"]
         chien = p["chien"]
+        seance_id = p["seance_id"]
 
-        # Vérifier si présence déjà validée
+        # Vérifier présence
         presence = (
             supabase.table("cours_presences")
             .select("*")
@@ -102,12 +110,12 @@ for seance in seances:
 
         deja = bool(presence)
 
-        # Affichage propre
         st.markdown(
             f"""
             <div style='background:#f7f7f7;padding:12px;border-radius:8px;margin-bottom:10px;'>
                 <b>{membre['prenom']} {membre['nom']}</b><br>
-                🐶 {chien['nom']}
+                🐶 {chien['nom']}<br>
+                Séance ID : {seance_id}
             </div>
             """,
             unsafe_allow_html=True
@@ -118,7 +126,6 @@ for seance in seances:
                 f"Valider présence de {membre['prenom']} {membre['nom']}",
                 key=f"btn_{p['inscription_id']}"
             ):
-                # Enregistrer la présence
                 supabase.table("cours_presences").insert({
                     "membre_id": membre["id"],
                     "chien_id": chien["id"],
@@ -126,7 +133,7 @@ for seance in seances:
                     "present": True
                 }).execute()
 
-                # Décrémenter l’abonnement
+                # Décrémenter abonnement
                 abo = (
                     supabase.table("abonnements")
                     .select("*")
