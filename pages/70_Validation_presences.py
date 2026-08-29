@@ -10,7 +10,7 @@ st.title("Validation des présences")
 
 aujourdhui = datetime.date.today().isoformat()
 
-# Charger les cours du jour
+# Charger les séances du jour
 seances = (
     supabase.table("cours_seances")
     .select("*")
@@ -21,27 +21,31 @@ seances = (
 )
 
 if not seances:
-    st.info("Aucun cours aujourd'hui.")
+    st.info("Aucune séance aujourd'hui.")
     st.stop()
-
-# Regrouper par cours
-cours_groupes = {}
-for s in seances:
-    cid = s["cours_id"]
-    cours_groupes.setdefault(cid, []).append(s)
 
 # Charger les cours
 cours_raw = supabase.table("cours").select("*").execute().data
 cours_dict = {c["id"]: c for c in cours_raw}
 
+# Regrouper les séances par cours
+cours_groupes = {}
+for s in seances:
+    cid = s["cours_id"]
+    cours_groupes.setdefault(cid, []).append(s)
+
 # Parcours des cours du jour
 for cours_id, liste_seances in cours_groupes.items():
 
-    cours_nom = cours_dict[cours_id]["nom_cours"]
+    # 🔥 Sécurité : ignorer les cours inexistants
+    if cours_id not in cours_dict:
+        st.warning(f"Cours ID {cours_id} introuvable dans la table 'cours'. Séance ignorée.")
+        continue
 
+    cours_nom = cours_dict[cours_id]["nom_cours"]
     st.markdown(f"## 🐾 {cours_nom}")
 
-    # Charger toutes les inscriptions du cours
+    # Charger les inscriptions membres
     inscriptions = (
         supabase.table("cours_inscriptions")
         .select("*")
@@ -90,7 +94,7 @@ for cours_id, liste_seances in cours_groupes.items():
         st.warning("Aucun inscrit pour ce cours.")
         continue
 
-    # Affichage des participants
+    # 🔥 AFFICHAGE + VALIDATION
     for p in participants:
 
         membre = p["membre"]
@@ -126,6 +130,7 @@ for cours_id, liste_seances in cours_groupes.items():
                 f"Valider présence de {membre['prenom']} {membre['nom']}",
                 key=f"btn_{p['inscription_id']}"
             ):
+                # Enregistrer la présence
                 supabase.table("cours_presences").insert({
                     "membre_id": membre["id"],
                     "chien_id": chien["id"],
