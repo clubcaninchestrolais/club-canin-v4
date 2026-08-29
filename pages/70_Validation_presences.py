@@ -10,13 +10,13 @@ supabase: Client = create_client(url, key)
 st.title("Validation des présences")
 
 # Séance du jour
-aujourdhui = datetime.date.today().isoformat()
+aujourdhui = datetime.date.today()
 
 # Charger TOUTES les séances du jour
 seances = (
     supabase.table("cours_seances")
     .select("*")
-    .eq("date_seance", aujourdhui)
+    .eq("date_seance", aujourdhui.isoformat())
     .order("id")
     .execute()
     .data
@@ -51,7 +51,7 @@ for seance in seances:
     )
 
     # ---------------------------------------------------------
-    # 2️⃣ MEMBRES INSCRITS (NOUVEAU : cours_inscriptions)
+    # 2️⃣ MEMBRES INSCRITS (cours_inscriptions)
     # ---------------------------------------------------------
     inscriptions = (
         supabase.table("cours_inscriptions")
@@ -70,6 +70,7 @@ for seance in seances:
         if ins["membre_id"] == "" or ins["chien_id"] == "":
             continue
 
+        # Vérifier existence réelle du membre et du chien
         membre = (
             supabase.table("membres")
             .select("*")
@@ -254,7 +255,7 @@ for seance in seances:
                 "membre_id": membre["id"],
                 "chien_id": chien["id"],
                 "seance_id": seance_id,
-                "date_presence": aujourdhui,
+                "date_presence": aujourdhui,   # ← CORRECTION FINALE
                 "present": True
             }).execute()
 
