@@ -126,6 +126,7 @@ for seance in seances:
                 f"Valider présence de {membre['prenom']} {membre['nom']}",
                 key=f"btn_membre_{item['inscription_id']}"
             ):
+                # 🔥 1) Enregistrer la présence
                 insertion = supabase.table("cours_presences").insert({
                     "membre_id": membre["id"],
                     "chien_id": chien["id"],
@@ -134,8 +135,29 @@ for seance in seances:
                 }).execute()
 
                 if insertion.data:
+
+                    # 🔥 2) Consommer 1 séance d’abonnement
+                    abos = (
+                        supabase.table("abonnements")
+                        .select("*")
+                        .eq("id_membre", membre["id"])
+                        .order("id", desc=True)
+                        .execute()
+                        .data
+                    )
+
+                    if abos:
+                        abo = abos[0]
+                        rest = abo["seances_restantes"]
+
+                        if rest > 0:
+                            supabase.table("abonnements").update({
+                                "seances_restantes": rest - 1
+                            }).eq("id", abo["id"]).execute()
+
                     st.success("Présence validée.")
                     st.rerun()
+
         else:
             st.success("Présence déjà validée.")
 
