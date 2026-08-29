@@ -39,7 +39,7 @@ for seance in seances:
     st.markdown(f"### 🐾 {nom_seance} — {seance['date_seance']}")
 
     # ---------------------------------------------------------
-    # 1️⃣ EXTÉRIEURS VALIDÉS
+    # 1️⃣ EXTÉRIEURS VALIDÉS (inchangé)
     # ---------------------------------------------------------
     exterieurs = (
         supabase.table("preinscriptions")
@@ -51,13 +51,12 @@ for seance in seances:
     )
 
     # ---------------------------------------------------------
-    # 2️⃣ MEMBRES INSCRITS
+    # 2️⃣ MEMBRES INSCRITS (NOUVEAU : cours_inscriptions)
     # ---------------------------------------------------------
     inscriptions = (
-        supabase.table("cours_seances_inscriptions")
+        supabase.table("cours_inscriptions")
         .select("*")
         .eq("seance_id", seance_id)
-        .eq("actif", True)
         .execute()
         .data
     )
@@ -84,7 +83,6 @@ for seance in seances:
             .data
         )
 
-        # 🔒 Protection anti-membre ou chien manquant
         if not membre or not chien:
             continue
 
@@ -121,11 +119,10 @@ for seance in seances:
     )
 
     # ---------------------------------------------------------
-    # AFFICHAGE EXTÉRIEURS
+    # AFFICHAGE EXTÉRIEURS (inchangé)
     # ---------------------------------------------------------
     for ext in exterieurs:
 
-        # 🔒 Protection anti-extérieurs incomplets
         if not ext["nom"] or not ext["prenom"] or not ext["chien_nom"]:
             continue
 
@@ -155,7 +152,7 @@ for seance in seances:
                 st.write(insertion)
 
     # ---------------------------------------------------------
-    # AFFICHAGE MEMBRES
+    # AFFICHAGE MEMBRES (corrigé)
     # ---------------------------------------------------------
     for item in membres_inscrits:
         membre = item["membre"]
@@ -265,3 +262,4 @@ for seance in seances:
             else:
                 st.error("❌ Erreur lors de l'enregistrement.")
                 st.write(insertion)
+
