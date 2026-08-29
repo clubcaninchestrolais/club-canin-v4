@@ -27,20 +27,21 @@ if not seances:
 for seance in seances:
 
     seance_id = seance["id"]
+    cours_id = seance["cours_id"]
 
     st.markdown(f"## 🐾 {seance['nom_seance']} — {seance['date_seance']}")
 
-    # Membres inscrits à cette séance
-    inscriptions = (
+    # 🔥 Membres inscrits au cours (pas à la séance)
+    inscriptions_membres = (
         supabase.table("cours_inscriptions")
         .select("*")
-        .eq("seance_id", seance_id)
+        .eq("cours_id", cours_id)
         .execute()
         .data
     )
 
-    # Extérieurs validés pour cette séance
-    exterieurs = (
+    # 🔥 Extérieurs inscrits à cette séance
+    inscriptions_ext = (
         supabase.table("preinscriptions")
         .select("*")
         .eq("seance_id", seance_id)
@@ -51,38 +52,41 @@ for seance in seances:
 
     participants = []
 
-    # Membres
-    for ins in inscriptions:
+    # 🔥 Membres du club
+    for ins in inscriptions_membres:
         membre = supabase.table("membres").select("*").eq("id", ins["membre_id"]).execute().data
         chien = supabase.table("chiens").select("*").eq("id", ins["chien_id"]).execute().data
         if membre and chien:
             participants.append({
                 "membre": membre[0],
                 "chien": chien[0],
-                "inscription_id": ins["id"]
+                "inscription_id": ins["id"],
+                "type": "membre"
             })
 
-    # Extérieurs
-    for ext in exterieurs:
+    # 🔥 Extérieurs
+    for ext in inscriptions_ext:
         membre = supabase.table("membres").select("*").eq("id", ext["membre_id"]).execute().data
         chien = supabase.table("chiens").select("*").eq("id", ext["chien_id"]).execute().data
         if membre and chien:
             participants.append({
                 "membre": membre[0],
                 "chien": chien[0],
-                "inscription_id": ext["id"]
+                "inscription_id": ext["id"],
+                "type": "exterieur"
             })
 
     if not participants:
         st.warning("Aucun inscrit pour cette séance.")
         continue
 
-    # Affichage + validation
+    # 🔥 AFFICHAGE + VALIDATION
     for p in participants:
 
         membre = p["membre"]
         chien = p["chien"]
 
+        # Vérifier présence
         presence = (
             supabase.table("cours_presences")
             .select("*")
@@ -99,7 +103,8 @@ for seance in seances:
             f"""
             <div style='background:#f7f7f7;padding:12px;border-radius:8px;margin-bottom:10px;'>
                 <b>{membre['prenom']} {membre['nom']}</b><br>
-                🐶 {chien['nom']}
+                🐶 {chien['nom']}<br>
+                <i>{'Membre' if p['type']=='membre' else 'Extérieur'}</i>
             </div>
             """,
             unsafe_allow_html=True
