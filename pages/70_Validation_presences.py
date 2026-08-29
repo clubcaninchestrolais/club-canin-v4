@@ -126,7 +126,7 @@ for ins in inscriptions:
         }).execute()
 
         # ---------------------------------------------------------
-        # 2) Décrémenter l'abonnement
+        # 2) Décrémenter l'abonnement (sauf bénévoles)
         # ---------------------------------------------------------
         abo = (
             supabase.table("abonnements")
@@ -138,12 +138,15 @@ for ins in inscriptions:
 
         if abo:
             abo = abo[0]
-            reste = abo["seances_restantes"] - 1
 
-            supabase.table("abonnements").update({
-                "seances_restantes": reste,
-                "actif": reste > 0
-            }).eq("id", abo["id"]).execute()
+            # Ne pas décrémenter les bénévoles (seances_restantes = -1)
+            if abo["seances_restantes"] != -1:
+                reste = abo["seances_restantes"] - 1
+
+                supabase.table("abonnements").update({
+                    "seances_restantes": reste,
+                    "actif": reste > 0
+                }).eq("id", abo["id"]).execute()
 
         st.success("Présence validée")
         st.rerun()
