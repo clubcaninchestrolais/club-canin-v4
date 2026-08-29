@@ -15,7 +15,7 @@ seances = (
     supabase.table("cours_seances")
     .select("*")
     .eq("date_seance", aujourdhui)
-    .order("heure_debut")
+    .order("id")
     .execute()
     .data
 )
