@@ -13,7 +13,7 @@ supabase: Client = create_client(url, key)
 st.title("🔁 Transformation d'un extérieur en membre")
 
 # ---------------------------------------------------------
-# Charger uniquement les extérieurs encore à traiter
+# Charger uniquement les extérieurs validés (présence NON obligatoire)
 # ---------------------------------------------------------
 preins = (
     supabase.table("preinscriptions")
@@ -21,7 +21,6 @@ preins = (
     .eq("type", "exterieur")
     .eq("traitee", True)
     .eq("acceptee", True)
-    .eq("present_exterieur", True)
     .execute()
     .data
 )
@@ -78,7 +77,8 @@ if st.button("Transformer en membre"):
     supabase.table("preinscriptions").update({
         "membre_id": membre_id,
         "chien_id": chien_id,
-        "type": "membre"
+        "type": "membre",
+        "statut": "transforme"
     }).eq("id", choix["id"]).execute()
 
     st.success("✅ L'extérieur a été transformé en membre.")
@@ -89,9 +89,9 @@ if st.button("Transformer en membre"):
 # ---------------------------------------------------------
 if st.button("Clôturer la préinscription (arrêt)"):
 
-    # On change simplement le type pour que la ligne disparaisse
     supabase.table("preinscriptions").update({
-        "type": "cloturee"
+        "type": "cloturee",
+        "statut": "archive"
     }).eq("id", choix["id"]).execute()
 
     st.warning("🗂️ La préinscription a été clôturée.")
