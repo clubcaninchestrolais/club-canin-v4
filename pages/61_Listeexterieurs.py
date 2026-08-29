@@ -1,6 +1,5 @@
 import streamlit as st
 from supabase import create_client, Client
-from datetime import datetime, timedelta
 from menu import hide_streamlit_menu, menu_lateral
 
 hide_streamlit_menu()
@@ -17,16 +16,11 @@ st.title("📋 Liste des extérieurs (préinscriptions)")
 # 🧹 NETTOYAGE AUTOMATIQUE DES PREINSCRIPTIONS
 # ---------------------------------------------------------
 
-limite = datetime.now() - timedelta(days=30)
-
 # 1️⃣ Supprimer les refusés
 supabase.table("preinscriptions").delete().eq("acceptee", False).execute()
 
 # 2️⃣ Supprimer les transformés
 supabase.table("preinscriptions").delete().eq("statut", "transforme").execute()
-
-# 3️⃣ Supprimer les anciennes préinscriptions (> 30 jours)
-supabase.table("preinscriptions").delete().lt("created_at", limite.isoformat()).execute()
 
 # ---------------------------------------------------------
 # Charger les extérieurs encore actifs
