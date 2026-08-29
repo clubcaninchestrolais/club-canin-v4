@@ -73,7 +73,7 @@ présent pour aider, structurer, corriger et accélérer la création.
 
 ## 🕒 Version actuelle
 
-**Version : 4.1 — mise à jour du 20/8/2026**
+**Version : 4.1 — mise à jour du 29/8/2026**
 
 ---
 
