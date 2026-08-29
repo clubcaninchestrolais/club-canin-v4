@@ -35,11 +35,11 @@ for seance in seances:
     seance_id = seance["id"]
     cours_id = seance["cours_id"]
 
-    # Membres inscrits à ce cours
+    # Membres inscrits à cette séance (CORRECT)
     inscriptions = (
         supabase.table("cours_inscriptions")
         .select("*")
-        .eq("cours_id", cours_id)
+        .eq("seance_id", seance_id)
         .execute()
         .data
     )
