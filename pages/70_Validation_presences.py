@@ -30,7 +30,7 @@ if not seances:
 
 for seance in seances:
 
-    seance_id = int(seance["id"])   # ← CORRECTION
+    seance_id = int(seance["id"])
 
     st.markdown(f"### 🐾 {seance['nom_seance']} — {seance['date_seance'][:10]}")
 
@@ -54,7 +54,7 @@ for seance in seances:
 
     inscriptions = [
         ins for ins in inscriptions_raw
-        if int(ins["seance_id"]) == seance_id   # ← CORRECTION
+        if int(ins["seance_id"]) == seance_id
     ]
 
     membres_inscrits = []
@@ -63,7 +63,7 @@ for seance in seances:
         try:
             membre_id = int(ins["membre_id"])
             chien_id = int(ins["chien_id"])
-            seance_id_ins = int(ins["seance_id"])   # ← CORRECTION
+            seance_id_ins = int(ins["seance_id"])
         except:
             continue
 
@@ -89,30 +89,41 @@ for seance in seances:
             "inscription_id": ins["id"],
             "membre": membre[0],
             "chien": chien[0],
-            "seance_id": seance_id_ins   # ← CORRECTION
+            "seance_id": seance_id_ins
         })
 
-    # AFFICHAGE MEMBRES
+    # AFFICHAGE MEMBRES (ajout du nom comme avant)
     for item in membres_inscrits:
         membre = item["membre"]
         chien = item["chien"]
-        seance_id = int(item["seance_id"])   # ← CORRECTION
+        seance_id = int(item["seance_id"])
 
         presence = (
             supabase.table("cours_presences")
             .select("*")
             .eq("membre_id", membre["id"])
             .eq("chien_id", chien["id"])
-            .eq("seance_id", seance_id)   # ← CORRECTION
+            .eq("seance_id", seance_id)
             .execute()
             .data
         )
 
         deja = bool(presence)
 
+        # 🔥 Affichage propre du membre + chien
+        st.markdown(
+            f"""
+            <div style='background:#f7f7f7;padding:12px;border-radius:8px;margin-bottom:10px;'>
+                <b>{membre['prenom']} {membre['nom']}</b><br>
+                🐶 {chien['nom']}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         if not deja:
             if st.button(
-                f"Valider présence {item['inscription_id']}",
+                f"Valider présence de {membre['prenom']} {membre['nom']}",
                 key=f"btn_membre_{item['inscription_id']}"
             ):
                 insertion = supabase.table("cours_presences").insert({
@@ -125,4 +136,6 @@ for seance in seances:
                 if insertion.data:
                     st.success("Présence validée.")
                     st.rerun()
+        else:
+            st.success("Présence déjà validée.")
 
