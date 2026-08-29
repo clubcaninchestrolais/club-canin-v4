@@ -13,7 +13,7 @@ st.title("Validation des présences")
 aujourdhui = datetime.date.today().isoformat()
 
 # ---------------------------------------------------------
-# 🔥 Correction : on charge toutes les séances puis on filtre
+# 🔥 Charger toutes les séances puis filtrer par date
 # ---------------------------------------------------------
 seances_raw = (
     supabase.table("cours_seances")
@@ -23,7 +23,6 @@ seances_raw = (
     .data
 )
 
-# Filtrer les séances du jour (date_seance peut être un timestamp)
 seances = [
     s for s in seances_raw
     if s["date_seance"][:10] == aujourdhui
@@ -67,7 +66,6 @@ for seance in seances:
         .data
     )
 
-    # Filtrer les inscriptions de cette séance
     inscriptions = [
         ins for ins in inscriptions_raw
         if str(ins["seance_id"]) == str(seance_id)
@@ -76,7 +74,6 @@ for seance in seances:
     membres_inscrits = []
     for ins in inscriptions:
 
-        # 🔒 Protection anti-NULL / anti-vide
         if ins["membre_id"] is None or ins["chien_id"] is None:
             continue
 
@@ -86,7 +83,6 @@ for seance in seances:
         except:
             continue
 
-        # Vérifier existence réelle du membre et du chien
         membre = (
             supabase.table("membres")
             .select("*")
@@ -109,7 +105,7 @@ for seance in seances:
             "inscription_id": ins["id"],
             "membre": membre[0],
             "chien": chien[0],
-            "seance_id": seance_id
+            "seance_id": ins["seance_id"]   # ← CORRECTION FINALE
         })
 
     # ---------------------------------------------------------
