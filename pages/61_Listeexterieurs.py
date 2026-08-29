@@ -1,9 +1,8 @@
 import streamlit as st
 from supabase import create_client, Client
+from datetime import datetime, timedelta
 from menu import hide_streamlit_menu, menu_lateral
-import datetime
 
-# --- Masquer le menu Streamlit + afficher ton menu latéral ---
 hide_streamlit_menu()
 menu_lateral()
 
@@ -12,40 +11,48 @@ url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(url, key)
 
-st.title("📋 Liste des préinscriptions extérieures")
+st.title("📋 Liste des extérieurs (préinscriptions)")
 
-# --- Charger toutes les préinscriptions extérieures ---
+# ---------------------------------------------------------
+# 🧹 NETTOYAGE AUTOMATIQUE DES PREINSCRIPTIONS
+# ---------------------------------------------------------
+
+limite = datetime.now() - timedelta(days=30)
+
+# 1️⃣ Supprimer les refusés
+supabase.table("preinscriptions").delete().eq("acceptee", False).execute()
+
+# 2️⃣ Supprimer les transformés
+supabase.table("preinscriptions").delete().eq("statut", "transforme").execute()
+
+# 3️⃣ Supprimer les anciennes préinscriptions (> 30 jours)
+supabase.table("preinscriptions").delete().lt("created_at", limite.isoformat()).execute()
+
+# ---------------------------------------------------------
+# Charger les extérieurs encore actifs
+# ---------------------------------------------------------
+
 preins = (
     supabase.table("preinscriptions")
     .select("*")
     .eq("type", "exterieur")
-    .order("date_seance")
     .execute()
     .data
 )
 
 if not preins:
-    st.info("Aucune préinscription extérieure enregistrée.")
+    st.info("Aucun extérieur actif.")
     st.stop()
 
-# --- Filtre par séance ---
-dates = sorted({p["date_seance"] for p in preins})
-date_choisie = st.selectbox("Filtrer par date de séance :", dates)
+# ---------------------------------------------------------
+# Affichage
+# ---------------------------------------------------------
 
-preins_filtrees = [p for p in preins if p["date_seance"] == date_choisie]
-
-st.subheader(f"Préinscriptions pour la séance du {date_choisie}")
-
-# --- Affichage compact et propre ---
-for p in preins_filtrees:
-    st.markdown(f"""
-    **{p['prenom']} {p['nom']}**
-
-    • Chien : {p['chien_nom']} ({p['chien_race']})  
-    • Email : {p['email']}  
-    • Téléphone : {p['telephone']}  
-    • Heure : {p['heure_debut']}  
-    • Statut : `{p['statut']}`  
-
-    ---
-    """)
+for p in preins:
+    st.markdown("---")
+    st.write(f"👤 **{p['prenom']} {p['nom']}**")
+    st.write(f"📧 {p['email']}")
+    st.write(f"📱 {p['telephone']}")
+    st.write(f"🐶 {p['chien_nom']} ({p['chien_race']})")
+    st.write(f"🆔 ID préinscription : {p['id']}")
+    st.write(f"📌 Statut : **{p['statut']}**")
