@@ -35,6 +35,8 @@ def menu_lateral():
     st.sidebar.page_link("pages/02_Chiens.py", label="🐶 Chiens")
     st.sidebar.page_link("pages/03_Membres_archives.py", label="📁 Membres archivés")
     st.sidebar.page_link("pages/04_Chiens_archives.py", label="📁 Chiens archivés")
+    st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")
+
 
     # --- Cours & Séances ---
     st.sidebar.page_link("pages/04_Cours.py", label="📘 Cours")
