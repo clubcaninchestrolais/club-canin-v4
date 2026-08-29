@@ -39,7 +39,7 @@ for seance in seances:
     st.markdown(f"### 🐾 {nom_seance} — {seance['date_seance']}")
 
     # ---------------------------------------------------------
-    # 1️⃣ EXTÉRIEURS VALIDÉS (inchangé)
+    # 1️⃣ EXTÉRIEURS VALIDÉS
     # ---------------------------------------------------------
     exterieurs = (
         supabase.table("preinscriptions")
@@ -64,8 +64,10 @@ for seance in seances:
     membres_inscrits = []
     for ins in inscriptions:
 
-        # 🔒 Protection anti-NULL
-        if not ins["membre_id"] or not ins["chien_id"]:
+        # 🔒 Protection anti-NULL / anti-vide
+        if ins["membre_id"] is None or ins["chien_id"] is None:
+            continue
+        if ins["membre_id"] == "" or ins["chien_id"] == "":
             continue
 
         membre = (
@@ -119,7 +121,7 @@ for seance in seances:
     )
 
     # ---------------------------------------------------------
-    # AFFICHAGE EXTÉRIEURS (inchangé)
+    # AFFICHAGE EXTÉRIEURS
     # ---------------------------------------------------------
     for ext in exterieurs:
 
@@ -152,7 +154,7 @@ for seance in seances:
                 st.write(insertion)
 
     # ---------------------------------------------------------
-    # AFFICHAGE MEMBRES (corrigé)
+    # AFFICHAGE MEMBRES
     # ---------------------------------------------------------
     for item in membres_inscrits:
         membre = item["membre"]
@@ -262,4 +264,3 @@ for seance in seances:
             else:
                 st.error("❌ Erreur lors de l'enregistrement.")
                 st.write(insertion)
-
