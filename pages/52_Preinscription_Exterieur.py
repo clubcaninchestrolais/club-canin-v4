@@ -1,6 +1,10 @@
 import streamlit as st
 from supabase_rest import supabase
 
+# 🔒 Sécurité : vérifier la session AVANT tout
+if "connected" not in st.session_state or not st.session_state["connected"]:
+    st.switch_page("pages/login.py")
+
 st.set_page_config(page_title="Préinscription extérieur", page_icon="🐾")
 st.title("🐾 Préinscription pour une personne extérieure")
 
