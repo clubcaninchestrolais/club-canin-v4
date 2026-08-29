@@ -26,22 +26,19 @@ if not seances:
 
 # Charger les cours
 cours_raw = supabase.table("cours").select("*").execute().data
-
-# 🔥 Harmonisation : dictionnaire avec clés INT
 cours_dict = {int(c["id"]): c for c in cours_raw}
 
 # Regrouper les séances par cours
 cours_groupes = {}
 for s in seances:
-    cid = int(s["cours_id"])   # 🔥 harmonisation
+    cid = int(s["cours_id"])
     cours_groupes.setdefault(cid, []).append(s)
 
 # Parcours des cours du jour
 for cours_id, liste_seances in cours_groupes.items():
 
-    # 🔥 Sécurité : ignorer les cours inexistants
     if cours_id not in cours_dict:
-        st.warning(f"⚠️ Séance ignorée : cours_id {cours_id} n'existe pas dans la table 'cours'.")
+        st.warning(f"Cours ID {cours_id} introuvable.")
         continue
 
     cours_nom = cours_dict[cours_id]["nom_cours"]
@@ -51,7 +48,7 @@ for cours_id, liste_seances in cours_groupes.items():
     inscriptions = (
         supabase.table("cours_inscriptions")
         .select("*")
-        .eq("cours_id", cours_id)   # 🔥 harmonisation
+        .eq("cours_id", str(cours_id))  # 🔥 harmonisation
         .execute()
         .data
     )
@@ -60,7 +57,7 @@ for cours_id, liste_seances in cours_groupes.items():
     exterieurs = (
         supabase.table("preinscriptions")
         .select("*")
-        .eq("cours_id", cours_id)   # 🔥 harmonisation
+        .eq("cours_id", str(cours_id))  # 🔥 harmonisation
         .eq("acceptee", True)
         .execute()
         .data
@@ -76,7 +73,7 @@ for cours_id, liste_seances in cours_groupes.items():
             participants.append({
                 "membre": membre[0],
                 "chien": chien[0],
-                "seance_id": int(ins["seance_id"]),   # 🔥 harmonisation
+                "seance_id": int(ins["seance_id"]),
                 "inscription_id": ins["id"]
             })
 
@@ -88,7 +85,7 @@ for cours_id, liste_seances in cours_groupes.items():
             participants.append({
                 "membre": membre[0],
                 "chien": chien[0],
-                "seance_id": int(ext["seance_id"]),   # 🔥 harmonisation
+                "seance_id": int(ext["seance_id"]),
                 "inscription_id": ext["id"]
             })
 
@@ -103,7 +100,6 @@ for cours_id, liste_seances in cours_groupes.items():
         chien = p["chien"]
         seance_id = p["seance_id"]
 
-        # Vérifier présence
         presence = (
             supabase.table("cours_presences")
             .select("*")
@@ -132,7 +128,6 @@ for cours_id, liste_seances in cours_groupes.items():
                 f"Valider présence de {membre['prenom']} {membre['nom']}",
                 key=f"btn_{p['inscription_id']}"
             ):
-                # Enregistrer la présence
                 supabase.table("cours_presences").insert({
                     "membre_id": membre["id"],
                     "chien_id": chien["id"],
@@ -140,7 +135,6 @@ for cours_id, liste_seances in cours_groupes.items():
                     "present": True
                 }).execute()
 
-                # Décrémenter abonnement
                 abo = (
                     supabase.table("abonnements")
                     .select("*")
