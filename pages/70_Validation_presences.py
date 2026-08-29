@@ -15,7 +15,7 @@ seances = (
     supabase.table("cours_seances")
     .select("*")
     .eq("date_seance", aujourdhui)
-    .order("cours_id")
+    .order("id")
     .execute()
     .data
 )
@@ -24,40 +24,26 @@ if not seances:
     st.info("Aucune séance aujourd'hui.")
     st.stop()
 
-# Charger les cours
-cours_raw = supabase.table("cours").select("*").execute().data
-cours_dict = {int(c["id"]): c for c in cours_raw}
+for seance in seances:
 
-# Regrouper les séances par cours
-cours_groupes = {}
-for s in seances:
-    cid = int(s["cours_id"])
-    cours_groupes.setdefault(cid, []).append(s)
+    seance_id = seance["id"]
 
-# Parcours des cours du jour
-for cours_id, liste_seances in cours_groupes.items():
+    st.markdown(f"## 🐾 {seance['nom_seance']} — {seance['date_seance']}")
 
-    if cours_id not in cours_dict:
-        st.warning(f"Cours ID {cours_id} introuvable.")
-        continue
-
-    cours_nom = cours_dict[cours_id]["nom_cours"]
-    st.markdown(f"## 🐾 {cours_nom}")
-
-    # Charger les inscriptions membres
+    # Membres inscrits à cette séance
     inscriptions = (
         supabase.table("cours_inscriptions")
         .select("*")
-        .eq("cours_id", str(cours_id))  # 🔥 harmonisation
+        .eq("seance_id", seance_id)
         .execute()
         .data
     )
 
-    # Charger les extérieurs validés
+    # Extérieurs validés pour cette séance
     exterieurs = (
         supabase.table("preinscriptions")
         .select("*")
-        .eq("cours_id", str(cours_id))  # 🔥 harmonisation
+        .eq("seance_id", seance_id)
         .eq("acceptee", True)
         .execute()
         .data
@@ -73,7 +59,6 @@ for cours_id, liste_seances in cours_groupes.items():
             participants.append({
                 "membre": membre[0],
                 "chien": chien[0],
-                "seance_id": int(ins["seance_id"]),
                 "inscription_id": ins["id"]
             })
 
@@ -85,20 +70,18 @@ for cours_id, liste_seances in cours_groupes.items():
             participants.append({
                 "membre": membre[0],
                 "chien": chien[0],
-                "seance_id": int(ext["seance_id"]),
                 "inscription_id": ext["id"]
             })
 
     if not participants:
-        st.warning("Aucun inscrit pour ce cours.")
+        st.warning("Aucun inscrit pour cette séance.")
         continue
 
-    # 🔥 AFFICHAGE + VALIDATION
+    # Affichage + validation
     for p in participants:
 
         membre = p["membre"]
         chien = p["chien"]
-        seance_id = p["seance_id"]
 
         presence = (
             supabase.table("cours_presences")
@@ -116,8 +99,7 @@ for cours_id, liste_seances in cours_groupes.items():
             f"""
             <div style='background:#f7f7f7;padding:12px;border-radius:8px;margin-bottom:10px;'>
                 <b>{membre['prenom']} {membre['nom']}</b><br>
-                🐶 {chien['nom']}<br>
-                Séance ID : {seance_id}
+                🐶 {chien['nom']}
             </div>
             """,
             unsafe_allow_html=True
@@ -134,22 +116,6 @@ for cours_id, liste_seances in cours_groupes.items():
                     "seance_id": seance_id,
                     "present": True
                 }).execute()
-
-                abo = (
-                    supabase.table("abonnements")
-                    .select("*")
-                    .eq("id_membre", membre["id"])
-                    .order("id", desc=True)
-                    .execute()
-                    .data
-                )
-
-                if abo:
-                    rest = abo[0]["seances_restantes"]
-                    if rest > 0:
-                        supabase.table("abonnements").update({
-                            "seances_restantes": rest - 1
-                        }).eq("id", abo[0]["id"]).execute()
 
                 st.success("Présence validée.")
                 st.rerun()
