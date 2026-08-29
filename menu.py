@@ -70,7 +70,7 @@ def menu_lateral():
     st.sidebar.page_link("pages/11_Flux_club.py", label="🔄 Flux du club")
     st.sidebar.page_link("pages/01_Apropos.py", label="ℹ️ À propos")
     # --- Page réservée à l'admin ---
-if st.session_state.get("role") == "admin":
+    if st.session_state.get("role") == "admin":
     st.sidebar.page_link("pages/gestion_utilisateurs.py", label="🔐 Gestion utilisateurs")
 
 
