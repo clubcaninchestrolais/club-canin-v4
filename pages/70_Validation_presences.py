@@ -60,26 +60,28 @@ for seance in seances:
     # ---------------------------------------------------------
     # 2️⃣ MEMBRES INSCRITS (cours_inscriptions)
     # ---------------------------------------------------------
-    inscriptions = (
+    inscriptions_raw = (
         supabase.table("cours_inscriptions")
         .select("*")
-        .eq("cours_id", seance_id)
         .execute()
         .data
     )
+
+    # Filtrer les inscriptions de cette séance
+    inscriptions = [
+        ins for ins in inscriptions_raw
+        if str(ins["seance_id"]) == str(seance_id)
+    ]
 
     membres_inscrits = []
     for ins in inscriptions:
 
         # 🔒 Protection anti-NULL / anti-vide
-        if ins["id_membre"] is None or ins["chien_id"] is None:
-            continue
-        if ins["id_membre"] == "" or ins["chien_id"] == "":
+        if ins["membre_id"] is None or ins["chien_id"] is None:
             continue
 
-        # 🔒 Conversion en int8
         try:
-            membre_id = int(ins["id_membre"])
+            membre_id = int(ins["membre_id"])
             chien_id = int(ins["chien_id"])
         except:
             continue
@@ -164,9 +166,6 @@ for seance in seances:
             if insertion.data:
                 st.success("Présence extérieur validée.")
                 st.rerun()
-            else:
-                st.error("❌ Erreur lors de la validation.")
-                st.write(insertion)
 
     # ---------------------------------------------------------
     # AFFICHAGE MEMBRES
@@ -176,9 +175,7 @@ for seance in seances:
         chien = item["chien"]
         seance_id = item["seance_id"]
 
-        # ---------------------------------------------------------
-        # 💳 Vérifier cotisation active
-        # ---------------------------------------------------------
+        # Vérifier cotisation
         cotisations = (
             supabase.table("cotisations")
             .select("*")
@@ -194,9 +191,7 @@ for seance in seances:
 
         cot_msg = "💳 Cotisation active" if cot_active else "❌ Cotisation non active"
 
-        # ---------------------------------------------------------
-        # 🎫 Vérifier abonnement actif
-        # ---------------------------------------------------------
+        # Vérifier abonnement
         abos = (
             supabase.table("abonnements")
             .select("*")
@@ -223,9 +218,7 @@ for seance in seances:
             couleur = "#ffcccc"
             abo_msg = "❌ Aucun abonnement"
 
-        # ---------------------------------------------------------
-        # Vérifier si déjà validé (cours_presences)
-        # ---------------------------------------------------------
+        # Vérifier présence
         presence = (
             supabase.table("cours_presences")
             .select("*")
@@ -238,9 +231,6 @@ for seance in seances:
 
         deja = bool(presence)
 
-        # ---------------------------------------------------------
-        # AFFICHAGE COMPACT
-        # ---------------------------------------------------------
         st.markdown(
             f"""
             <div style='background:{couleur};padding:10px;border-radius:6px;margin-bottom:6px;'>
@@ -251,9 +241,6 @@ for seance in seances:
             unsafe_allow_html=True
         )
 
-        # ---------------------------------------------------------
-        # BOUTON
-        # ---------------------------------------------------------
         if deja:
             st.success("Présence déjà validée.")
             continue
@@ -276,6 +263,3 @@ for seance in seances:
             if insertion.data:
                 st.success("Présence validée.")
                 st.rerun()
-            else:
-                st.error("❌ Erreur lors de l'enregistrement.")
-                st.write(insertion)
