@@ -10,19 +10,15 @@ st.title("Validation des présences")
 
 aujourdhui = datetime.date.today().isoformat()
 
-# Charger toutes les séances
-seances_raw = (
+# Charger toutes les séances du jour
+seances = (
     supabase.table("cours_seances")
     .select("*")
-    .order("id")
+    .eq("date_seance", aujourdhui)
+    .order("heure_debut")
     .execute()
     .data
 )
-
-seances = [
-    s for s in seances_raw
-    if s["date_seance"][:10] == aujourdhui
-]
 
 if not seances:
     st.info("Aucune séance aujourd'hui.")
@@ -30,11 +26,20 @@ if not seances:
 
 for seance in seances:
 
-    seance_id = int(seance["id"])
+    seance_id = seance["id"]
 
-    st.markdown(f"### 🐾 {seance['nom_seance']} — {seance['date_seance'][:10]}")
+    st.markdown(f"### 🐾 {seance['nom_seance']} — {seance['date_seance']}")
 
-    # EXTÉRIEURS
+    # 🔵 Charger les inscriptions validées (membres)
+    inscriptions = (
+        supabase.table("cours_inscriptions")
+        .select("*")
+        .eq("seance_id", seance_id)
+        .execute()
+        .data
+    )
+
+    # 🔵 Charger les extérieurs validés
     exterieurs = (
         supabase.table("preinscriptions")
         .select("*")
@@ -44,60 +49,47 @@ for seance in seances:
         .data
     )
 
-    # INSCRIPTIONS
-    inscriptions_raw = (
-        supabase.table("cours_inscriptions")
-        .select("*")
-        .execute()
-        .data
-    )
+    # Fusion propre
+    participants = []
 
-    inscriptions = [
-        ins for ins in inscriptions_raw
-        if int(ins["seance_id"]) == seance_id
-    ]
-
-    membres_inscrits = []
+    # Membres inscrits
     for ins in inscriptions:
+        membre = supabase.table("membres").select("*").eq("id", ins["membre_id"]).execute().data
+        chien = supabase.table("chiens").select("*").eq("id", ins["chien_id"]).execute().data
 
-        try:
-            membre_id = int(ins["membre_id"])
-            chien_id = int(ins["chien_id"])
-            seance_id_ins = int(ins["seance_id"])
-        except:
-            continue
+        if membre and chien:
+            participants.append({
+                "type": "membre",
+                "membre": membre[0],
+                "chien": chien[0],
+                "inscription_id": ins["id"]
+            })
 
-        membre = (
-            supabase.table("membres")
-            .select("*")
-            .eq("id", membre_id)
-            .execute()
-            .data
-        )
-        chien = (
-            supabase.table("chiens")
-            .select("*")
-            .eq("id", chien_id)
-            .execute()
-            .data
-        )
+    # Extérieurs validés
+    for ext in exterieurs:
+        membre = supabase.table("membres").select("*").eq("id", ext["membre_id"]).execute().data
+        chien = supabase.table("chiens").select("*").eq("id", ext["chien_id"]).execute().data
 
-        if not membre or not chien:
-            continue
+        if membre and chien:
+            participants.append({
+                "type": "exterieur",
+                "membre": membre[0],
+                "chien": chien[0],
+                "inscription_id": ext["id"]
+            })
 
-        membres_inscrits.append({
-            "inscription_id": ins["id"],
-            "membre": membre[0],
-            "chien": chien[0],
-            "seance_id": seance_id_ins
-        })
+    # Aucun participant ?
+    if not participants:
+        st.warning("Aucun participant inscrit pour cette séance.")
+        continue
 
-    # AFFICHAGE MEMBRES (ajout du nom comme avant)
-    for item in membres_inscrits:
-        membre = item["membre"]
-        chien = item["chien"]
-        seance_id = int(item["seance_id"])
+    # 🔥 AFFICHAGE + VALIDATION
+    for p in participants:
 
+        membre = p["membre"]
+        chien = p["chien"]
+
+        # Vérifier si présence déjà validée
         presence = (
             supabase.table("cours_presences")
             .select("*")
@@ -110,7 +102,7 @@ for seance in seances:
 
         deja = bool(presence)
 
-        # 🔥 Affichage propre du membre + chien
+        # Affichage propre
         st.markdown(
             f"""
             <div style='background:#f7f7f7;padding:12px;border-radius:8px;margin-bottom:10px;'>
@@ -124,40 +116,35 @@ for seance in seances:
         if not deja:
             if st.button(
                 f"Valider présence de {membre['prenom']} {membre['nom']}",
-                key=f"btn_membre_{item['inscription_id']}"
+                key=f"btn_{p['inscription_id']}"
             ):
-                # 🔥 1) Enregistrer la présence
-                insertion = supabase.table("cours_presences").insert({
+                # Enregistrer la présence
+                supabase.table("cours_presences").insert({
                     "membre_id": membre["id"],
                     "chien_id": chien["id"],
                     "seance_id": seance_id,
                     "present": True
                 }).execute()
 
-                if insertion.data:
+                # Décrémenter l’abonnement
+                abo = (
+                    supabase.table("abonnements")
+                    .select("*")
+                    .eq("id_membre", membre["id"])
+                    .order("id", desc=True)
+                    .execute()
+                    .data
+                )
 
-                    # 🔥 2) Consommer 1 séance d’abonnement
-                    abos = (
-                        supabase.table("abonnements")
-                        .select("*")
-                        .eq("id_membre", membre["id"])
-                        .order("id", desc=True)
-                        .execute()
-                        .data
-                    )
+                if abo:
+                    rest = abo[0]["seances_restantes"]
+                    if rest > 0:
+                        supabase.table("abonnements").update({
+                            "seances_restantes": rest - 1
+                        }).eq("id", abo[0]["id"]).execute()
 
-                    if abos:
-                        abo = abos[0]
-                        rest = abo["seances_restantes"]
-
-                        if rest > 0:
-                            supabase.table("abonnements").update({
-                                "seances_restantes": rest - 1
-                            }).eq("id", abo["id"]).execute()
-
-                    st.success("Présence validée.")
-                    st.rerun()
+                st.success("Présence validée.")
+                st.rerun()
 
         else:
             st.success("Présence déjà validée.")
-
