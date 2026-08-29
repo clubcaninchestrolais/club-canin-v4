@@ -56,7 +56,7 @@ for seance in seances:
     inscriptions = (
         supabase.table("cours_inscriptions")
         .select("*")
-        .eq("seance_id", seance_id)
+        .eq("cours_id", seance_id)
         .execute()
         .data
     )
@@ -65,22 +65,30 @@ for seance in seances:
     for ins in inscriptions:
 
         # 🔒 Protection anti-NULL / anti-vide
-        if ins["membre_id"] is None or ins["chien_id"] is None:
+        if ins["id_membre"] is None or ins["chien_id"] is None:
             continue
-        if ins["membre_id"] == "" or ins["chien_id"] == "":
+        if ins["id_membre"] == "" or ins["chien_id"] == "":
             continue
 
+        # 🔒 Conversion en int8 (correction finale)
+        try:
+            membre_id = int(ins["id_membre"])
+            chien_id = int(ins["chien_id"])
+        except:
+            continue
+
+        # Vérifier existence réelle du membre et du chien
         membre = (
             supabase.table("membres")
             .select("*")
-            .eq("id", ins["membre_id"])
+            .eq("id", membre_id)
             .execute()
             .data
         )
         chien = (
             supabase.table("chiens")
             .select("*")
-            .eq("id", ins["chien_id"])
+            .eq("id", chien_id)
             .execute()
             .data
         )
@@ -92,7 +100,8 @@ for seance in seances:
             "inscription_id": ins["id"],
             "membre": membre[0],
             "chien": chien[0],
-            "cours": nom_seance
+            "cours": nom_seance,
+            "seance_id": seance_id
         })
 
     # ---------------------------------------------------------
@@ -159,6 +168,7 @@ for seance in seances:
     for item in membres_inscrits:
         membre = item["membre"]
         chien = item["chien"]
+        seance_id = item["seance_id"]
 
         # ---------------------------------------------------------
         # 💳 Vérifier cotisation active
@@ -254,7 +264,6 @@ for seance in seances:
                 "membre_id": membre["id"],
                 "chien_id": chien["id"],
                 "seance_id": seance_id,
-                # ❗ On enlève date_presence → DEFAULT CURRENT_DATE
                 "present": True
             }).execute()
 
