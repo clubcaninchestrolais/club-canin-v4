@@ -2,9 +2,6 @@ import streamlit as st
 from supabase import create_client
 import datetime
 
-# ---------------------------------------------------------
-# Connexion Supabase
-# ---------------------------------------------------------
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase = create_client(url, key)
@@ -27,7 +24,7 @@ cours_nom = st.selectbox("Filtrer par cours :", list(cours_labels.keys()))
 cours_id = cours_labels[cours_nom]
 
 # ---------------------------------------------------------
-# Charger les séances du cours sélectionné
+# Charger les séances du cours
 # ---------------------------------------------------------
 seances = (
     supabase.table("cours_seances")
@@ -51,11 +48,11 @@ seance_nom = st.selectbox("Séance :", list(seance_labels.keys()))
 seance_id = seance_labels[seance_nom]
 
 # ---------------------------------------------------------
-# Charger les inscriptions à cette séance
+# Charger les inscriptions
 # ---------------------------------------------------------
 inscriptions = (
     supabase.table("cours_inscriptions")
-    .select("*, membres(*), chiens(*)")
+    .select("*")
     .eq("seance_id", seance_id)
     .execute()
     .data
@@ -72,8 +69,25 @@ st.subheader("Liste des inscrits")
 # ---------------------------------------------------------
 for ins in inscriptions:
 
-    membre = ins["membres"]
-    chien = ins["chiens"]
+    # Charger membre
+    membre = (
+        supabase.table("membres")
+        .select("*")
+        .eq("id", ins["membre_id"])
+        .execute()
+        .data[0]
+    )
+
+    # Charger chien
+    chien = None
+    if ins["chien_id"]:
+        chien = (
+            supabase.table("chiens")
+            .select("*")
+            .eq("id", ins["chien_id"])
+            .execute()
+            .data[0]
+        )
 
     membre_nom = f"{membre['prenom']} {membre['nom']}"
     chien_nom = chien["nom"] if chien else "(bénévole)"
@@ -97,20 +111,16 @@ for ins in inscriptions:
     # Bouton de validation
     if st.button(f"Valider présence — {membre_nom}"):
 
-        # ---------------------------------------------------------
-        # 1) Enregistrer la présence
-        # ---------------------------------------------------------
+        # 1) Enregistrer présence
         supabase.table("cours_presences").insert({
             "membre_id": membre["id"],
-            "chien_id": chien["id"] if chien else None,
+            "chien_id": ins["chien_id"],
             "seance_id": seance_id,
             "present": True,
             "date_presence": datetime.date.today().isoformat()
         }).execute()
 
-        # ---------------------------------------------------------
-        # 2) Décrémenter l'abonnement du membre
-        # ---------------------------------------------------------
+        # 2) Décrémenter abonnement
         abo = (
             supabase.table("abonnements")
             .select("*")
