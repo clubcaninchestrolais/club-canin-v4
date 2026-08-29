@@ -16,6 +16,6 @@ seances = (
     .data
 )
 
-st.write("Cours_id réels :")
+st.write("Cours_id réels et types :")
 for s in seances:
-    st.write(repr(s["cours_id"]))
+    st.write(s["cours_id"], type(s["cours_id"]))
