@@ -2,6 +2,9 @@ import streamlit as st
 from supabase import create_client
 import datetime
 
+# ---------------------------------------------------------
+# Connexion Supabase
+# ---------------------------------------------------------
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 supabase = create_client(url, key)
@@ -111,7 +114,9 @@ for ins in inscriptions:
     # Bouton de validation
     if st.button(f"Valider présence — {membre_nom}"):
 
+        # ---------------------------------------------------------
         # 1) Enregistrer présence
+        # ---------------------------------------------------------
         supabase.table("cours_presences").insert({
             "membre_id": membre["id"],
             "chien_id": ins["chien_id"],
@@ -120,12 +125,13 @@ for ins in inscriptions:
             "date_presence": datetime.date.today().isoformat()
         }).execute()
 
-        # 2) Décrémenter abonnement
+        # ---------------------------------------------------------
+        # 2) Décrémenter l'abonnement
+        # ---------------------------------------------------------
         abo = (
             supabase.table("abonnements")
             .select("*")
             .eq("membre_id", membre["id"])
-            .eq("actif", True)
             .execute()
             .data
         )
@@ -136,8 +142,6 @@ for ins in inscriptions:
 
             supabase.table("abonnements").update({
                 "seances_restantes": reste,
-                "date_dernier_cours": datetime.date.today().isoformat(),
-                "cours_id_dernier": cours_id,
                 "actif": reste > 0
             }).eq("id", abo["id"]).execute()
 
