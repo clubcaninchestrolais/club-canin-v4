@@ -12,15 +12,22 @@ st.title("Validation des présences")
 # Séance du jour
 aujourdhui = datetime.date.today().isoformat()
 
-# Charger TOUTES les séances du jour
-seances = (
+# ---------------------------------------------------------
+# 🔥 Correction : on charge toutes les séances puis on filtre
+# ---------------------------------------------------------
+seances_raw = (
     supabase.table("cours_seances")
     .select("*")
-    .eq("date_seance", aujourdhui)
     .order("id")
     .execute()
     .data
 )
+
+# Filtrer les séances du jour (date_seance peut être un timestamp)
+seances = [
+    s for s in seances_raw
+    if s["date_seance"][:10] == aujourdhui
+]
 
 if not seances:
     st.info("Aucune séance aujourd'hui.")
@@ -36,7 +43,7 @@ for seance in seances:
     seance_id = seance["id"]
     nom_seance = seance["nom_seance"]
 
-    st.markdown(f"### 🐾 {nom_seance} — {seance['date_seance']}")
+    st.markdown(f"### 🐾 {nom_seance} — {seance['date_seance'][:10]}")
 
     # ---------------------------------------------------------
     # 1️⃣ EXTÉRIEURS VALIDÉS
@@ -70,7 +77,7 @@ for seance in seances:
         if ins["id_membre"] == "" or ins["chien_id"] == "":
             continue
 
-        # 🔒 Conversion en int8 (correction finale)
+        # 🔒 Conversion en int8
         try:
             membre_id = int(ins["id_membre"])
             chien_id = int(ins["chien_id"])
@@ -100,7 +107,6 @@ for seance in seances:
             "inscription_id": ins["id"],
             "membre": membre[0],
             "chien": chien[0],
-            "cours": nom_seance,
             "seance_id": seance_id
         })
 
