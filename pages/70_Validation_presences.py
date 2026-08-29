@@ -146,4 +146,4 @@ for ins in inscriptions:
             }).eq("id", abo["id"]).execute()
 
         st.success("Présence validée")
-        st.experimental_rerun()
+        st.rerun()
