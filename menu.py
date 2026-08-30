@@ -11,6 +11,8 @@ def hide_streamlit_menu():
     st.markdown(css, unsafe_allow_html=True)
 
 def menu_lateral():
+    role = st.session_state.get("role", "user")  # sécurité
+
     st.sidebar.markdown("## 🐶 Menu Club Canin")
 
     # --- Raccourcis rapides ---
@@ -23,7 +25,11 @@ def menu_lateral():
         st.page_link("pages/02_Chiens.py", label="🐶")
 
     with col3:
-        st.page_link("pages/04_Cours.py", label="📘")
+        # Cours = ADMIN → on affiche seulement si admin
+        if role == "admin":
+            st.page_link("pages/04_Cours.py", label="📘")
+        else:
+            st.write("")
 
     with col4:
         st.page_link("pages/20_Cotisations.py", label="💰")
@@ -38,34 +44,49 @@ def menu_lateral():
     st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")
 
     # --- Cours & Séances ---
-    st.sidebar.page_link("pages/04_Cours.py", label="📘 Cours")
+    if role == "admin":
+        st.sidebar.page_link("pages/04_Cours.py", label="📘 Cours")
+
     st.sidebar.page_link("pages/10_Cours_du_jour.py", label="📅 Cours du jour")
     st.sidebar.page_link("pages/70_Validation_presences.py", label="🟢 Validation des présences")
     st.sidebar.page_link("pages/33_presence_du_jour.py", label="👣 Présences du jour")
 
+    # --- Finances ---
     st.sidebar.markdown("### 💰 Finances")
     st.sidebar.page_link("pages/20_Cotisations.py", label="💳 Cotisations")
     st.sidebar.page_link("pages/21_Abonnements.py", label="🎫 Abonnements")
-    st.sidebar.page_link("pages/21_Recettes.py", label="📈 Recettes")
-    st.sidebar.page_link("pages/23_Depenses.py", label="🧾 Dépenses")
-    st.sidebar.page_link("pages/09_Finances.py", label="💼 Finances globales")
 
+    if role == "admin":
+        st.sidebar.page_link("pages/21_Recettes.py", label="📈 Recettes")
+        st.sidebar.page_link("pages/23_Depenses.py", label="🧾 Dépenses")
+        st.sidebar.page_link("pages/09_Finances.py", label="💼 Finances globales")
+
+    # --- Flux extérieurs ---
     st.sidebar.markdown("### 🔄 Flux")
     st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="🌐 Préinscription publique")
-    st.sidebar.page_link("pages/60_Validation_preinscription.py", label="📝 Validation préinscription")
-    st.sidebar.page_link("pages/61_Listeexterieurs.py", label="📋 listing Préinscriptions extérieures")
+
+    if role == "admin":
+        st.sidebar.page_link("pages/60_Validation_preinscription.py", label="📝 Validation préinscription")
+
+    st.sidebar.page_link("pages/61_Listeexterieurs.py", label="📋 Listing extérieurs")
     st.sidebar.page_link("pages/62_Transformation_exterieur.py", label="🔁 Transformation extérieur → membre")
 
+    # --- Organisations ---
     st.sidebar.markdown("### 🏛️ Organisations")
     st.sidebar.page_link("pages/organisations.py", label="🏛️ Organisations")
 
+    # --- Technique ---
     st.sidebar.markdown("### ⚙️ Technique")
-    st.sidebar.page_link("pages/10_Parametres.py", label="⚙️ Paramètres")
+
+    if role == "admin":
+        st.sidebar.page_link("pages/10_Parametres.py", label="⚙️ Paramètres")
+
     st.sidebar.page_link("pages/11_Flux_club.py", label="🔄 Flux du club")
     st.sidebar.page_link("pages/01_Apropos.py", label="ℹ️ À propos")
 
-    # --- Page réservée à l'admin ---
-    if st.session_state.get("role") == "admin":
+    # --- Admin uniquement ---
+    if role == "admin":
+        st.sidebar.page_link("pages/60_Rapport.py", label="📊 Rapport")
         st.sidebar.page_link("pages/gestion_utilisateurs.py", label="🔐 Gestion utilisateurs")
 
     st.sidebar.markdown("---")
