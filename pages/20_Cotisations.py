@@ -2,10 +2,11 @@ import streamlit as st
 from securite import securite_user
 securite_user()
 
+from datetime import datetime, date   # si tu utilises date.today()
 from supabase import create_client, Client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-from datetime import date   # si utilisé
+
 
 
 st.set_page_config(page_title="Cotisations", page_icon="💳", layout="wide")
