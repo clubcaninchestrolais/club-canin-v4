@@ -1,4 +1,5 @@
 import streamlit as st
+from supabase_rest import supabase
 
 def hide_streamlit_menu():
     css = """
@@ -10,10 +11,34 @@ def hide_streamlit_menu():
     """
     st.markdown(css, unsafe_allow_html=True)
 
+
+def afficher_notifications():
+    """Affiche les notifications actives selon le rôle."""
+    role = st.session_state.get("role", "user")
+
+    try:
+        notifs = (
+            supabase.table("notifications")
+            .select("*")
+            .eq("actif", True)
+            .execute()
+            .data
+        )
+    except Exception:
+        return
+
+    for n in notifs:
+        if n["role"] in ["all", role]:
+            st.sidebar.info(f"📢 {n['titre']} — {n['message']}")
+
+
 def menu_lateral():
-    role = st.session_state.get("role", "user")  # sécurité
+    role = st.session_state.get("role", "user")
 
     st.sidebar.markdown("## 🐶 Menu Club Canin")
+
+    # --- Notifications internes ---
+    afficher_notifications()
 
     # --- Raccourcis rapides ---
     col1, col2, col3, col4 = st.sidebar.columns(4)
@@ -25,7 +50,6 @@ def menu_lateral():
         st.page_link("pages/02_Chiens.py", label="🐶")
 
     with col3:
-        # Cours = ADMIN → on affiche seulement si admin
         if role == "admin":
             st.page_link("pages/04_Cours.py", label="📘")
         else:
@@ -87,6 +111,7 @@ def menu_lateral():
     # --- Admin uniquement ---
     if role == "admin":
         st.sidebar.page_link("pages/60_Rapport.py", label="📊 Rapport")
+        st.sidebar.page_link("pages/90_Notifications.py", label="📢 Notifications")
         st.sidebar.page_link("pages/gestion_utilisateurs.py", label="🔐 Gestion utilisateurs")
 
     st.sidebar.markdown("---")
