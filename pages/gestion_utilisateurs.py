@@ -1,10 +1,12 @@
 import streamlit as st
-import hashlib
-from supabase_rest import supabase
+from securite import securite_admin
+securite_admin()
 
-# --- Sécurité ---
-if "connected" not in st.session_state or not st.session_state["connected"]:
-    st.switch_page("pages/login.py")
+from datetime import datetime, date
+from supabase import create_client, Client
+from supabase_rest import supabase
+from menu import hide_streamlit_menu, menu_lateral
+
 
 # --- Accès réservé à l'admin ---
 if st.session_state.get("role") != "admin":
