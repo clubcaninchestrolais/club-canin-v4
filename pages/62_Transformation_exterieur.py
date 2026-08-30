@@ -1,10 +1,11 @@
 import streamlit as st
-from supabase import create_client, Client
-from menu import hide_streamlit_menu, menu_lateral
+from securite import securite_user
+securite_user()
 
-# 🔒 Sécurité : vérifier la session AVANT tout
-if "connected" not in st.session_state or not st.session_state["connected"]:
-    st.switch_page("pages/login.py")
+from supabase import create_client, Client
+from supabase_rest import supabase
+from menu import hide_streamlit_menu, menu_lateral
+from datetime import date   # si utilisé
 
 hide_streamlit_menu()
 menu_lateral()
