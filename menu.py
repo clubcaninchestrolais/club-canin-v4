@@ -98,6 +98,8 @@ def menu_lateral():
     # --- Organisations ---
     st.sidebar.markdown("### 🏛️ Organisations")
     st.sidebar.page_link("pages/organisations.py", label="🏛️ Organisations")
+    st.sidebar.page_link("pages/95_PV_Reunions.py", label="📄 PV des réunions")
+
 
     # --- Technique ---
     st.sidebar.markdown("### ⚙️ Technique")
