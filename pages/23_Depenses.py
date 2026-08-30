@@ -1,12 +1,12 @@
 import streamlit as st
+from securite import securite_admin
+securite_admin()
 
-# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
-if "connected" not in st.session_state or not st.session_state["connected"]:
-    st.switch_page("pages/login.py")
-
+from datetime import datetime, date
+from supabase import create_client, Client
 from supabase_rest import supabase
-from datetime import datetime
 from menu import hide_streamlit_menu, menu_lateral
+
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Dépenses", page_icon="📉", layout="wide")
