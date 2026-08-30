@@ -58,7 +58,7 @@ if notifs:
         # Bouton pour supprimer
         if st.button("🗑️ Supprimer", key=f"delete_{n['id']}"):
             supabase.table("notifications").delete().eq("id", n["id"]).execute()
-            st.experimental_rerun()
+            st.rerun()
 
         st.markdown("---")
 else:
