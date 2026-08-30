@@ -1,9 +1,12 @@
 import streamlit as st
-from securite import securite_user
-securite_user()
+from securite import securite_admin
+securite_admin()
 
+from datetime import datetime, date
+from supabase import create_client, Client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
+
 
 
 st.set_page_config(page_title="Cours", page_icon="📚")
