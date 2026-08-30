@@ -5,7 +5,6 @@ securite_admin()
 from datetime import date
 from supabase_rest import supabase
 
-# IMPORT FPDF — indispensable
 from fpdf import FPDF
 import io
 
@@ -61,7 +60,7 @@ else:
             st.write(pv["contenu"])
 
             # ---------------------------------------------------------
-            # Génération PDF via FPDF (compatible Streamlit Cloud)
+            # Génération PDF via FPDF
             # ---------------------------------------------------------
 
             pdf = FPDF()
@@ -90,7 +89,6 @@ else:
             for line in pv["contenu"].split("\n"):
                 pdf.multi_cell(0, 8, line)
 
-            # Export PDF
             buffer = io.BytesIO()
             pdf.output(buffer)
             buffer.seek(0)
@@ -109,5 +107,3 @@ else:
             if st.button("🗑️ Supprimer ce PV", key=f"delete_{pv['id']}"):
                 supabase.table("pv_reunions").delete().eq("id", pv["id"]).execute()
                 st.rerun()
-
-)
