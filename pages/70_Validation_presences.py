@@ -1,6 +1,9 @@
 import streamlit as st
-from supabase import create_client
-import datetime
+from securite import securite_user
+securite_user()
+
+from supabase_rest import supabase
+from menu import hide_streamlit_menu, menu_lateral
 
 # ---------------------------------------------------------
 # Connexion Supabase
