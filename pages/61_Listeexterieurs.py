@@ -1,10 +1,11 @@
 import streamlit as st
-from securite import securite_admin
-securite_admin()
+from securite import securite_user
+securite_user()
 
 from supabase import create_client, Client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
+from datetime import date   # si utilisé
 
 hide_streamlit_menu()
 menu_lateral()
