@@ -1,11 +1,10 @@
 import streamlit as st
-
-# --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
-if "connected" not in st.session_state or not st.session_state["connected"]:
-    st.switch_page("pages/login.py")
+from securite import securite_user
+securite_user()
 
 from supabase_rest import supabase
-from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
+from menu import hide_streamlit_menu, menu_lateral
+
 
 st.set_page_config(page_title="Cours", page_icon="📚")
 
