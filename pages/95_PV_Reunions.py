@@ -5,13 +5,12 @@ securite_admin()
 from datetime import date
 from supabase_rest import supabase
 
+from fpdf import FPDF
 import io
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
 
 st.title("📄 PV des réunions")
 
-st.write("Cette page permet de créer, consulter, télécharger et archiver les PV des réunions du comité.")
+st.write("Créer, consulter, télécharger et archiver les PV des réunions du comité.")
 
 # ---------------------------------------------------------
 # Création d'un PV
@@ -61,39 +60,31 @@ else:
             st.write(pv["contenu"])
 
             # ---------------------------------------------------------
-            # Génération PDF
+            # Génération PDF via FPDF (compatible Streamlit Cloud)
             # ---------------------------------------------------------
 
-            buffer = io.BytesIO()
-            pdf = canvas.Canvas(buffer, pagesize=A4)
-            pdf.setTitle(f"PV - {pv['date_reunion']}")
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_auto_page_break(auto=True, margin=15)
 
-            width, height = A4
-            y = height - 50
+            pdf.set_font("Arial", "B", 16)
+            pdf.cell(0, 10, f"PV de réunion - {pv['date_reunion']}", ln=True)
 
-            pdf.setFont("Helvetica-Bold", 16)
-            pdf.drawString(40, y, f"PV de réunion - {pv['date_reunion']}")
-            y -= 30
+            pdf.set_font("Arial", "", 12)
+            pdf.ln(5)
+            pdf.cell(0, 10, f"Titre : {pv['titre']}", ln=True)
+            pdf.cell(0, 10, f"Auteur : {pv['auteur']}", ln=True)
+            pdf.cell(0, 10, f"Créé le : {pv['date_creation']}", ln=True)
 
-            pdf.setFont("Helvetica", 12)
-            pdf.drawString(40, y, f"Titre : {pv['titre']}")
-            y -= 20
-            pdf.drawString(40, y, f"Auteur : {pv['auteur']}")
-            y -= 20
-            pdf.drawString(40, y, f"Créé le : {pv['date_creation']}")
-            y -= 40
-
-            pdf.setFont("Helvetica", 11)
+            pdf.ln(10)
+            pdf.set_font("Arial", "", 11)
 
             for line in pv["contenu"].split("\n"):
-                pdf.drawString(40, y, line)
-                y -= 15
-                if y < 40:
-                    pdf.showPage()
-                    pdf.setFont("Helvetica", 11)
-                    y = height - 50
+                pdf.multi_cell(0, 8, line)
 
-            pdf.save()
+            # Export PDF
+            buffer = io.BytesIO()
+            pdf.output(buffer)
             buffer.seek(0)
 
             st.download_button(
