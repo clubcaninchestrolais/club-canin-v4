@@ -5,9 +5,13 @@ securite_admin()
 from datetime import date
 from supabase_rest import supabase
 
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+
 st.title("📄 PV des réunions")
 
-st.write("Cette page permet de créer, consulter et archiver les PV des réunions du comité.")
+st.write("Cette page permet de créer, consulter, télécharger et archiver les PV des réunions du comité.")
 
 # ---------------------------------------------------------
 # Création d'un PV
@@ -28,6 +32,7 @@ if st.button("Enregistrer le PV"):
     }
     supabase.table("pv_reunions").insert(data).execute()
     st.success("PV enregistré avec succès !")
+    st.rerun()
 
 st.markdown("---")
 
@@ -55,7 +60,53 @@ else:
             st.markdown("---")
             st.write(pv["contenu"])
 
-            # Bouton supprimer
+            # ---------------------------------------------------------
+            # Génération PDF
+            # ---------------------------------------------------------
+
+            buffer = io.BytesIO()
+            pdf = canvas.Canvas(buffer, pagesize=A4)
+            pdf.setTitle(f"PV - {pv['date_reunion']}")
+
+            width, height = A4
+            y = height - 50
+
+            pdf.setFont("Helvetica-Bold", 16)
+            pdf.drawString(40, y, f"PV de réunion - {pv['date_reunion']}")
+            y -= 30
+
+            pdf.setFont("Helvetica", 12)
+            pdf.drawString(40, y, f"Titre : {pv['titre']}")
+            y -= 20
+            pdf.drawString(40, y, f"Auteur : {pv['auteur']}")
+            y -= 20
+            pdf.drawString(40, y, f"Créé le : {pv['date_creation']}")
+            y -= 40
+
+            pdf.setFont("Helvetica", 11)
+
+            for line in pv["contenu"].split("\n"):
+                pdf.drawString(40, y, line)
+                y -= 15
+                if y < 40:
+                    pdf.showPage()
+                    pdf.setFont("Helvetica", 11)
+                    y = height - 50
+
+            pdf.save()
+            buffer.seek(0)
+
+            st.download_button(
+                label="📄 Télécharger le PV en PDF",
+                data=buffer,
+                file_name=f"PV_{pv['date_reunion']}.pdf",
+                mime="application/pdf"
+            )
+
+            # ---------------------------------------------------------
+            # Suppression du PV
+            # ---------------------------------------------------------
+
             if st.button("🗑️ Supprimer ce PV", key=f"delete_{pv['id']}"):
                 supabase.table("pv_reunions").delete().eq("id", pv["id"]).execute()
                 st.rerun()
