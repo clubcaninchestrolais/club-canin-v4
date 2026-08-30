@@ -1,6 +1,7 @@
 import streamlit as st
 from securite import securite_user
 securite_user()
+from datetime import date
 
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
