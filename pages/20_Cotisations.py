@@ -3,7 +3,6 @@ from securite import securite_user
 securite_user()
 
 from datetime import datetime, date
-from supabase import create_client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
 
@@ -35,52 +34,10 @@ def safe_date(value):
             return datetime.strptime(v, "%Y-%m-%d")
         except:
             pass
-        try:
-            return datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
-        except:
-            pass
     return None
 
 # ---------------------------------------------------------
-# Fonction CORRIGÉE : statut fiable
-# ---------------------------------------------------------
-def get_statut(cot, cotisations_all):
-    exp = safe_date(cot["date_expiration"])
-    if exp is None:
-        return "historique"
-
-    today = datetime.today().date()
-
-    # Expirée ?
-    if exp.date() < today:
-        return "expirée"
-
-    # Cotisations valides (date >= aujourd’hui)
-    cot_valides = [
-        c for c in cotisations_all
-        if safe_date(c["date_expiration"])
-        and safe_date(c["date_expiration"]).date() >= today
-    ]
-
-    # Si aucune valide → tout est expiré
-    if not cot_valides:
-        return "expirée"
-
-    # La plus récente parmi les valides
-    cot_valides_sorted = sorted(
-        cot_valides,
-        key=lambda c: safe_date(c["date_expiration"]),
-        reverse=True
-    )
-
-    # Si c’est la plus récente → active
-    if cot["id"] == cot_valides_sorted[0]["id"]:
-        return "active"
-
-    return "historique"
-
-# ---------------------------------------------------------
-# Renouvellement
+# Renouvellement = création nouvelle cotisation
 # ---------------------------------------------------------
 if st.session_state.get("go_renew", False):
 
@@ -99,8 +56,9 @@ if st.session_state.get("go_renew", False):
 
     if st.button("Confirmer le renouvellement"):
 
+        # 1️⃣ Créer nouvelle cotisation active
         nouvelle = supabase.table("cotisations").insert({
-            "membre_id": cot["membre_id"],
+            "id_membre": cot["id_membre"],
             "montant": cot["montant"],
             "type": cot["type"],
             "date_paiement": str(date_paiement),
@@ -113,15 +71,17 @@ if st.session_state.get("go_renew", False):
 
         nouvelle_id = nouvelle.data[0]["id"]
 
+        # 2️⃣ Mettre toutes les anciennes en historique
         supabase.table("cotisations").update({
             "statut": "historique"
-        }).eq("membre_id", cot["membre_id"]).execute()
+        }).eq("id_membre", cot["id_membre"]).execute()
 
+        # 3️⃣ Mettre la nouvelle en active
         supabase.table("cotisations").update({
             "statut": "active"
         }).eq("id", nouvelle_id).execute()
 
-        st.success("Nouvelle cotisation créée et statut mis à jour.")
+        st.success("Nouvelle cotisation créée.")
         st.rerun()
 
 # ---------------------------------------------------------
@@ -150,7 +110,7 @@ cotisations = supabase.table("cotisations").select("*").order("id", desc=True).e
 
 # Ajouter nom + prénom
 for cot in cotisations:
-    membre = next((m for m in membres if m["id"] == cot["membre_id"]), None)
+    membre = next((m for m in membres if m["id"] == cot["id_membre"]), None)
     if membre:
         cot["nom"] = membre["nom"]
         cot["prenom"] = membre["prenom"]
@@ -163,17 +123,9 @@ if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
     cotisations = [c for c in cotisations if c["nom"] == nom_sel and c["prenom"] == prenom_sel]
 
-# Sauvegarde des cotisations du membre AVANT filtre radio
-cotisations_originales = cotisations.copy()
-
-# ---------------------------------------------------------
-# Filtre corrigé : active uniquement
-# ---------------------------------------------------------
+# Filtre actif uniquement
 if filtre == "Cotisation active uniquement":
-    cotisations = [
-        c for c in cotisations_originales
-        if get_statut(c, cotisations_originales) == "active"
-    ]
+    cotisations = [c for c in cotisations if c["statut"] == "active"]
 
 # ---------------------------------------------------------
 # Affichage
@@ -186,21 +138,15 @@ if cotisations:
         date_pay = safe_date(cot.get("date_paiement"))
         date_exp = safe_date(cot.get("date_expiration"))
 
-        # Statut corrigé
-        statut = get_statut(cot, cotisations_originales)
+        statut = cot["statut"]  # ⭐ statut = celui de Supabase
 
-        # Code couleur
-        if date_exp:
-            jours_restants = (date_exp.date() - datetime.today().date()).days
-
-            if jours_restants < 0:
-                couleur = "#ffcccc"
-            elif jours_restants <= 30:
-                couleur = "#ffe6cc"
-            else:
-                couleur = "#e6ffe6" if cot.get("paye") else "#ffffcc"
-        else:
+        # Code couleur simple
+        if statut == "active":
+            couleur = "#e6ffe6"
+        elif statut == "expirée":
             couleur = "#ffcccc"
+        else:
+            couleur = "#ffffcc"
 
         col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([2,2,2,2,2,2,2,2,2])
 
@@ -248,7 +194,7 @@ if st.session_state.get("go_detail", False):
     st.switch_page("pages/32_Fiche_Cotisation.py")
 
 # ---------------------------------------------------------
-# SECTION TOUJOURS VISIBLE : CRÉER UNE COTISATION
+# SECTION CRÉATION COTISATION
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("➕ Créer une cotisation")
@@ -263,8 +209,14 @@ else:
     if st.button("Créer la cotisation"):
         membre_id = next(m["id"] for m in membres if f"{m['nom']} {m['prenom']}" == choix)
 
+        # Mettre toutes les anciennes en historique
+        supabase.table("cotisations").update({
+            "statut": "historique"
+        }).eq("id_membre", membre_id).execute()
+
+        # Créer nouvelle active
         supabase.table("cotisations").insert({
-            "membre_id": membre_id,
+            "id_membre": membre_id,
             "montant": montant,
             "date_paiement": str(date_paiement),
             "mode_de_paiement": mode,
