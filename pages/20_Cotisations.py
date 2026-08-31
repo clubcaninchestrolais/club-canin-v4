@@ -140,12 +140,15 @@ if cotisations:
 
         statut = cot["statut"]
 
-        # ⭐ CODE COULEUR CORRIGÉ
-        if statut == "active":
+        # ⭐ Normalisation du statut (corrige le problème de l'expiré non rouge)
+        statut_normalise = statut.lower().strip().replace("é", "e").replace("è", "e")
+
+        # ⭐ CODE COULEUR ROBUSTE
+        if statut_normalise == "active":
             couleur = "#e6ffe6"      # vert
-        elif statut == "expirée":
+        elif statut_normalise == "expiree":
             couleur = "#ffcccc"      # rouge
-        elif statut == "gratuit":
+        elif statut_normalise == "gratuit":
             couleur = "#cce6ff"      # bleu clair
         else:
             couleur = "#ffffcc"      # jaune = historique
