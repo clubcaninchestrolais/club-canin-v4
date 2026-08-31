@@ -58,7 +58,7 @@ if st.session_state.get("go_renew", False):
 
         # 1️⃣ Créer nouvelle cotisation active
         nouvelle = supabase.table("cotisations").insert({
-            "id_membre": cot["id_membre"],
+            "membre_id": cot["membre_id"],
             "montant": cot["montant"],
             "type": cot["type"],
             "date_paiement": str(date_paiement),
@@ -74,7 +74,7 @@ if st.session_state.get("go_renew", False):
         # 2️⃣ Mettre toutes les anciennes en historique
         supabase.table("cotisations").update({
             "statut": "historique"
-        }).eq("id_membre", cot["id_membre"]).execute()
+        }).eq("membre_id", cot["membre_id"]).execute()
 
         # 3️⃣ Mettre la nouvelle en active
         supabase.table("cotisations").update({
@@ -110,7 +110,7 @@ cotisations = supabase.table("cotisations").select("*").order("id", desc=True).e
 
 # Ajouter nom + prénom
 for cot in cotisations:
-    membre = next((m for m in membres if m["id"] == cot["id_membre"]), None)
+    membre = next((m for m in membres if m["id"] == cot["membre_id"]), None)
     if membre:
         cot["nom"] = membre["nom"]
         cot["prenom"] = membre["prenom"]
@@ -138,9 +138,8 @@ if cotisations:
         date_pay = safe_date(cot.get("date_paiement"))
         date_exp = safe_date(cot.get("date_expiration"))
 
-        statut = cot["statut"]  # ⭐ statut = celui de Supabase
+        statut = cot["statut"]
 
-        # Code couleur simple
         if statut == "active":
             couleur = "#e6ffe6"
         elif statut == "expirée":
@@ -209,14 +208,12 @@ else:
     if st.button("Créer la cotisation"):
         membre_id = next(m["id"] for m in membres if f"{m['nom']} {m['prenom']}" == choix)
 
-        # Mettre toutes les anciennes en historique
         supabase.table("cotisations").update({
             "statut": "historique"
-        }).eq("id_membre", membre_id).execute()
+        }).eq("membre_id", membre_id).execute()
 
-        # Créer nouvelle active
         supabase.table("cotisations").insert({
-            "id_membre": membre_id,
+            "membre_id": membre_id,
             "montant": montant,
             "date_paiement": str(date_paiement),
             "mode_de_paiement": mode,
