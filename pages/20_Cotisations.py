@@ -23,11 +23,22 @@ def safe_date(value):
         return value
     if isinstance(value, date):
         return datetime.combine(value, datetime.min.time())
-    if isinstance(value, str) and value.strip() != "":
-        try:
-            return datetime.fromisoformat(value.replace("Z", ""))
-        except:
+    if isinstance(value, str):
+        v = value.strip()
+        if v == "":
             return None
+        try:
+            return datetime.fromisoformat(v.replace("Z", "").replace("T", " "))
+        except:
+            pass
+        try:
+            return datetime.strptime(v, "%Y-%m-%d")
+        except:
+            pass
+        try:
+            return datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
+        except:
+            pass
     return None
 
 # ---------------------------------------------------------
@@ -69,7 +80,7 @@ def get_statut(cot, cotisations_all):
     return "historique"
 
 # ---------------------------------------------------------
-# Renouvellement = création nouvelle cotisation
+# Renouvellement
 # ---------------------------------------------------------
 if st.session_state.get("go_renew", False):
 
@@ -180,7 +191,7 @@ if cotisations:
 
         # Code couleur
         if date_exp:
-            jours_restants = (date_exp - datetime.now()).days
+            jours_restants = (date_exp.date() - datetime.today().date()).days
 
             if jours_restants < 0:
                 couleur = "#ffcccc"
@@ -237,7 +248,7 @@ if st.session_state.get("go_detail", False):
     st.switch_page("pages/32_Fiche_Cotisation.py")
 
 # ---------------------------------------------------------
-# SECTION TOUJOURS VISIBLE : CRÉER UNE COTisation
+# SECTION TOUJOURS VISIBLE : CRÉER UNE COTISATION
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("➕ Créer une cotisation")
