@@ -3,7 +3,7 @@ from securite import securite_user
 securite_user()
 
 from datetime import datetime, date
-from supabase import create_client, Client
+from supabase import create_client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
 
@@ -33,7 +33,7 @@ def safe_date(value):
 # ---------------------------------------------------------
 # Fonction CORRIGÉE : statut fiable
 # ---------------------------------------------------------
-def get_statut(cot, cotisations):
+def get_statut(cot, cotisations_all):
     exp = safe_date(cot["date_expiration"])
     if exp is None:
         return "historique"
@@ -46,7 +46,7 @@ def get_statut(cot, cotisations):
 
     # Cotisations valides (date >= aujourd’hui)
     cot_valides = [
-        c for c in cotisations
+        c for c in cotisations_all
         if safe_date(c["date_expiration"])
         and safe_date(c["date_expiration"]).date() >= today
     ]
@@ -152,11 +152,17 @@ if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
     cotisations = [c for c in cotisations if c["nom"] == nom_sel and c["prenom"] == prenom_sel]
 
+# Sauvegarde des cotisations du membre AVANT filtre radio
+cotisations_originales = cotisations.copy()
+
 # ---------------------------------------------------------
 # Filtre corrigé : active uniquement
 # ---------------------------------------------------------
 if filtre == "Cotisation active uniquement":
-    cotisations = [c for c in cotisations if get_statut(c, cotisations) == "active"]
+    cotisations = [
+        c for c in cotisations_originales
+        if get_statut(c, cotisations_originales) == "active"
+    ]
 
 # ---------------------------------------------------------
 # Affichage
@@ -170,7 +176,7 @@ if cotisations:
         date_exp = safe_date(cot.get("date_expiration"))
 
         # Statut corrigé
-        statut = get_statut(cot, cotisations)
+        statut = get_statut(cot, cotisations_originales)
 
         # Code couleur
         if date_exp:
@@ -231,7 +237,7 @@ if st.session_state.get("go_detail", False):
     st.switch_page("pages/32_Fiche_Cotisation.py")
 
 # ---------------------------------------------------------
-# SECTION TOUJOURS VISIBLE : CRÉER UNE COTISATION
+# SECTION TOUJOURS VISIBLE : CRÉER UNE COTisation
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("➕ Créer une cotisation")
