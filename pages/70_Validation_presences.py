@@ -5,8 +5,7 @@ securite_user()
 from supabase import create_client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-from datetime import date
-
+from datetime import date   # ✔ Correction : on utilise date.today()
 
 # ---------------------------------------------------------
 # Connexion Supabase
@@ -128,7 +127,7 @@ for ins in inscriptions:
             "chien_id": ins["chien_id"],
             "seance_id": seance_id,
             "present": True,
-            "date_presence": datetime.date.today().isoformat()
+            "date_presence": date.today().isoformat()   # ✔ Correction ici
         }).execute()
 
         # ---------------------------------------------------------
