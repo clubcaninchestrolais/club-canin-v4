@@ -2,12 +2,10 @@ import streamlit as st
 from securite import securite_user
 securite_user()
 
-from datetime import datetime, date   # si tu utilises date.today()
+from datetime import datetime, date
 from supabase import create_client, Client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-
-
 
 st.set_page_config(page_title="Cotisations", page_icon="💳", layout="wide")
 hide_streamlit_menu()
@@ -33,6 +31,44 @@ def safe_date(value):
     return None
 
 # ---------------------------------------------------------
+# Fonction CORRIGÉE : statut fiable
+# ---------------------------------------------------------
+def get_statut(cot, cotisations):
+    exp = safe_date(cot["date_expiration"])
+    if exp is None:
+        return "historique"
+
+    today = datetime.today().date()
+
+    # Expirée ?
+    if exp.date() < today:
+        return "expirée"
+
+    # Cotisations valides (date >= aujourd’hui)
+    cot_valides = [
+        c for c in cotisations
+        if safe_date(c["date_expiration"])
+        and safe_date(c["date_expiration"]).date() >= today
+    ]
+
+    # Si aucune valide → tout est expiré
+    if not cot_valides:
+        return "expirée"
+
+    # La plus récente parmi les valides
+    cot_valides_sorted = sorted(
+        cot_valides,
+        key=lambda c: safe_date(c["date_expiration"]),
+        reverse=True
+    )
+
+    # Si c’est la plus récente → active
+    if cot["id"] == cot_valides_sorted[0]["id"]:
+        return "active"
+
+    return "historique"
+
+# ---------------------------------------------------------
 # Renouvellement = création nouvelle cotisation
 # ---------------------------------------------------------
 if st.session_state.get("go_renew", False):
@@ -52,7 +88,6 @@ if st.session_state.get("go_renew", False):
 
     if st.button("Confirmer le renouvellement"):
 
-        # Création nouvelle cotisation active
         nouvelle = supabase.table("cotisations").insert({
             "membre_id": cot["membre_id"],
             "montant": cot["montant"],
@@ -67,12 +102,10 @@ if st.session_state.get("go_renew", False):
 
         nouvelle_id = nouvelle.data[0]["id"]
 
-        # Mettre toutes les anciennes cotisations en historique
         supabase.table("cotisations").update({
             "statut": "historique"
         }).eq("membre_id", cot["membre_id"]).execute()
 
-        # Mettre la nouvelle cotisation en active
         supabase.table("cotisations").update({
             "statut": "active"
         }).eq("id", nouvelle_id).execute()
@@ -119,20 +152,11 @@ if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
     cotisations = [c for c in cotisations if c["nom"] == nom_sel and c["prenom"] == prenom_sel]
 
-# Déterminer la cotisation active
-if cotisations:
-    cot_sorted = sorted(
-        cotisations,
-        key=lambda c: safe_date(c["date_expiration"]) or datetime.min,
-        reverse=True
-    )
-    cot_active = cot_sorted[0]["id"]
-else:
-    cot_active = None
-
-# Appliquer le filtre
-if filtre == "Cotisation active uniquement" and cot_active:
-    cotisations = [c for c in cotisations if c["id"] == cot_active]
+# ---------------------------------------------------------
+# Filtre corrigé : active uniquement
+# ---------------------------------------------------------
+if filtre == "Cotisation active uniquement":
+    cotisations = [c for c in cotisations if get_statut(c, cotisations) == "active"]
 
 # ---------------------------------------------------------
 # Affichage
@@ -145,13 +169,8 @@ if cotisations:
         date_pay = safe_date(cot.get("date_paiement"))
         date_exp = safe_date(cot.get("date_expiration"))
 
-        # Statut automatique
-        if cot["id"] == cot_active:
-            statut = "active"
-        elif date_exp and date_exp < datetime.now():
-            statut = "expirée"
-        else:
-            statut = "historique"
+        # Statut corrigé
+        statut = get_statut(cot, cotisations)
 
         # Code couleur
         if date_exp:
