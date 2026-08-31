@@ -140,12 +140,15 @@ if cotisations:
 
         statut = cot["statut"]
 
+        # ⭐ CODE COULEUR CORRIGÉ
         if statut == "active":
-            couleur = "#e6ffe6"
+            couleur = "#e6ffe6"      # vert
         elif statut == "expirée":
-            couleur = "#ffcccc"
+            couleur = "#ffcccc"      # rouge
+        elif statut == "gratuit":
+            couleur = "#cce6ff"      # bleu clair
         else:
-            couleur = "#ffffcc"
+            couleur = "#ffffcc"      # jaune = historique
 
         col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([2,2,2,2,2,2,2,2,2])
 
@@ -208,10 +211,12 @@ else:
     if st.button("Créer la cotisation"):
         membre_id = next(m["id"] for m in membres if f"{m['nom']} {m['prenom']}" == choix)
 
+        # Mettre toutes les anciennes en historique
         supabase.table("cotisations").update({
             "statut": "historique"
         }).eq("membre_id", membre_id).execute()
 
+        # Créer nouvelle active
         supabase.table("cotisations").insert({
             "membre_id": membre_id,
             "montant": montant,
