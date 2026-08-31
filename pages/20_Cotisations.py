@@ -48,7 +48,8 @@ if st.session_state.get("go_renew", False):
     st.subheader("🔄 Renouvellement de la cotisation")
 
     mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
-    date_paiement = st.date_input("Date de paiement", value=date.today())
+    # paiement peut être différé → date facultative
+    date_paiement = st.date_input("Date de paiement", value=None)
 
     ancienne_echeance = safe_date(cot["date_expiration"]).date()
     nouvelle_date_debut = ancienne_echeance
@@ -56,27 +57,24 @@ if st.session_state.get("go_renew", False):
 
     if st.button("Confirmer le renouvellement"):
 
-        # 1️⃣ Créer nouvelle cotisation active
         nouvelle = supabase.table("cotisations").insert({
             "membre_id": cot["membre_id"],
             "montant": cot["montant"],
             "type": cot["type"],
-            "date_paiement": str(date_paiement),
-            "mode_de_paiement": mode_de_paiement,
+            "date_paiement": str(date_paiement) if date_paiement else None,
+            "mode_de_paiement": mode_de_paiement if date_paiement else None,
             "date_expiration": str(nouvelle_expiration),
             "statut": "active",
-            "paye": True,
+            "paye": bool(date_paiement),
             "remarques": ""
         }).execute()
 
         nouvelle_id = nouvelle.data[0]["id"]
 
-        # 2️⃣ Mettre toutes les anciennes en historique
         supabase.table("cotisations").update({
             "statut": "historique"
         }).eq("membre_id", cot["membre_id"]).execute()
 
-        # 3️⃣ Mettre la nouvelle en active
         supabase.table("cotisations").update({
             "statut": "active"
         }).eq("id", nouvelle_id).execute()
@@ -109,17 +107,28 @@ st.markdown("---")
 cotisations = supabase.table("cotisations").select("*").order("id", desc=True).execute().data
 
 # ---------------------------------------------------------
-# ⭐ Mise à jour automatique des cotisations expirées
+# Mise à jour automatique du statut selon la date d'expiration
 # ---------------------------------------------------------
 today = datetime.today().date()
 
 for cot in cotisations:
     exp = safe_date(cot["date_expiration"])
-    if exp and exp.date() < today and cot["statut"] != "expirée":
+    if not exp:
+        continue
+
+    # expirée
+    if exp.date() < today and cot["statut"] != "expirée":
         supabase.table("cotisations").update({
             "statut": "expirée"
         }).eq("id", cot["id"]).execute()
         cot["statut"] = "expirée"
+
+    # encore valide → active (sauf historique)
+    elif exp.date() >= today and cot["statut"] in ["expirée"]:
+        supabase.table("cotisations").update({
+            "statut": "active"
+        }).eq("id", cot["id"]).execute()
+        cot["statut"] = "active"
 
 # ---------------------------------------------------------
 # Ajouter nom + prénom
@@ -154,42 +163,57 @@ if cotisations:
         date_exp = safe_date(cot.get("date_expiration"))
 
         statut = cot["statut"]
+        paye = cot.get("paye", False)
 
-        # ⭐ Normalisation du statut
         statut_normalise = statut.lower().strip().replace("é", "e").replace("è", "e")
 
-        # ⭐ CODE COULEUR ROBUSTE
         if statut_normalise == "active":
-            couleur = "#e6ffe6"      # vert
+            if paye:
+                couleur = "#e6ffe6"      # vert = active payée
+            else:
+                couleur = "#ffe6b3"      # orange = active non payée
         elif statut_normalise == "expiree":
-            couleur = "#ffcccc"      # rouge
+            couleur = "#ffcccc"          # rouge
         elif statut_normalise == "gratuit":
-            couleur = "#cce6ff"      # bleu clair
+            couleur = "#cce6ff"          # bleu clair
         else:
-            couleur = "#ffffcc"      # jaune = historique
+            couleur = "#ffffcc"          # jaune = historique
 
         col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([2,2,2,2,2,2,2,2,2])
 
         with col1:
-            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['nom']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot.get('nom','')}</div>", unsafe_allow_html=True)
 
         with col2:
-            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['prenom']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot.get('prenom','')}</div>", unsafe_allow_html=True)
 
         with col3:
             st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['montant']} €</div>", unsafe_allow_html=True)
 
         with col4:
-            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_pay.strftime('%d/%m/%Y') if date_pay else ''}</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_pay.strftime('%d/%m/%Y') if date_pay else ''}</div>",
+                unsafe_allow_html=True
+            )
 
         with col5:
-            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_exp.strftime('%d/%m/%Y') if date_exp else ''}</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_exp.strftime('%d/%m/%Y') if date_exp else ''}</div>",
+                unsafe_allow_html=True
+            )
 
         with col6:
-            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['mode_de_paiement']}</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['mode_de_paiement']}</div>",
+                unsafe_allow_html=True
+            )
 
         with col7:
-            st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{statut}</div>", unsafe_allow_html=True)
+            etat_paiement = "payée" if paye else "non payée"
+            st.markdown(
+                f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{statut} ({etat_paiement})</div>",
+                unsafe_allow_html=True
+            )
 
         with col8:
             if st.button("Voir détail", key=f"detail_{cot['id']}"):
@@ -223,26 +247,25 @@ if choix == "-- Tous les membres --":
     st.info("Sélectionnez un membre pour créer une cotisation.")
 else:
     montant = st.number_input("Montant (€)", min_value=0, value=45)
-    date_paiement = st.date_input("Date de paiement", value=date.today())
-    mode = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
+    # paiement peut être différé → date facultative
+    date_paiement = st.date_input("Date de paiement", value=None)
+    mode = st.selectbox("Mode de paiement", ["", "cash", "virement", "QRCode"])
 
     if st.button("Créer la cotisation"):
         membre_id = next(m["id"] for m in membres if f"{m['nom']} {m['prenom']}" == choix)
 
-        # Mettre toutes les anciennes en historique
         supabase.table("cotisations").update({
             "statut": "historique"
         }).eq("membre_id", membre_id).execute()
 
-        # Créer nouvelle active
         supabase.table("cotisations").insert({
             "membre_id": membre_id,
             "montant": montant,
-            "date_paiement": str(date_paiement),
-            "mode_de_paiement": mode,
-            "date_expiration": str(date_paiement.replace(year=date_paiement.year + 1)),
+            "date_paiement": str(date_paiement) if date_paiement else None,
+            "mode_de_paiement": mode if date_paiement else None,
+            "date_expiration": str((date_paiement or date.today()).replace(year=(date_paiement or date.today()).year + 1)),
             "statut": "active",
-            "paye": True,
+            "paye": bool(date_paiement),
             "remarques": ""
         }).execute()
 
