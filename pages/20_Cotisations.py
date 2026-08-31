@@ -108,7 +108,22 @@ st.markdown("---")
 # ---------------------------------------------------------
 cotisations = supabase.table("cotisations").select("*").order("id", desc=True).execute().data
 
+# ---------------------------------------------------------
+# ⭐ Mise à jour automatique des cotisations expirées
+# ---------------------------------------------------------
+today = datetime.today().date()
+
+for cot in cotisations:
+    exp = safe_date(cot["date_expiration"])
+    if exp and exp.date() < today and cot["statut"] != "expirée":
+        supabase.table("cotisations").update({
+            "statut": "expirée"
+        }).eq("id", cot["id"]).execute()
+        cot["statut"] = "expirée"
+
+# ---------------------------------------------------------
 # Ajouter nom + prénom
+# ---------------------------------------------------------
 for cot in cotisations:
     membre = next((m for m in membres if m["id"] == cot["membre_id"]), None)
     if membre:
@@ -140,7 +155,7 @@ if cotisations:
 
         statut = cot["statut"]
 
-        # ⭐ Normalisation du statut (corrige le problème de l'expiré non rouge)
+        # ⭐ Normalisation du statut
         statut_normalise = statut.lower().strip().replace("é", "e").replace("è", "e")
 
         # ⭐ CODE COULEUR ROBUSTE
