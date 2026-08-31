@@ -52,7 +52,7 @@ if st.session_state.get("go_renew", False):
 
     ancienne_exp = safe_date(cot["date_expiration"]).date()
 
-    # LOGIQUE VALIDÉE PAR TOI :
+    # LOGIQUE VALIDÉE :
     # date_creation = date_expiration de l’ancienne cotisation
     nouvelle_date_creation = ancienne_exp
     nouvelle_date_expiration = nouvelle_date_creation.replace(year=nouvelle_date_creation.year + 1)
@@ -153,6 +153,21 @@ if filtre == "Cotisation active uniquement":
 st.subheader("📋 Liste des cotisations")
 
 if cotisations:
+
+    # Ligne de titres
+    header_cols = st.columns([2,2,2,2,2,2,2,2,2])
+    with header_cols[0]: st.markdown("**Nom**")
+    with header_cols[1]: st.markdown("**Prénom**")
+    with header_cols[2]: st.markdown("**Montant**")
+    with header_cols[3]: st.markdown("**Création**")
+    with header_cols[4]: st.markdown("**Expiration**")
+    with header_cols[5]: st.markdown("**Paiement**")
+    with header_cols[6]: st.markdown("**Statut**")
+    with header_cols[7]: st.markdown("**Détail**")
+    with header_cols[8]: st.markdown("**Renouveler**")
+
+    st.markdown("---")
+
     for cot in cotisations:
 
         date_creation = safe_date(cot.get("date_creation"))
@@ -173,49 +188,49 @@ if cotisations:
         else:
             couleur = "#ffffcc"
 
-        col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([2,2,2,2,2,2,2,2,2])
+        cols = st.columns([2,2,2,2,2,2,2,2,2])
 
-        with col1:
+        with cols[0]:
             st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['nom']}</div>", unsafe_allow_html=True)
 
-        with col2:
+        with cols[1]:
             st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['prenom']}</div>", unsafe_allow_html=True)
 
-        with col3:
+        with cols[2]:
             st.markdown(f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{cot['montant']} €</div>", unsafe_allow_html=True)
 
-        with col4:
+        with cols[3]:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_creation.strftime('%d/%m/%Y') if date_creation else ''}</div>",
                 unsafe_allow_html=True
             )
 
-        with col5:
+        with cols[4]:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_exp.strftime('%d/%m/%Y') if date_exp else ''}</div>",
                 unsafe_allow_html=True
             )
 
-        with col6:
+        with cols[5]:
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{date_pay.strftime('%d/%m/%Y') if date_pay else ''}</div>",
                 unsafe_allow_html=True
             )
 
-        with col7:
+        with cols[6]:
             etat_paiement = "payée" if paye else "non payée"
             st.markdown(
                 f"<div style='background:{couleur};padding:4px;border-radius:4px;'>{statut} ({etat_paiement})</div>",
                 unsafe_allow_html=True
             )
 
-        with col8:
+        with cols[7]:
             if st.button("Voir détail", key=f"detail_{cot['id']}"):
                 st.session_state["cot_id"] = cot["id"]
                 st.session_state["go_detail"] = True
                 st.rerun()
 
-        with col9:
+        with cols[8]:
             if st.button("Renouveler", key=f"renew_{cot['id']}"):
                 st.session_state["renew_cot"] = cot
                 st.session_state["go_renew"] = True
