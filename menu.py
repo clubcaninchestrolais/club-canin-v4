@@ -109,6 +109,8 @@ def menu_lateral():
 
     st.sidebar.page_link("pages/11_Flux_club.py", label="🔄 Flux du club")
     st.sidebar.page_link("pages/01_Apropos.py", label="ℹ️ À propos")
+    st.sidebar.page_link("pages/110_documentation_pdf.py", label="📘 Documentation")
+
 
     # --- Admin uniquement ---
     if role == "admin":
