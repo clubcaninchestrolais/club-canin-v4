@@ -11,6 +11,10 @@ hide_streamlit_menu()
 menu_lateral()
 
 st.title("💳 Gestion des cotisations")
+# Si on revient sur la page sans être en mode renouvellement, on désactive
+if "go_renew" in st.session_state and not st.session_state.get("renew_cot"):
+    st.session_state["go_renew"] = False
+
 
 # ---------------------------------------------------------
 # Fonction de conversion sécurisée
