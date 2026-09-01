@@ -6,6 +6,7 @@ from datetime import datetime, date
 from supabase import create_client, Client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
+import hashlib
 
 
 # --- Accès réservé à l'admin ---
