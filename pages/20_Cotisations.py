@@ -42,11 +42,27 @@ def safe_date(value):
 if st.session_state.get("go_renew", False):
 
     cot = st.session_state["renew_cot"]
-    # IMPORTANT : ne pas désactiver go_renew ici !
-    # Cela évite la sortie immédiate de l'écran lors du choix de la date.
 
     st.markdown("---")
-    st.subheader("🔄 Renouvellement de la cotisation")
+
+    # ---------------------------------------------------------
+    # Encadré bleu : Mode renouvellement actif
+    # ---------------------------------------------------------
+    st.markdown(
+        """
+        <div style='padding:15px;border-radius:8px;background-color:#e8f0ff;
+                    border-left:6px solid #4a78ff;margin-bottom:15px;'>
+        <h3 style='margin:0;'>🔄 Mode renouvellement actif</h3>
+        <p style='margin:5px 0 0 0;'>
+        Vous êtes en train de renouveler une cotisation.  
+        Ne touchez pas au menu “Sélectionner un membre” situé plus bas dans la page.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.subheader("Renouvellement de la cotisation")
 
     ancienne_exp = safe_date(cot["date_expiration"]).date()
     nouvelle_date_creation = ancienne_exp
@@ -57,7 +73,8 @@ if st.session_state.get("go_renew", False):
     # ---------------------------------------------------------
     st.markdown(
         f"""
-        <div style='padding:15px;border-radius:8px;background-color:#f0f4ff;border:1px solid #c7d4ff;'>
+        <div style='padding:15px;border-radius:8px;background-color:#f0f4ff;
+                    border:1px solid #c7d4ff;margin-bottom:20px;'>
         <h4 style='margin-top:0;'>📘 Résumé du renouvellement</h4>
         <ul>
             <li><b>Ancienne expiration :</b> {ancienne_exp.strftime('%d/%m/%Y')}</li>
@@ -100,11 +117,25 @@ if st.session_state.get("go_renew", False):
             "statut": "active"
         }).eq("id", nouvelle_id).execute()
 
-        # Maintenant on peut désactiver go_renew
         st.session_state["go_renew"] = False
 
         st.success("Renouvellement effectué.")
         st.rerun()
+
+    # ---------------------------------------------------------
+    # Encadré jaune : avertissement
+    # ---------------------------------------------------------
+    st.markdown(
+        """
+        <div style='margin-top:20px;padding:12px;background:#fff3cd;
+                    border-left:6px solid #ffca2c;border-radius:4px;'>
+        ⚠️ <b>Important :</b> Pendant un renouvellement, ignorez le menu “Sélectionner un membre”
+        situé plus bas.  
+        Il n’a aucun effet sur le renouvellement.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ---------------------------------------------------------
 # Charger les membres
@@ -176,7 +207,6 @@ st.subheader("📋 Liste des cotisations")
 
 if cotisations:
 
-    # Ligne de titres
     header_cols = st.columns([2,2,2,2,2,2,2,2,2])
     with header_cols[0]: st.markdown("**Nom**")
     with header_cols[1]: st.markdown("**Prénom**")
