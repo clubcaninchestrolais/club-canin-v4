@@ -3,10 +3,8 @@ from securite import securite_user
 securite_user()
 
 from datetime import datetime, date
-from supabase import create_client, Client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-
 
 st.set_page_config(page_title="Abonnements", page_icon="🎫", layout="wide")
 hide_streamlit_menu()
@@ -236,7 +234,7 @@ if st.session_state["abo_id"] is not None:
             st.rerun()
 
 # ---------------------------------------------------------
-# SECTION TOUJOURS VISIBLE : CRÉER UN ABONNEMENT
+# SECTION CRÉATION ABONNEMENT (CORRIGÉE)
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("➕ Créer un abonnement")
@@ -249,18 +247,22 @@ else:
         None
     )
 
+    # ---------------------------------------------------------
+    # Types d'abonnements corrigés
+    # ---------------------------------------------------------
     types_abonnements = {
-        "Abonnement 12 séances": 12,
-        "Abonnement 01 séances": 03,
-        "Abonnement illimité": -1
+        "Abonnement 12 séances (30 €)": {"seances": 12, "prix": 30},
+        "Abonnement 1 séance (3 €)": {"seances": 1, "prix": 3}
     }
 
     type_abo = st.selectbox("Type d’abonnement", list(types_abonnements.keys()))
-    total = types_abonnements[type_abo]
+
+    total = types_abonnements[type_abo]["seances"]
+    prix = types_abonnements[type_abo]["prix"]
 
     if st.button("Créer l’abonnement"):
 
-        # Vérifier cotisation active
+        # Vérifier cotisation active payée
         cotisations = (
             supabase.table("cotisations")
             .select("*")
@@ -283,7 +285,8 @@ else:
             "seances_total": total,
             "seances_restantes": total,
             "date_achat": datetime.now().date().isoformat(),
-            "statut": "actif"
+            "statut": "actif",
+            "prix": prix
         }).execute()
 
         st.success("🎉 Abonnement créé avec succès.")
