@@ -251,7 +251,7 @@ else:
 
     types_abonnements = {
         "Abonnement 12 séances": 12,
-        "Abonnement 1 séances": 03,
+        "Abonnement 01 séances": 03,
         "Abonnement illimité": -1
     }
 
