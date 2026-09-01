@@ -13,13 +13,19 @@ menu_lateral()
 st.title("💳 Gestion des cotisations")
 
 # ---------------------------------------------------------
-# Réinitialisation automatique du mode renouvellement
+# RÉINITIALISATION AUTOMATIQUE DU MODE RENOUVELLEMENT
 # ---------------------------------------------------------
 
-if st.session_state.get("go_renew", False) and not st.session_state.get("renew_cot"):
+# Initialisation des variables si absentes
+if "go_renew" not in st.session_state:
     st.session_state["go_renew"] = False
 
-if not st.session_state.get("go_renew", False):
+if "renew_cot" not in st.session_state:
+    st.session_state["renew_cot"] = None
+
+# Si on arrive sur la page sans cliquer sur Renouveler,
+# on désactive le mode renouvellement.
+if not st.session_state["go_renew"]:
     st.session_state["renew_cot"] = None
 
 # ---------------------------------------------------------
@@ -47,7 +53,7 @@ def safe_date(value):
     return None
 
 # ---------------------------------------------------------
-# Renouvellement = création nouvelle cotisation
+# MODE RENOUVELLEMENT
 # ---------------------------------------------------------
 if st.session_state.get("go_renew", False):
 
@@ -55,9 +61,7 @@ if st.session_state.get("go_renew", False):
 
     st.markdown("---")
 
-    # ---------------------------------------------------------
-    # Encadré bleu : Mode renouvellement actif
-    # ---------------------------------------------------------
+    # Encadré bleu
     st.markdown(
         """
         <div style='padding:15px;border-radius:8px;background-color:#e8f0ff;
@@ -78,9 +82,7 @@ if st.session_state.get("go_renew", False):
     nouvelle_date_creation = ancienne_exp
     nouvelle_date_expiration = nouvelle_date_creation.replace(year=nouvelle_date_creation.year + 1)
 
-    # ---------------------------------------------------------
-    # Résumé clair du renouvellement
-    # ---------------------------------------------------------
+    # Résumé
     st.markdown(
         f"""
         <div style='padding:15px;border-radius:8px;background-color:#f0f4ff;
@@ -127,15 +129,14 @@ if st.session_state.get("go_renew", False):
             "statut": "active"
         }).eq("id", nouvelle_id).execute()
 
+        # Désactivation du mode renouvellement
         st.session_state["go_renew"] = False
         st.session_state["renew_cot"] = None
 
         st.success("Renouvellement effectué.")
         st.rerun()
 
-    # ---------------------------------------------------------
-    # Encadré jaune : avertissement
-    # ---------------------------------------------------------
+    # Encadré jaune
     st.markdown(
         """
         <div style='margin-top:20px;padding:12px;background:#fff3cd;
@@ -149,7 +150,7 @@ if st.session_state.get("go_renew", False):
     )
 
 # ---------------------------------------------------------
-# Charger les membres
+# CHARGEMENT DES MEMBRES
 # ---------------------------------------------------------
 membres = supabase.table("membres").select("*").order("nom").execute().data
 
@@ -157,7 +158,7 @@ options = ["-- Tous les membres --"] + [f"{m['nom']} {m['prenom']}" for m in mem
 choix = st.selectbox("Sélectionner un membre", options)
 
 # ---------------------------------------------------------
-# Filtre d'affichage
+# FILTRE
 # ---------------------------------------------------------
 filtre = st.radio(
     "Afficher",
@@ -168,13 +169,11 @@ filtre = st.radio(
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Charger les cotisations
+# CHARGEMENT DES COTISATIONS
 # ---------------------------------------------------------
 cotisations = supabase.table("cotisations").select("*").order("id", desc=True).execute().data
 
-# ---------------------------------------------------------
-# Mise à jour automatique du statut selon la date d'expiration
-# ---------------------------------------------------------
+# Mise à jour des statuts
 today = datetime.today().date()
 
 for cot in cotisations:
@@ -190,9 +189,7 @@ for cot in cotisations:
         supabase.table("cotisations").update({"statut": "active"}).eq("id", cot["id"]).execute()
         cot["statut"] = "active"
 
-# ---------------------------------------------------------
-# Ajouter nom + prénom
-# ---------------------------------------------------------
+# Ajout nom + prénom
 for cot in cotisations:
     membre = next((m for m in membres if m["id"] == cot["membre_id"]), None)
     if membre:
@@ -202,17 +199,17 @@ for cot in cotisations:
     if not cot.get("mode_de_paiement"):
         cot["mode_de_paiement"] = ""
 
-# Filtrer par membre
+# Filtre membre
 if choix != "-- Tous les membres --":
     nom_sel, prenom_sel = choix.split(" ")
     cotisations = [c for c in cotisations if c["nom"] == nom_sel and c["prenom"] == prenom_sel]
 
-# Filtre actif uniquement
+# Filtre actif
 if filtre == "Cotisation active uniquement":
     cotisations = [c for c in cotisations if c["statut"] == "active"]
 
 # ---------------------------------------------------------
-# Affichage
+# AFFICHAGE
 # ---------------------------------------------------------
 st.subheader("📋 Liste des cotisations")
 
@@ -310,7 +307,7 @@ if st.session_state.get("go_detail", False):
     st.switch_page("pages/32_Fiche_Cotisation.py")
 
 # ---------------------------------------------------------
-# SECTION CRÉATION COTISATION (FLUX 1)
+# SECTION CRÉATION COTISATION
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("➕ Création cotisation nouveau membre")
