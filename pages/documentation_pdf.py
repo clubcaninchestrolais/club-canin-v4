@@ -1,9 +1,6 @@
 import streamlit as st
-import base64
 
-# ------------------------------------------------------------
-# PDF via HTML (méthode 100% compatible Streamlit Cloud)
-# ------------------------------------------------------------
+st.title("📘 Documentation du Club Canin Chestrolais")
 
 html = """
 <h1 style='text-align:center;'>Documentation Technique — Club Canin Chestrolais</h1>
@@ -63,14 +60,11 @@ html = """
 </ul>
 """
 
-# Convert HTML → PDF (via browser)
-b64 = base64.b64encode(html.encode()).decode()
+st.markdown(html, unsafe_allow_html=True)
 
-href = f"""
-<a href="data:application/pdf;base64,{b64}" download="documentation_club.pdf">
-📄 Télécharger la documentation complète (PDF)
-</a>
-"""
-
-st.title("📘 Documentation du Club — Export PDF")
-st.markdown(href, unsafe_allow_html=True)
+st.info("""
+### 📄 Pour obtenir un PDF compatible Adobe Acrobat :
+1. Cliquez dans votre navigateur sur **Ctrl+P** (Windows) ou **Cmd+P** (Mac).
+2. Choisissez **Enregistrer en PDF**.
+3. Le PDF généré sera 100% compatible Adobe Acrobat.
+""")
