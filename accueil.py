@@ -16,13 +16,13 @@ fade_css = """
 """
 st.markdown(fade_css, unsafe_allow_html=True)
 
-# --- Contenu de la page d'accueil ---
 st.title("🐾 Club Canin V4")
 
+# --- Logo avec fade-in ---
 st.markdown(
     """
     <div class="fade-in" style="text-align:center; margin-top:20px;">
-        <img src="https://raw.githubusercontent.com/your-logo-url.png" width="250">
+        <img src="https://i.imgur.com/yourlogo.png" width="250">
     </div>
     """,
     unsafe_allow_html=True
