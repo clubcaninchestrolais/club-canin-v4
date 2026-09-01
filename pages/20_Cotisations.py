@@ -42,7 +42,8 @@ def safe_date(value):
 if st.session_state.get("go_renew", False):
 
     cot = st.session_state["renew_cot"]
-    st.session_state["go_renew"] = False
+    # IMPORTANT : ne pas désactiver go_renew ici !
+    # Cela évite la sortie immédiate de l'écran lors du choix de la date.
 
     st.markdown("---")
     st.subheader("🔄 Renouvellement de la cotisation")
@@ -98,6 +99,9 @@ if st.session_state.get("go_renew", False):
         supabase.table("cotisations").update({
             "statut": "active"
         }).eq("id", nouvelle_id).execute()
+
+        # Maintenant on peut désactiver go_renew
+        st.session_state["go_renew"] = False
 
         st.success("Renouvellement effectué.")
         st.rerun()
