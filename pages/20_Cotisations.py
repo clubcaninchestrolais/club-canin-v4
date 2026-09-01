@@ -47,15 +47,33 @@ if st.session_state.get("go_renew", False):
     st.markdown("---")
     st.subheader("🔄 Renouvellement de la cotisation")
 
-    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
-    date_paiement = st.date_input("Date de paiement", value=None)
-
     ancienne_exp = safe_date(cot["date_expiration"]).date()
-
-    # LOGIQUE VALIDÉE :
-    # date_creation = date_expiration de l’ancienne cotisation
     nouvelle_date_creation = ancienne_exp
     nouvelle_date_expiration = nouvelle_date_creation.replace(year=nouvelle_date_creation.year + 1)
+
+    # ---------------------------------------------------------
+    # Résumé clair du renouvellement
+    # ---------------------------------------------------------
+    st.markdown(
+        f"""
+        <div style='padding:15px;border-radius:8px;background-color:#f0f4ff;border:1px solid #c7d4ff;'>
+        <h4 style='margin-top:0;'>📘 Résumé du renouvellement</h4>
+        <ul>
+            <li><b>Ancienne expiration :</b> {ancienne_exp.strftime('%d/%m/%Y')}</li>
+            <li><b>Nouvelle date de création :</b> {nouvelle_date_creation.strftime('%d/%m/%Y')}</li>
+            <li><b>Nouvelle expiration :</b> {nouvelle_date_expiration.strftime('%d/%m/%Y')}</li>
+            <li><b>Montant :</b> {cot['montant']} €</li>
+            <li><b>Statut final :</b> active</li>
+        </ul>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("### Paiement du renouvellement")
+
+    mode_de_paiement = st.selectbox("Mode de paiement", ["cash", "virement", "QRCode"])
+    date_paiement = st.date_input("Date de paiement", value=None)
 
     if st.button("Confirmer le renouvellement"):
 
