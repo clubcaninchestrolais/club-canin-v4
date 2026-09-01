@@ -5,8 +5,9 @@ import zipfile
 from supabase import create_client
 
 # Connexion Supabase
-url = st.secrets["supabase_url"]
-key = st.secrets["supabase_key"]
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+
 supabase = create_client(url, key)
 
 st.title("💾 Backup des données du Club Canin")
