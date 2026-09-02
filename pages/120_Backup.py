@@ -43,7 +43,7 @@ tables = [
     "notifications",
     "parametres",
     "versions",
-    "audit.log",
+    "audit_log",
     "utilisateurs",
 ]
 
