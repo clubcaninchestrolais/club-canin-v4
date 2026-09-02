@@ -4,16 +4,20 @@ securite_admin()
 
 from datetime import datetime
 from supabase_rest import supabase
+import pandas as pd
+import altair as alt
 
+# ---------------------------------------------------------
+# CONFIGURATION
+# ---------------------------------------------------------
 st.set_page_config(page_title="📊 Rapport du Club", page_icon="📊", layout="wide")
 
 st.title("📊 Rapport du Club – Vue d’ensemble")
 st.write("Aperçu général des activités du club canin.")
 
 # ---------------------------------------------------------
-# Récupération des données
+# FONCTION DE SÉCURITÉ POUR LES COMPTAGES
 # ---------------------------------------------------------
-
 def safe_count(table_name: str, filters: dict | None = None) -> int:
     try:
         q = supabase.table(table_name).select("*")
@@ -25,6 +29,9 @@ def safe_count(table_name: str, filters: dict | None = None) -> int:
     except Exception:
         return 0
 
+# ---------------------------------------------------------
+# RÉCUPÉRATION DES DONNÉES
+# ---------------------------------------------------------
 nb_membres = safe_count("membres")
 nb_chiens = safe_count("chiens")
 nb_exterieurs = safe_count("preinscriptions", {"type": "exterieur"})
@@ -34,9 +41,8 @@ nb_recettes = safe_count("recettes")
 nb_depenses = safe_count("depenses")
 
 # ---------------------------------------------------------
-# Cartes modernes
+# CARTES MODERNES
 # ---------------------------------------------------------
-
 st.subheader("📌 Résumé rapide")
 
 card_css = """
@@ -48,6 +54,7 @@ card_css = """
     border: 1px solid #e3e6eb;
     text-align: center;
     box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
 }
 .card h2 {
     font-size: 32px;
@@ -116,15 +123,17 @@ with col3:
             <p>Lignes de dépenses</p>
         </div>
     """, unsafe_allow_html=True)
-import pandas as pd
-import altair as alt
 
+st.markdown("---")
+
+# ---------------------------------------------------------
+# 📈 GRAPHIQUES
+# ---------------------------------------------------------
 st.subheader("📈 Graphiques et tendances")
 
 # ---------------------------------------------------------
 # 1) Évolution des membres par mois
 # ---------------------------------------------------------
-
 try:
     membres_data = supabase.table("membres").select("id", "created_at").execute().data
     df_membres = pd.DataFrame(membres_data)
@@ -153,7 +162,6 @@ except Exception:
 # ---------------------------------------------------------
 # 2) Répartition des chiens par groupe
 # ---------------------------------------------------------
-
 try:
     chiens_data = supabase.table("chiens").select("id", "groupe").execute().data
     df_chiens = pd.DataFrame(chiens_data)
@@ -179,7 +187,6 @@ except Exception:
 # ---------------------------------------------------------
 # 3) Recettes vs Dépenses
 # ---------------------------------------------------------
-
 try:
     recettes_data = supabase.table("recettes").select("id").execute().data
     depenses_data = supabase.table("depenses").select("id").execute().data
@@ -204,19 +211,18 @@ try:
     st.altair_chart(chart_finances, use_container_width=True)
 
 except Exception:
-    st.warning("Impossible
+    st.warning("Impossible d'afficher le graphique des finances.")
+
+# ---------------------------------------------------------
+# INFOS COMPLÉMENTAIRES
+# ---------------------------------------------------------
 st.markdown("---")
-
-# ---------------------------------------------------------
-# Informations complémentaires
-# ---------------------------------------------------------
-
 st.subheader("ℹ️ Informations complémentaires")
 
 st.write(f"📅 Rapport généré le : **{datetime.now().strftime('%d/%m/%Y à %H:%M')}**")
 
 st.info(
-    "Ce tableau de bord est désormais modernisé. "
-    "Il peut être enrichi avec des graphiques, des tendances mensuelles, "
-    "et des analyses détaillées des présences et des finances."
+    "Ce tableau de bord modernisé peut être enrichi avec des tendances mensuelles, "
+    "des analyses de présences, des graphiques financiers détaillés, "
+    "et des statistiques avancées pour les moniteurs."
 )
