@@ -49,7 +49,7 @@ with splash.container():
     )
 
 # Temps d'affichage
-time.sleep(2)
+time.sleep(3)
 
 # Effacer l'animation
 splash.empty()
