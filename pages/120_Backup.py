@@ -28,6 +28,7 @@ tables = [
     "inscriptions_speciales",
     "preinscriptions",
     "profiles",
+    "pv_reunions",
 ]
 
 zip_buffer = io.BytesIO()
