@@ -32,6 +32,7 @@ tables = [
     "recettes",
     "depenses",
     "finances",
+    "utilisateurs",
 ]
 
 zip_buffer = io.BytesIO()
