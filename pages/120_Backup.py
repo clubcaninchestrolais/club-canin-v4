@@ -18,7 +18,7 @@ tables = [
     "membres",
     "chiens",
     "cours_presences",
-    "cours_dates",
+    "cours_seances",
     "cours_inscriptions",
     "cotisations",
     "abonnements",
