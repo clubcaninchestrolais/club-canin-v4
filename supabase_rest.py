@@ -1,4 +1,5 @@
 from supabase import create_client, Client
+import streamlit as st
 
 # ---------------------------------------------------------
 # Connexion Supabase
@@ -9,6 +10,20 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# ---------------------------------------------------------
+# AUDIT LOG
+# ---------------------------------------------------------
+
+def log_action(action: str, details: str = ""):
+    """Ajoute une ligne dans le journal des actions."""
+    try:
+        supabase.table("audit_log").insert({
+            "user_id": st.session_state.get("user_id", "inconnu"),
+            "action": action,
+            "details": details
+        }).execute()
+    except Exception as e:
+        print("Erreur audit log :", e)
 
 # ---------------------------------------------------------
 # MEMBRES
@@ -19,6 +34,7 @@ def get_members():
         .select("*") \
         .order("nom") \
         .execute().data
+
 def get_member_by_id(membre_id):
     return (
         supabase
@@ -30,12 +46,10 @@ def get_member_by_id(membre_id):
         .data
     )
 
-
 def add_member(data):
-    return supabase.table("membres") \
-        .insert(data) \
-        .execute()
-
+    result = supabase.table("membres").insert(data).execute()
+    log_action("Ajout membre", f"{data.get('prenom', '')} {data.get('nom', '')}")
+    return result
 
 # ---------------------------------------------------------
 # CHIENS
@@ -47,19 +61,16 @@ def get_dogs():
         .order("nom") \
         .execute().data
 
-
 def get_dog_by_id(dog_id):
     return supabase.table("chiens") \
         .select("*") \
         .eq("id", dog_id) \
         .execute().data[0]
 
-
 def add_dog(data):
-    return supabase.table("chiens") \
-        .insert(data) \
-        .execute()
-
+    result = supabase.table("chiens").insert(data).execute()
+    log_action("Ajout chien", f"{data.get('nom', '')} (membre {data.get('id_membre', '')})")
+    return result
 
 # ---------------------------------------------------------
 # COURS — PRÉSENCES DES CHIENS
@@ -72,7 +83,6 @@ def get_cours_presences_for_dog(dog_id):
         .order("date", desc=True) \
         .execute().data
 
-
 # ---------------------------------------------------------
 # COTISATIONS
 # ---------------------------------------------------------
@@ -83,7 +93,6 @@ def get_cotisations():
         .order("date_paiement", desc=True) \
         .execute().data
 
-
 def get_cotisations_for_member(membre_id):
     return supabase.table("cotisations") \
         .select("*") \
@@ -91,15 +100,16 @@ def get_cotisations_for_member(membre_id):
         .order("date_paiement", desc=True) \
         .execute().data
 
-
 def add_cotisation(data):
-    return supabase.table("cotisations") \
-        .insert({
-            "id_membres": data["id_membres"],
-            "montant": data["montant"],
-            "date_paiement": data["date_paiement"],
-            "date_expiration": data["date_expiration"],
-            "statut": data["statut"],
-            "remarques": data["remarques"],
-        }) \
-        .execute()
+    result = supabase.table("cotisations").insert({
+        "id_membres": data["id_membres"],
+        "montant": data["montant"],
+        "date_paiement": data["date_paiement"],
+        "date_expiration": data["date_expiration"],
+        "statut": data["statut"],
+        "remarques": data["remarques"],
+    }).execute()
+
+    log_action("Ajout cotisation", f"Membre {data['id_membres']} montant {data['montant']}")
+
+    return result
