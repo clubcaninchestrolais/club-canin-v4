@@ -32,6 +32,7 @@ tables = [
     "recettes",
     "depenses",
     "finances",
+    "finances_generales",
     "utilisateurs",
 ]
 
