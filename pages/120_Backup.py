@@ -29,6 +29,9 @@ tables = [
     "preinscriptions",
     "profiles",
     "pv_reunions",
+    "recettes",
+    "depenses",
+    "finances",
 ]
 
 zip_buffer = io.BytesIO()
