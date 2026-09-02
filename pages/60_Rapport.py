@@ -135,12 +135,17 @@ st.subheader("📈 Graphiques et tendances")
 # 1) Évolution des membres par mois
 # ---------------------------------------------------------
 try:
-    membres_data = supabase.table("membres").select("id", "created_at").execute().data
+    membres_data = supabase.table("membres").select("*").execute().data
     df_membres = pd.DataFrame(membres_data)
 
-    df_membres["created_at"] = pd.to_datetime(df_membres["created_at"])
-    df_membres["mois"] = df_membres["created_at"].dt.to_period("M").astype(str)
+    if "created_at" in df_membres.columns:
+        df_membres["date"] = pd.to_datetime(df_membres["created_at"])
+    elif "date_inscription" in df_membres.columns:
+        df_membres["date"] = pd.to_datetime(df_membres["date_inscription"])
+    else:
+        raise Exception("Aucune colonne date trouvée")
 
+    df_membres["mois"] = df_membres["date"].dt.to_period("M").astype(str)
     membres_par_mois = df_membres.groupby("mois").size().reset_index(name="nouveaux_membres")
 
     chart_membres = (
@@ -163,8 +168,13 @@ except Exception:
 # 2) Répartition des chiens par groupe
 # ---------------------------------------------------------
 try:
-    chiens_data = supabase.table("chiens").select("id", "groupe").execute().data
+    chiens_data = supabase.table("chiens").select("*").execute().data
     df_chiens = pd.DataFrame(chiens_data)
+
+    if "groupe" not in df_chiens.columns:
+        df_chiens["groupe"] = "Non défini"
+
+    df_chiens["groupe"] = df_chiens["groupe"].fillna("Non défini")
 
     repartition_chiens = df_chiens.groupby("groupe").size().reset_index(name="total")
 
@@ -212,6 +222,49 @@ try:
 
 except Exception:
     st.warning("Impossible d'afficher le graphique des finances.")
+
+# ---------------------------------------------------------
+# 4) Présences du jour
+# ---------------------------------------------------------
+st.subheader("👣 Présences du jour")
+
+try:
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    presences_data = (
+        supabase.table("presences")
+        .select("id", "chien_id", "date_presence")
+        .eq("date_presence", today)
+        .execute()
+        .data
+    )
+
+    df_presences = pd.DataFrame(presences_data)
+
+    if df_presences.empty:
+        st.info("Aucune présence enregistrée aujourd’hui.")
+    else:
+        df_presences["date_presence"] = pd.to_datetime(df_presences["date_presence"])
+        df_presences["heure"] = df_presences["date_presence"].dt.hour
+
+        presences_par_heure = df_presences.groupby("heure").size().reset_index(name="total")
+
+        chart_presences = (
+            alt.Chart(presences_par_heure)
+            .mark_bar()
+            .encode(
+                x="heure:O",
+                y="total:Q",
+                tooltip=["heure", "total"],
+                color="total"
+            )
+            .properties(title="Présences du jour par heure", height=300)
+        )
+
+        st.altair_chart(chart_presences, use_container_width=True)
+
+except Exception:
+    st.warning("Impossible d'afficher le graphique des présences du jour.")
 
 # ---------------------------------------------------------
 # INFOS COMPLÉMENTAIRES
