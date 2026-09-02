@@ -1,5 +1,5 @@
 import streamlit as st
-from supabase_rest import supabase
+from supabase_rest import supabase, log_action
 
 # 🔒 Sécurité : vérifier la session AVANT tout
 if "connected" not in st.session_state or not st.session_state["connected"]:
@@ -53,6 +53,11 @@ if st.button("Ajouter le membre"):
     membre_id = nouveau.data[0]["id"]
 
     # ---------------------------------------------------------
+    # 🔍 Audit log simple et sûr
+    # ---------------------------------------------------------
+    log_action("Ajout membre", f"{prenom} {nom}")
+
+    # ---------------------------------------------------------
     # LOGIQUE AUTOMATIQUE : bénévole = gratuit
     # ---------------------------------------------------------
     if statut == "benevole":
@@ -87,3 +92,4 @@ if st.button("Ajouter le membre"):
     # ---------------------------------------------------------
     st.session_state["membre_ajoute"] = "Membre ajouté avec succès."
     st.rerun()
+
