@@ -108,7 +108,8 @@ if submit:
     }).execute()
 
     # AUDIT
-    log_action("Ajout chien", f"{nom}")
+    log_action("Ajout chien", f"{nom} — utilisateur : {st.session_state.get('username', 'inconnu')}")
+
 
     # Message persistant
     st.session_state["chien_ajoute"] = "🐶 Chien ajouté avec succès !"
