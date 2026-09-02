@@ -26,7 +26,7 @@ tables = [
     "finances_generales",
     "activites_speciales",
     "inscriptions_speciales",
-    "preinscriptions"
+    "preinscriptions",
     "profiles",
 ]
 
