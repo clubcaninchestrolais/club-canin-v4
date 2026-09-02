@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 from menu import hide_streamlit_menu, menu_lateral
 
 # ---------------------------------------------------------
@@ -8,7 +9,54 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="Club Canin – Accueil", page_icon="🏠")
+st.set_page_config(page_title="Club Canin – Accueil", page_icon="🏠", layout="centered")
+
+# ---------------------------------------------------------
+# 🎬 ANIMATION SPLASH SCREEN (post-login)
+# ---------------------------------------------------------
+
+# CSS animation
+fade_css = """
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+.fade-in {
+    animation: fadeIn 2s ease-in-out;
+}
+</style>
+"""
+st.markdown(fade_css, unsafe_allow_html=True)
+
+# Splash container
+splash = st.empty()
+
+with splash.container():
+    st.markdown(
+        """
+        <div class="fade-in" style="text-align:center; margin-top:120px;">
+            <img src="/logo.png" width="300">
+            <h1 style="color:#003366; font-size:36px; margin-top:20px;">
+                Club Canin Chestrolais
+            </h1>
+            <p style="color:#555; font-size:20px;">
+                Chargement du portail interne...
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# Temps d'affichage
+time.sleep(2)
+
+# Effacer l'animation
+splash.empty()
+
+# ---------------------------------------------------------
+# MENU LATERAL + CONTENU
+# ---------------------------------------------------------
 
 hide_streamlit_menu()
 menu_lateral()
@@ -95,6 +143,7 @@ with col12:
 
 with col13:
     bloc("09_Finances", "💼", "Finances globales")
+
 with col14:
     bloc("QR_Paiement", "🔲", "QR Paiement")
 
