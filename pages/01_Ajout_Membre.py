@@ -53,9 +53,12 @@ if st.button("Ajouter le membre"):
     membre_id = nouveau.data[0]["id"]
 
     # ---------------------------------------------------------
-    # 🔍 Audit log simple et sûr
+    # 🔍 Audit log avec identification de l'utilisateur
     # ---------------------------------------------------------
-    log_action("Ajout membre", f"{prenom} {nom}")
+    log_action(
+        "Ajout membre",
+        f"{prenom} {nom} — utilisateur : {st.session_state.get('username', 'inconnu')}"
+    )
 
     # ---------------------------------------------------------
     # LOGIQUE AUTOMATIQUE : bénévole = gratuit
