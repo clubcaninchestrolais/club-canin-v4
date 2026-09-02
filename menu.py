@@ -1,3 +1,6 @@
+from securite import securite_globale
+securite_globale()
+
 import streamlit as st
 from supabase_rest import supabase
 
