@@ -49,6 +49,8 @@ if st.button("Connexion"):
                 st.session_state["username"] = user["username"]
                 st.session_state["role"] = user["role"]
                 st.session_state["uuid"] = user["uuid"]
+                st.session_state["user_id"] = user["uuid"]
+
 
                 st.success("Connexion réussie.")
                 st.switch_page("pages/00_Accueil.py")
