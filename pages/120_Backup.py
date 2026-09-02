@@ -24,6 +24,7 @@ tables = [
     "cotisations",
     "abonnements",
     "finances_generales",
+    "finances_clotures",
     "activites_speciales",
     "inscriptions_speciales",
     "preinscriptions",
