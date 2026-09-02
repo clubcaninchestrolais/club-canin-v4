@@ -224,44 +224,57 @@ except Exception:
     st.warning("Impossible d'afficher le graphique des finances.")
 
 # ---------------------------------------------------------
-# 4) Présences du jour
+# 4) Présences du jour (VERSION CORRIGÉE)
 # ---------------------------------------------------------
 st.subheader("👣 Présences du jour")
 
 try:
     today = datetime.now().strftime("%Y-%m-%d")
 
-    presences_data = (
-        supabase.table("presences")
-        .select("id", "chien_id", "date_presence")
-        .eq("date_presence", today)
+    # 1) Récupérer les séances du jour
+    seances = (
+        supabase.table("cours_seances")
+        .select("id", "date_seance")
+        .eq("date_seance", today)
         .execute()
         .data
     )
 
-    df_presences = pd.DataFrame(presences_data)
-
-    if df_presences.empty:
-        st.info("Aucune présence enregistrée aujourd’hui.")
+    if not seances:
+        st.info("Aucune séance aujourd’hui.")
     else:
-        df_presences["date_presence"] = pd.to_datetime(df_presences["date_presence"])
-        df_presences["heure"] = df_presences["date_presence"].dt.hour
+        seance_ids = [s["id"] for s in seances]
 
-        presences_par_heure = df_presences.groupby("heure").size().reset_index(name="total")
-
-        chart_presences = (
-            alt.Chart(presences_par_heure)
-            .mark_bar()
-            .encode(
-                x="heure:O",
-                y="total:Q",
-                tooltip=["heure", "total"],
-                color="total"
-            )
-            .properties(title="Présences du jour par heure", height=300)
+        # 2) Récupérer les présences liées à ces séances
+        presences = (
+            supabase.table("presences")
+            .select("id", "seance_id")
+            .in_("seance_id", seance_ids)
+            .execute()
+            .data
         )
 
-        st.altair_chart(chart_presences, use_container_width=True)
+        df_pres = pd.DataFrame(presences)
+
+        if df_pres.empty:
+            st.info("Aucune présence enregistrée aujourd’hui.")
+        else:
+            df_pres["seance_id"] = df_pres["seance_id"].astype(str)
+            presences_par_seance = df_pres.groupby("seance_id").size().reset_index(name="total")
+
+            chart_presences = (
+                alt.Chart(presences_par_seance)
+                .mark_bar()
+                .encode(
+                    x="seance_id",
+                    y="total",
+                    tooltip=["seance_id", "total"],
+                    color="total"
+                )
+                .properties(title="Présences du jour par séance", height=300)
+            )
+
+            st.altair_chart(chart_presences, use_container_width=True)
 
 except Exception:
     st.warning("Impossible d'afficher le graphique des présences du jour.")
