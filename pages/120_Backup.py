@@ -26,7 +26,7 @@ tables = [
     "finances_generales",
     "activites_speciales",
     "inscriptions_speciales",
-    "historique"
+    "preinscriptions"
 ]
 
 zip_buffer = io.BytesIO()
