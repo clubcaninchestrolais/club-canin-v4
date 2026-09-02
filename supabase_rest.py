@@ -113,4 +113,3 @@ def add_cotisation(data):
     log_action("Ajout cotisation", f"Membre {data['id_membres']} montant {data['montant']}")
 
     return result
-
