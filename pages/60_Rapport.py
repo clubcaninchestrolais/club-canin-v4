@@ -116,7 +116,95 @@ with col3:
             <p>Lignes de dépenses</p>
         </div>
     """, unsafe_allow_html=True)
+import pandas as pd
+import altair as alt
 
+st.subheader("📈 Graphiques et tendances")
+
+# ---------------------------------------------------------
+# 1) Évolution des membres par mois
+# ---------------------------------------------------------
+
+try:
+    membres_data = supabase.table("membres").select("id", "created_at").execute().data
+    df_membres = pd.DataFrame(membres_data)
+
+    df_membres["created_at"] = pd.to_datetime(df_membres["created_at"])
+    df_membres["mois"] = df_membres["created_at"].dt.to_period("M").astype(str)
+
+    membres_par_mois = df_membres.groupby("mois").size().reset_index(name="nouveaux_membres")
+
+    chart_membres = (
+        alt.Chart(membres_par_mois)
+        .mark_line(point=True)
+        .encode(
+            x="mois",
+            y="nouveaux_membres",
+            tooltip=["mois", "nouveaux_membres"]
+        )
+        .properties(title="Évolution des nouveaux membres par mois", height=300)
+    )
+
+    st.altair_chart(chart_membres, use_container_width=True)
+
+except Exception:
+    st.warning("Impossible d'afficher le graphique des membres.")
+
+# ---------------------------------------------------------
+# 2) Répartition des chiens par groupe
+# ---------------------------------------------------------
+
+try:
+    chiens_data = supabase.table("chiens").select("id", "groupe").execute().data
+    df_chiens = pd.DataFrame(chiens_data)
+
+    repartition_chiens = df_chiens.groupby("groupe").size().reset_index(name="total")
+
+    chart_chiens = (
+        alt.Chart(repartition_chiens)
+        .mark_arc()
+        .encode(
+            theta="total",
+            color="groupe",
+            tooltip=["groupe", "total"]
+        )
+        .properties(title="Répartition des chiens par groupe", height=300)
+    )
+
+    st.altair_chart(chart_chiens, use_container_width=True)
+
+except Exception:
+    st.warning("Impossible d'afficher le graphique des chiens.")
+
+# ---------------------------------------------------------
+# 3) Recettes vs Dépenses
+# ---------------------------------------------------------
+
+try:
+    recettes_data = supabase.table("recettes").select("id").execute().data
+    depenses_data = supabase.table("depenses").select("id").execute().data
+
+    df_finances = pd.DataFrame({
+        "Type": ["Recettes", "Dépenses"],
+        "Total": [len(recettes_data), len(depenses_data)]
+    })
+
+    chart_finances = (
+        alt.Chart(df_finances)
+        .mark_bar()
+        .encode(
+            x="Type",
+            y="Total",
+            color="Type",
+            tooltip=["Type", "Total"]
+        )
+        .properties(title="Comparaison Recettes / Dépenses", height=300)
+    )
+
+    st.altair_chart(chart_finances, use_container_width=True)
+
+except Exception:
+    st.warning("Impossible
 st.markdown("---")
 
 # ---------------------------------------------------------
