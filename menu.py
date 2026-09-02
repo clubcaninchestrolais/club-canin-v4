@@ -121,6 +121,8 @@ def menu_lateral():
         st.sidebar.page_link("pages/90_Notifications.py", label="📢 Notifications")
         st.sidebar.page_link("pages/gestion_utilisateurs.py", label="🔐 Gestion utilisateurs")
         st.sidebar.page_link("pages/120_Backup.py", label="💾 Backup des données")
+        st.sidebar.page_link("pages/90_Audit_Log.py", label="Journal des actions")
+
 
 
     st.sidebar.markdown("---")
