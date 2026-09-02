@@ -17,6 +17,7 @@ st.write("Téléchargez une sauvegarde complète des tables du club.")
 tables = [
     "membres",
     "chiens",
+    "cours",
     "cours_presences",
     "cours_seances",
     "cours_inscriptions",
