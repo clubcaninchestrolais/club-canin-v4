@@ -6,6 +6,7 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
 
 import datetime
 from supabase import create_client
+from supabase_rest import log_action   # ← AJOUT AUDIT
 
 st.set_page_config(page_title="Ajouter un chien", page_icon="🐶", layout="wide")
 
@@ -111,6 +112,11 @@ with st.form("form_chien"):
             "archive": False
         }).execute()
 
+        # ---------------------------------------------------------
+        # AUDIT : enregistre l'action dans le journal
+        # ---------------------------------------------------------
+        log_action("Ajout chien", f"{nom}")   # ← AJOUT AUDIT
+
         # Message persistant + anti double-clic
         st.session_state["chien_ajoute"] = "🐶 Chien ajouté avec succès !"
-        st.rerun()
+        st.rerun
