@@ -6,7 +6,7 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
 
 import datetime
 from supabase import create_client
-from supabase_rest import log_action   # ← AJOUT AUDIT
+from supabase_rest import log_action   # ← AUDIT
 
 st.set_page_config(page_title="Ajouter un chien", page_icon="🐶", layout="wide")
 
@@ -38,16 +38,9 @@ membres = (
     .data
 )
 
-# Tri alphabétique NOM + PRÉNOM
 membres = sorted(membres, key=lambda m: (m["nom"].lower(), m["prenom"].lower()))
-
-# Liste triée pour affichage
 liste_affichage = [f"{m['nom']} {m['prenom']}" for m in membres]
-
-# Sélecteur alphabétique
 proprietaire_nom = st.selectbox("Propriétaire du chien", liste_affichage)
-
-# Retrouver l'id du membre choisi
 id_membre = next(m["id"] for m in membres if f"{m['nom']} {m['prenom']}" == proprietaire_nom)
 
 # ---------------------------------------------------------
@@ -68,8 +61,6 @@ with st.form("form_chien"):
     nom = st.text_input("Nom du chien")
     race = st.text_input("Race")
     sexe = st.selectbox("Sexe", ["Mâle", "Femelle", "Inconnu"])
-
-    # Date JJ/MM/AAAA
     date_naissance = st.date_input("Date de naissance", format="DD/MM/YYYY")
 
     st.subheader("Identification")
@@ -89,34 +80,38 @@ with st.form("form_chien"):
 
     submit = st.form_submit_button("Ajouter le chien")
 
-    if submit:
+# ---------------------------------------------------------
+# TRAITEMENT APRÈS LE FORMULAIRE
+# ---------------------------------------------------------
+if submit:
 
-        # Vérification numéro de puce
-        if not valide_puce(numero_puce):
-            st.error("❌ Le numéro de puce doit contenir exactement 15 chiffres.")
-            st.stop()
+    # Vérification numéro de puce
+    if not valide_puce(numero_puce):
+        st.error("❌ Le numéro de puce doit contenir exactement 15 chiffres.")
+        st.stop()
 
-        supabase.table("chiens").insert({
-            "nom": nom,
-            "race": race,
-            "sexe": sexe,
-            "date_naissance": date_naissance.isoformat(),
-            "numero_puce": numero_puce.replace(" ", ""),
-            "identification": identification,
-            "vaccins": vaccins,
-            "date_vaccin": date_vaccin.isoformat(),
-            "activite": activite,
-            "remarques": remarques,
-            "photo_url": photo_url,
-            "id_membre": id_membre,
-            "archive": False
-        }).execute()
+    # Insertion du chien
+    supabase.table("chiens").insert({
+        "nom": nom,
+        "race": race,
+        "sexe": sexe,
+        "date_naissance": date_naissance.isoformat(),
+        "numero_puce": numero_puce.replace(" ", ""),
+        "identification": identification,
+        "vaccins": vaccins,
+        "date_vaccin": date_vaccin.isoformat(),
+        "activite": activite,
+        "remarques": remarques,
+        "photo_url": photo_url,
+        "id_membre": id_membre,
+        "archive": False
+    }).execute()
 
-        # ---------------------------------------------------------
-        # AUDIT : enregistre l'action dans le journal
-        # ---------------------------------------------------------
-        log_action("Ajout chien", f"{nom}")   # ← AJOUT AUDIT
+    # AUDIT
+    log_action("Ajout chien", f"{nom}")
 
-        # Message persistant + anti double-clic
-        st.session_state["chien_ajoute"] = "🐶 Chien ajouté avec succès !"
-        st.rerun
+    # Message persistant
+    st.session_state["chien_ajoute"] = "🐶 Chien ajouté avec succès !"
+
+    # RERUN (autorisé car hors du formulaire)
+    st.rerun()
