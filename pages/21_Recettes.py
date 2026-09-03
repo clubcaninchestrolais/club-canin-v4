@@ -3,10 +3,8 @@ from securite import securite_admin
 securite_admin()
 
 from datetime import datetime, date
-from supabase import create_client, Client
-from supabase_rest import supabase
+from supabase_rest import supabase, log_action
 from menu import hide_streamlit_menu, menu_lateral
-
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Recettes", page_icon="💵", layout="wide")
@@ -53,6 +51,13 @@ with st.form("add_recette"):
             "remarque": remarque,
             "exercice": exercice
         }).execute()
+
+        # 🔍 AUDIT : ajout recette
+        log_action(
+            "Ajout recette",
+            f"{libelle} — {montant}€ — utilisateur : {st.session_state.get('username', 'inconnu')}"
+        )
+
         st.success("Recette ajoutée")
         st.rerun()
 
@@ -79,6 +84,13 @@ for r in recettes:
     # Bouton supprimer
     if col3.button("🗑️", key=f"del_recette_{r['id']}"):
         supabase.table("recettes").delete().eq("id", r["id"]).execute()
+
+        # 🔍 AUDIT : suppression recette
+        log_action(
+            "Suppression recette",
+            f"{r.get('libelle', '')} — {r.get('montant', 0)}€ — utilisateur : {st.session_state.get('username', 'inconnu')}"
+        )
+
         st.rerun()
 
 # ---------------------------------------------------------
@@ -107,6 +119,12 @@ if "edit_recette" in st.session_state:
                 "remarque": new_remarque,
                 "exercice": new_date.year
             }).eq("id", r["id"]).execute()
+
+            # 🔍 AUDIT : modification recette
+            log_action(
+                "Modification recette",
+                f"{r.get('libelle', '')} → {new_libelle} — {new_montant}€ — utilisateur : {st.session_state.get('username', 'inconnu')}"
+            )
 
             del st.session_state["edit_recette"]
             st.success("Recette modifiée")
