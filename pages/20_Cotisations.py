@@ -340,6 +340,12 @@ else:
             "paye": bool(date_paiement),
             "remarques": ""
         }).execute()
-
+# ---------------------------------------------------------
+        # 🔍 AUDIT : qui a créé la cotisation ?
+        # ---------------------------------------------------------
+        log_action(
+            "Création cotisation",
+            f"{montant}€ pour {choix} — utilisateur : {st.session_state.get('username', 'inconnu')}"
+        )
         st.success("Cotisation créée.")
         st.rerun()
