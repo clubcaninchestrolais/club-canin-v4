@@ -4,7 +4,7 @@ import streamlit as st
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
-from supabase_rest import supabase
+from supabase_rest import supabase, log_action
 
 st.set_page_config(page_title="Modifier un cours", page_icon="✏️")
 
@@ -25,6 +25,9 @@ actif = st.checkbox("Actif", value=cours["actif"])
 
 st.markdown("---")
 
+# ---------------------------------------------------------
+# 🔧 Enregistrer les modifications
+# ---------------------------------------------------------
 if st.button("💾 Enregistrer"):
     data = {
         "nom": nom,
@@ -32,13 +35,34 @@ if st.button("💾 Enregistrer"):
         "actif": actif
     }
     supabase.table("cours").update(data).eq("id", cours_id).execute()
+
+    # 🔍 AUDIT : modification cours
+    log_action(
+        "Modification cours",
+        f"{cours_id} — {nom} — utilisateur : {st.session_state.get('username', 'inconnu')}"
+    )
+
     st.success("Cours mis à jour.")
     st.switch_page("pages/04_Cours.py")
 
+# ---------------------------------------------------------
+# 🔥 Suppression du cours
+# ---------------------------------------------------------
 if st.button("🗑️ Supprimer"):
     supabase.table("cours").delete().eq("id", cours_id).execute()
+
+    # 🔍 AUDIT : suppression cours
+    log_action(
+        "Suppression cours",
+        f"{cours_id} — {cours['nom']} — utilisateur : {st.session_state.get('username', 'inconnu')}"
+    )
+
     st.success("Cours supprimé.")
     st.switch_page("pages/04_Cours.py")
 
+# ---------------------------------------------------------
+# Retour
+# ---------------------------------------------------------
 if st.button("⬅️ Retour"):
     st.switch_page("pages/04_Cours.py")
+
