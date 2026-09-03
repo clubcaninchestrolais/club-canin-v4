@@ -3,7 +3,7 @@ from securite import securite_admin
 securite_admin()
 
 from datetime import date
-from supabase_rest import supabase
+from supabase_rest import supabase, log_action
 
 from fpdf import FPDF
 import io
@@ -30,6 +30,13 @@ if st.button("Enregistrer le PV"):
         "auteur": st.session_state.get("user_id", "admin")
     }
     supabase.table("pv_reunions").insert(data).execute()
+
+    # 🔍 AUDIT : création PV
+    log_action(
+        "Création PV",
+        f"{titre} — {date_reunion} — utilisateur : {st.session_state.get('username', 'inconnu')}"
+    )
+
     st.success("PV enregistré avec succès !")
     st.rerun()
 
@@ -106,4 +113,11 @@ else:
 
             if st.button("🗑️ Supprimer ce PV", key=f"delete_{pv['id']}"):
                 supabase.table("pv_reunions").delete().eq("id", pv["id"]).execute()
+
+                # 🔍 AUDIT : suppression PV
+                log_action(
+                    "Suppression PV",
+                    f"{pv['titre']} — {pv['date_reunion']} — utilisateur : {st.session_state.get('username', 'inconnu')}"
+                )
+
                 st.rerun()
