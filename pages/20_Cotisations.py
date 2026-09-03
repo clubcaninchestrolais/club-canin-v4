@@ -4,6 +4,8 @@ securite_user()
 
 from datetime import datetime, date
 from supabase_rest import supabase
+from supabase_rest import log_action
+
 from menu import hide_streamlit_menu, menu_lateral
 
 st.set_page_config(page_title="Cotisations", page_icon="💳", layout="wide")
