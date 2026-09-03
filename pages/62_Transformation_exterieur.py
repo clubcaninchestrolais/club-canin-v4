@@ -3,7 +3,7 @@ from securite import securite_user
 securite_user()
 
 from supabase import create_client, Client
-from supabase_rest import supabase
+from supabase_rest import supabase, log_action
 from menu import hide_streamlit_menu, menu_lateral
 from datetime import date   # si utilisé
 
@@ -86,6 +86,12 @@ if st.button("Transformer en membre"):
         "statut": "transforme"
     }).eq("id", choix["id"]).execute()
 
+    # 🔍 AUDIT : transformation extérieur → membre
+    log_action(
+        "Transformation extérieur en membre",
+        f"{choix['prenom']} {choix['nom']} — chien {choix['chien_nom']} — utilisateur : {st.session_state.get('username', 'inconnu')}"
+    )
+
     st.success("✅ L'extérieur a été transformé en membre.")
     st.rerun()
 
@@ -98,6 +104,12 @@ if st.button("Clôturer la préinscription (arrêt)"):
         "type": "cloturee",
         "statut": "archive"
     }).eq("id", choix["id"]).execute()
+
+    # 🔍 AUDIT : clôture préinscription
+    log_action(
+        "Clôture préinscription",
+        f"{choix['prenom']} {choix['nom']} — utilisateur : {st.session_state.get('username', 'inconnu')}"
+    )
 
     st.warning("🗂️ La préinscription a été clôturée.")
     st.rerun()
