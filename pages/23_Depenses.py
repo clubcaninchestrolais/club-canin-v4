@@ -3,10 +3,8 @@ from securite import securite_admin
 securite_admin()
 
 from datetime import datetime, date
-from supabase import create_client, Client
-from supabase_rest import supabase
+from supabase_rest import supabase, log_action
 from menu import hide_streamlit_menu, menu_lateral
-
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Dépenses", page_icon="📉", layout="wide")
@@ -50,6 +48,13 @@ with st.form("add_depense"):
             "remarque": remarque,
             "exercice": exercice
         }).execute()
+
+        # 🔍 AUDIT : ajout dépense
+        log_action(
+            "Ajout dépense",
+            f"{libelle} — {montant}€ — utilisateur : {st.session_state.get('username', 'inconnu')}"
+        )
+
         st.success("Dépense ajoutée")
         st.rerun()
 
@@ -74,6 +79,13 @@ for d in depenses:
 
     if col3.button("🗑️", key=f"del_depense_{d['id']}"):
         supabase.table("depenses").delete().eq("id", d["id"]).execute()
+
+        # 🔍 AUDIT : suppression dépense
+        log_action(
+            "Suppression dépense",
+            f"{d.get('libelle', '')} — {d.get('montant', 0)}€ — utilisateur : {st.session_state.get('username', 'inconnu')}"
+        )
+
         st.rerun()
 
 # ---------------------------------------------------------
@@ -102,6 +114,12 @@ if "edit_depense" in st.session_state:
                 "remarque": new_remarque,
                 "exercice": new_date.year
             }).eq("id", d["id"]).execute()
+
+            # 🔍 AUDIT : modification dépense
+            log_action(
+                "Modification dépense",
+                f"{d.get('libelle', '')} → {new_libelle} — {new_montant}€ — utilisateur : {st.session_state.get('username', 'inconnu')}"
+            )
 
             del st.session_state["edit_depense"]
             st.success("Dépense modifiée")
