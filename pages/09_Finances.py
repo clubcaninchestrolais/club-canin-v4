@@ -3,18 +3,17 @@ from securite import securite_admin
 securite_admin()
 
 from datetime import datetime, date
-from supabase import create_client, Client
-from supabase_rest import supabase
+from supabase_rest import supabase, log_action
 from menu import hide_streamlit_menu, menu_lateral
 
 
 st.set_page_config(page_title="Finances", page_icon="💰")
 
 # --- MASQUER LE MENU AUTOMATIQUE ---
-hide_streamlit_menu()   # <-- AJOUT
+hide_streamlit_menu()
 
 # --- AFFICHER LE MENU PERSONNALISÉ ---
-menu_lateral()          # <-- AJOUT
+menu_lateral()
 
 st.title("Résumé financier du club")
 
@@ -62,58 +61,4 @@ depenses_annee = [
 # -----------------------------
 total_recettes = sum(float(r.get("montant") or 0) for r in recettes_annee)
 total_depenses = sum(float(d.get("montant") or 0) for d in depenses_annee)
-resultat = total_recettes - total_depenses
-
-# -----------------------------
-# Résumé
-# -----------------------------
-st.subheader(f"Résumé financier {annee}")
-
-col1, col2, col3 = st.columns(3)
-col1.metric("Recettes", f"{total_recettes:.2f} €")
-col2.metric("Dépenses", f"{total_depenses:.2f} €")
-col3.metric("Résultat", f"{resultat:.2f} €")
-
-st.markdown("---")
-
-# -----------------------------
-# Détail des recettes
-# -----------------------------
-st.subheader("Recettes de l'année")
-
-for r in recettes_annee:
-    st.write(
-        f"📅 {r.get('date', '')} — {r.get('montant', 0)} € — "
-        f"{r.get('rubrique', '')} — {r.get('libelle', '')}"
-    )
-
-st.markdown("---")
-
-# -----------------------------
-# Détail des dépenses
-# -----------------------------
-st.subheader("Dépenses de l'année")
-
-for d in depenses_annee:
-    st.write(
-        f"📅 {d.get('date', '')} — {d.get('montant', 0)} € — "
-        f"{d.get('rubrique', '')} — {d.get('libelle', '')}"
-    )
-
-st.markdown("---")
-
-# -----------------------------
-# Clôture de l'année
-# -----------------------------
-st.subheader("Clôture de l'exercice")
-
-if st.button(f"Clôturer l'année {annee}"):
-    supabase.table("finances_clotures").insert({
-        "annee": annee,
-        "total_recettes": total_recettes,
-        "total_depenses": total_depenses,
-        "resultat": resultat,
-        "date_cloture": datetime.now().isoformat()
-    }).execute()
-
-    st.success(f"Année {annee} clôturée et enregistrée.")
+resultat = total_recettes
