@@ -5,7 +5,7 @@ securite_user()
 from supabase import create_client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-from datetime import date   # ✔ Correction : on utilise date.today()
+from datetime import date
 
 # ---------------------------------------------------------
 # Connexion Supabase
@@ -127,7 +127,7 @@ for ins in inscriptions:
             "chien_id": ins["chien_id"],
             "seance_id": seance_id,
             "present": True,
-            "date_presence": date.today().isoformat()   # ✔ Correction ici
+            "date_presence": date.today().isoformat()
         }).execute()
 
         # ---------------------------------------------------------
@@ -144,14 +144,21 @@ for ins in inscriptions:
         if abo:
             abo = abo[0]
 
-            # Ne pas décrémenter les bénévoles (seances_restantes = -1)
-            if abo["seances_restantes"] != -1:
-                reste = abo["seances_restantes"] - 1
+            # ⭐ Si la colonne existe (ancien format)
+            if "seances_restantes" in abo:
 
-                supabase.table("abonnements").update({
-                    "seances_restantes": reste,
-                    "actif": reste > 0
-                }).eq("id", abo["id"]).execute()
+                # Avertissement si épuisé
+                if abo["seances_restantes"] == 0:
+                    st.warning("⚠️ Abonnement épuisé : aucune séance restante.")
+
+                # Décrémentation normale (comme avant)
+                if abo["seances_restantes"] != -1:
+                    reste = abo["seances_restantes"] - 1
+
+                    supabase.table("abonnements").update({
+                        "seances_restantes": reste,
+                        "actif": reste > 0
+                    }).eq("id", abo["id"]).execute()
 
         st.success("Présence validée")
         st.rerun()
