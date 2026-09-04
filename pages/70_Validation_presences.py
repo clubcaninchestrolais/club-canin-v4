@@ -120,6 +120,57 @@ for ins in inscriptions:
     if st.button(f"Valider présence — {membre_nom}"):
 
         # ---------------------------------------------------------
+        # 🔒 Vérifier cotisation
+        # ---------------------------------------------------------
+        cotisation = (
+            supabase.table("cotisations")
+            .select("*")
+            .eq("membre_id", membre["id"])
+            .is_("active", True)
+            .execute()
+            .data
+        )
+
+        if not cotisation:
+            st.error("❌ Ce membre n'a pas de cotisation active.")
+            st.stop()
+
+        cotisation = cotisation[0]
+
+        # Cotisation expirée ?
+        if cotisation["date_expiration"] and cotisation["date_expiration"] < date.today().isoformat():
+            st.error("❌ Cotisation expirée. Validation impossible.")
+            st.stop()
+
+        # ---------------------------------------------------------
+        # 🔒 Vérifier abonnement
+        # ---------------------------------------------------------
+        abo = (
+            supabase.table("abonnements")
+            .select("*")
+            .eq("membre_id", membre["id"])
+            .is_("actif", True)
+            .execute()
+            .data
+        )
+
+        if not abo:
+            st.error("❌ Ce membre n'a pas d'abonnement actif.")
+            st.stop()
+
+        abo = abo[0]
+
+        # Abonnement expiré ?
+        if abo["date_expiration"] and abo["date_expiration"] < date.today().isoformat():
+            st.error("❌ Abonnement expiré. Validation impossible.")
+            st.stop()
+
+        # Séances restantes ?
+        if abo["seances_restantes"] == 0:
+            st.error("❌ Abonnement épuisé. Plus de séances disponibles.")
+            st.stop()
+
+        # ---------------------------------------------------------
         # 1) Enregistrer présence
         # ---------------------------------------------------------
         supabase.table("cours_presences").insert({
@@ -127,31 +178,20 @@ for ins in inscriptions:
             "chien_id": ins["chien_id"],
             "seance_id": seance_id,
             "present": True,
-            "date_presence": date.today().isoformat()   # ✔ Correction ici
+            "date_presence": date.today().isoformat()
         }).execute()
 
         # ---------------------------------------------------------
         # 2) Décrémenter l'abonnement (sauf bénévoles)
         # ---------------------------------------------------------
-        abo = (
-            supabase.table("abonnements")
-            .select("*")
-            .eq("membre_id", membre["id"])
-            .execute()
-            .data
-        )
+        if abo["seances_restantes"] != -1:   # -1 = bénévoles
+            reste = abo["seances_restantes"] - 1
 
-        if abo:
-            abo = abo[0]
-
-            # Ne pas décrémenter les bénévoles (seances_restantes = -1)
-            if abo["seances_restantes"] != -1:
-                reste = abo["seances_restantes"] - 1
-
-                supabase.table("abonnements").update({
-                    "seances_restantes": reste,
-                    "actif": reste > 0
-                }).eq("id", abo["id"]).execute()
+            supabase.table("abonnements").update({
+                "seances_restantes": reste,
+                "actif": reste > 0
+            }).eq("id", abo["id"]).execute()
 
         st.success("Présence validée")
         st.rerun()
+
