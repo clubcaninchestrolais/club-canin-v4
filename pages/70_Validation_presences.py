@@ -126,7 +126,7 @@ for ins in inscriptions:
             supabase.table("cotisations")
             .select("*")
             .eq("membre_id", membre["id"])
-            .eq("active", True)
+            .is_("active", True)   # ✔ fonctionne même si NULL
             .execute()
             .data
         )
@@ -142,7 +142,7 @@ for ins in inscriptions:
             supabase.table("abonnements")
             .select("*")
             .eq("membre_id", membre["id"])
-            .eq("actif", True)   # ✔ colonne correcte
+            .is_("actif", True)   # ✔ évite les NULL
             .execute()
             .data
         )
