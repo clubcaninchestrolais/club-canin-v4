@@ -103,7 +103,6 @@ def menu_lateral():
     st.sidebar.page_link("pages/organisations.py", label="🏛️ Creer_Activites_exterieures")
     st.sidebar.page_link("pages/95_PV_Reunions.py", label="📄 PV des réunions")
 
-
     # --- Technique ---
     st.sidebar.markdown("### ⚙️ Technique")
 
@@ -114,6 +113,11 @@ def menu_lateral():
     st.sidebar.page_link("pages/01_Apropos.py", label="ℹ️ À propos")
     st.sidebar.page_link("pages/110_documentation_pdf.py", label="📘 Documentation")
 
+    # --- Nouvelles pages ---
+    if role == "admin":
+        st.sidebar.page_link("pages/moniteurs.py", label="👨‍🏫 Moniteurs")
+        st.sidebar.page_link("pages/vaccins.py", label="💉 Vaccins")
+        st.sidebar.page_link("pages/version.py", label="ℹ️ Version du programme")
 
     # --- Admin uniquement ---
     if role == "admin":
@@ -123,6 +127,5 @@ def menu_lateral():
         st.sidebar.page_link("pages/120_Backup.py", label="💾 Backup des données")
         st.sidebar.page_link("pages/90_Audit_Log.py", label="Journal des actions")
 
-
-
     st.sidebar.markdown("---")
+
