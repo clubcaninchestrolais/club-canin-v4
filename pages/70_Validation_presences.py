@@ -5,7 +5,7 @@ securite_user()
 from supabase import create_client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-from datetime import date
+from datetime import date   # ✔ Correction : on utilise date.today()
 
 # ---------------------------------------------------------
 # Connexion Supabase
@@ -120,47 +120,6 @@ for ins in inscriptions:
     if st.button(f"Valider présence — {membre_nom}"):
 
         # ---------------------------------------------------------
-        # 🔒 VERROU 1 : Cotisation active obligatoire
-        # ---------------------------------------------------------
-        cotisation = (
-            supabase.table("cotisations")
-            .select("*")
-            .eq("membre_id", membre["id"])
-            .is_("active", True)   # ✔ fonctionne même si NULL
-            .execute()
-            .data
-        )
-
-        if not cotisation:
-            st.error("❌ Ce membre n'a pas de cotisation active. Validation impossible.")
-            st.stop()
-
-        # ---------------------------------------------------------
-        # 🔒 VERROU 2 : Abonnement actif obligatoire
-        # ---------------------------------------------------------
-        abo = (
-            supabase.table("abonnements")
-            .select("*")
-            .eq("membre_id", membre["id"])
-            .is_("actif", True)   # ✔ évite les NULL
-            .execute()
-            .data
-        )
-
-        if not abo:
-            st.error("❌ Ce membre n'a pas d'abonnement actif. Validation impossible.")
-            st.stop()
-
-        abo = abo[0]
-
-        # ---------------------------------------------------------
-        # 🔒 VERROU 3 : Séances restantes > 0
-        # ---------------------------------------------------------
-        if abo["seances_restantes"] == 0:
-            st.error("❌ Ce membre n'a plus de séances disponibles.")
-            st.stop()
-
-        # ---------------------------------------------------------
         # 1) Enregistrer présence
         # ---------------------------------------------------------
         supabase.table("cours_presences").insert({
@@ -168,19 +127,31 @@ for ins in inscriptions:
             "chien_id": ins["chien_id"],
             "seance_id": seance_id,
             "present": True,
-            "date_presence": date.today().isoformat()
+            "date_presence": date.today().isoformat()   # ✔ Correction ici
         }).execute()
 
         # ---------------------------------------------------------
         # 2) Décrémenter l'abonnement (sauf bénévoles)
         # ---------------------------------------------------------
-        if abo["seances_restantes"] != -1:   # ✔ bénévoles = -1
-            reste = abo["seances_restantes"] - 1
+        abo = (
+            supabase.table("abonnements")
+            .select("*")
+            .eq("membre_id", membre["id"])
+            .execute()
+            .data
+        )
 
-            supabase.table("abonnements").update({
-                "seances_restantes": reste,
-                "actif": reste > 0
-            }).eq("id", abo["id"]).execute()
+        if abo:
+            abo = abo[0]
+
+            # Ne pas décrémenter les bénévoles (seances_restantes = -1)
+            if abo["seances_restantes"] != -1:
+                reste = abo["seances_restantes"] - 1
+
+                supabase.table("abonnements").update({
+                    "seances_restantes": reste,
+                    "actif": reste > 0
+                }).eq("id", abo["id"]).execute()
 
         st.success("Présence validée")
         st.rerun()
