@@ -17,7 +17,7 @@ st.title("👨‍🏫 Gestion des moniteurs")
 moniteurs = (
     supabase.table("moniteurs")
     .select("*")
-    .order("nom", asc=True)
+    .order("nom")
     .execute()
     .data
 )
