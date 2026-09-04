@@ -5,7 +5,7 @@ securite_user()
 from supabase import create_client
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-from datetime import date   # ✔ Correction : on utilise date.today()
+from datetime import date
 
 # ---------------------------------------------------------
 # Connexion Supabase
@@ -120,57 +120,6 @@ for ins in inscriptions:
     if st.button(f"Valider présence — {membre_nom}"):
 
         # ---------------------------------------------------------
-        # 🔒 Vérifier cotisation
-        # ---------------------------------------------------------
-        cotisation = (
-            supabase.table("cotisations")
-            .select("*")
-            .eq("membre_id", membre["id"])
-            .is_("active", True)
-            .execute()
-            .data
-        )
-
-        if not cotisation:
-            st.error("❌ Ce membre n'a pas de cotisation active.")
-            st.stop()
-
-        cotisation = cotisation[0]
-
-        # Cotisation expirée ?
-        if cotisation["date_expiration"] and cotisation["date_expiration"] < date.today().isoformat():
-            st.error("❌ Cotisation expirée. Validation impossible.")
-            st.stop()
-
-        # ---------------------------------------------------------
-        # 🔒 Vérifier abonnement
-        # ---------------------------------------------------------
-        abo = (
-            supabase.table("abonnements")
-            .select("*")
-            .eq("membre_id", membre["id"])
-            .is_("actif", True)
-            .execute()
-            .data
-        )
-
-        if not abo:
-            st.error("❌ Ce membre n'a pas d'abonnement actif.")
-            st.stop()
-
-        abo = abo[0]
-
-        # Abonnement expiré ?
-        if abo["date_expiration"] and abo["date_expiration"] < date.today().isoformat():
-            st.error("❌ Abonnement expiré. Validation impossible.")
-            st.stop()
-
-        # Séances restantes ?
-        if abo["seances_restantes"] == 0:
-            st.error("❌ Abonnement épuisé. Plus de séances disponibles.")
-            st.stop()
-
-        # ---------------------------------------------------------
         # 1) Enregistrer présence
         # ---------------------------------------------------------
         supabase.table("cours_presences").insert({
@@ -184,14 +133,34 @@ for ins in inscriptions:
         # ---------------------------------------------------------
         # 2) Décrémenter l'abonnement (sauf bénévoles)
         # ---------------------------------------------------------
-        if abo["seances_restantes"] != -1:   # -1 = bénévoles
-            reste = abo["seances_restantes"] - 1
+        abo = (
+            supabase.table("abonnements")
+            .select("*")
+            .eq("membre_id", membre["id"])
+            .execute()
+            .data
+        )
 
-            supabase.table("abonnements").update({
-                "seances_restantes": reste,
-                "actif": reste > 0
-            }).eq("id", abo["id"]).execute()
+        if abo:
+            abo = abo[0]
+
+            # Si la colonne seances_restantes existe
+            if "seances_restantes" in abo:
+
+                # Cas abonnement épuisé
+                if abo["seances_restantes"] == 0:
+                    st.warning("⚠️ Abonnement épuisé : aucune séance restante.")
+                    # On n'exécute PAS l'update → pas d'erreur
+
+                else:
+                    # Ne pas décrémenter les bénévoles (seances_restantes = -1)
+                    if abo["seances_restantes"] != -1:
+                        reste = abo["seances_restantes"] - 1
+
+                        supabase.table("abonnements").update({
+                            "seances_restantes": reste,
+                            "actif": reste > 0
+                        }).eq("id", abo["id"]).execute()
 
         st.success("Présence validée")
         st.rerun()
-
