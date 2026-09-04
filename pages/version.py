@@ -10,11 +10,11 @@ menu_lateral()
 
 st.title("ℹ️ Version du programme")
 
-# Charger les versions
+# Charger les versions (tri fiable)
 versions = (
     supabase.table("versions")
     .select("*")
-    .order("last_update", desc=True)
+    .order("created_at", desc=True)   # ✔️ la dernière version en premier
     .execute()
     .data
 )
@@ -23,7 +23,7 @@ if not versions:
     st.info("Aucune version enregistrée.")
     st.stop()
 
-# Version actuelle
+# Version actuelle = première entrée après tri
 version_actuelle = versions[0]
 
 st.subheader("Version actuelle")
@@ -35,7 +35,7 @@ st.write(f"**Enregistrée le :** {version_actuelle['created_at']}")
 
 st.markdown("---")
 
-# Historique
+# Historique complet
 st.subheader("Historique des versions")
 
 for v in versions:
