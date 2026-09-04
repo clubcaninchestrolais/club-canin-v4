@@ -17,7 +17,7 @@ st.title("💉 Gestion des vaccins des chiens")
 chiens = (
     supabase.table("chiens")
     .select("*")
-    .order("nom", asc=True)
+    .order("nom")
     .execute()
     .data
 )
