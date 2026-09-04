@@ -8,7 +8,7 @@ from menu import hide_streamlit_menu, menu_lateral
 hide_streamlit_menu()
 menu_lateral()
 
-st.title("ℹ️ À propos — Version du programme")
+st.title("ℹ️ Version du programme")
 
 # Charger les versions
 versions = (
@@ -23,7 +23,7 @@ if not versions:
     st.info("Aucune version enregistrée.")
     st.stop()
 
-# Version actuelle (la plus récente)
+# Version actuelle
 version_actuelle = versions[0]
 
 st.subheader("Version actuelle")
@@ -35,7 +35,7 @@ st.write(f"**Enregistrée le :** {version_actuelle['created_at']}")
 
 st.markdown("---")
 
-# Historique des versions
+# Historique
 st.subheader("Historique des versions")
 
 for v in versions:
@@ -43,22 +43,3 @@ for v in versions:
         st.write(f"**Build :** {v['build']}")
         st.write(f"**Créée le :** {v['created_at']}")
         st.write(f"**ID interne :** {v['id']}")
-
-st.markdown("---")
-
-st.subheader("À propos du logiciel")
-
-st.write("""
-Ce logiciel a été développé pour le Club Canin de Neufchâteau afin de gérer :
-
-- les membres et les chiens  
-- les préinscriptions  
-- les cours et les séances  
-- les présences  
-- les cotisations et abonnements  
-- les finances  
-- les PV des réunions  
-- la sécurité et le monitoring
-
-Il est mis à jour régulièrement pour améliorer les fonctionnalités, la stabilité et la sécurité.
-""")
