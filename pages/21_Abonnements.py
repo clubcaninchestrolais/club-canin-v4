@@ -263,9 +263,8 @@ if st.session_state["abo_id"] is not None:
         if st.button("⬅️ Fermer la fiche"):
             st.session_state["abo_id"] = None
             st.rerun()
-
 # ---------------------------------------------------------
-# SECTION CRÉATION ABONNEMENT (CORRIGÉE + GRATUIT)
+# SECTION CRÉATION ABONNEMENT (VERSION SÉCURISÉE)
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("➕ Créer un abonnement")
@@ -299,7 +298,9 @@ else:
 
     if st.button("Créer l’abonnement"):
 
+        # ---------------------------------------------------------
         # Vérifier cotisation active payée (sauf bénévoles)
+        # ---------------------------------------------------------
         if membre_sel["statut"] != "benevole":
 
             cotisations = (
@@ -328,7 +329,7 @@ else:
         }).eq("membre_id", membre_sel["id"]).execute()
 
         # ---------------------------------------------------------
-        # Créer le nouvel abonnement (CORRIGÉ)
+        # Créer le nouvel abonnement (ACTIF = TRUE GARANTI)
         # ---------------------------------------------------------
         supabase.table("abonnements").insert({
             "membre_id": membre_sel["id"],
@@ -342,3 +343,5 @@ else:
 
         st.success("🎉 Abonnement créé avec succès.")
         st.rerun()
+
+
