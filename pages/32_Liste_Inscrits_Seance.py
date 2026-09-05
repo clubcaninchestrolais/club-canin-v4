@@ -54,12 +54,12 @@ st.write(f"📘 **Cours : {cours['nom']}**")
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Charger les inscrits
+# Charger les inscriptions (table cours_inscriptions)
 # ---------------------------------------------------------
 inscriptions = (
-    supabase.table("seances_inscriptions")
-    .select("*, chiens(*), membres(*)")
-    .eq("seance_id", seance_id)
+    supabase.table("cours_inscriptions")
+    .select("*")
+    .eq("seance_id", seance_id)   # 🔁 adapte ce nom si besoin
     .execute()
     .data
 )
@@ -73,12 +73,26 @@ if not inscriptions:
 # ---------------------------------------------------------
 for ins in inscriptions:
 
-    chien = ins["chiens"]
-    membre = ins["membres"]
+    # Charger le chien
+    chien = (
+        supabase.table("chiens")
+        .select("*")
+        .eq("id", ins["chien_id"])
+        .execute()
+        .data[0]
+    )
+
+    # Charger le membre
+    membre = (
+        supabase.table("membres")
+        .select("*")
+        .eq("id", ins["membre_id"])
+        .execute()
+        .data[0]
+    )
 
     nom_chien = chien["nom"]
     nom_membre = f"{membre['prenom']} {membre['nom']}"
-
     statut = "🟢 Présent" if ins.get("present", False) else "⚪ Absent"
 
     with st.container():
