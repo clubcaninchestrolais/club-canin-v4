@@ -7,7 +7,7 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
 
-st.set_page_config(page_title="Séances du cours", page_icon="📅")
+st.set_page_config(page_title="gestion des seances", page_icon="📅")
 
 # --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
