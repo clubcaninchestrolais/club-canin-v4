@@ -1,11 +1,11 @@
 import streamlit as st
+from datetime import date
+from supabase_rest import supabase
+from menu import hide_streamlit_menu, menu_lateral
 
 # --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
-
-from supabase_rest import supabase
-from menu import hide_streamlit_menu, menu_lateral
 
 st.set_page_config(page_title="gestion des seances", page_icon="📅")
 
@@ -15,76 +15,25 @@ hide_streamlit_menu()
 # --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
-st.title("📅 gestion des seances")
-
-# ---------------------------------------------------------
-# Vérifier si cours_id existe
-# ---------------------------------------------------------
-cours_id = st.session_state.get("cours_id")
-
-if not cours_id:
-    st.info("Sélectionnez un cours pour afficher ses séances.")
-
-    cours_list = (
-        supabase.table("cours")
-        .select("*")
-        .order("nom")
-        .execute()
-        .data
-    )
-
-    if not cours_list:
-        st.error("Aucun cours disponible.")
-        st.stop()
-
-    choix = st.selectbox("Cours :", cours_list, format_func=lambda c: c["nom"])
-    cours_id = choix["id"]
-    st.session_state["cours_id"] = cours_id
+st.title("📅 Gestion des séances")
 
 st.markdown("---")
 
 # ---------------------------------------------------------
-# Charger le cours
+# Charger toutes les séances du jour
 # ---------------------------------------------------------
-cours = (
-    supabase.table("cours")
+aujourdhui = date.today().isoformat()
+
+query = (
+    supabase.table("cours_seances")
     .select("*")
-    .eq("id", cours_id)
-    .execute()
-    .data[0]
+    .eq("date_seance", aujourdhui)
 )
-
-st.subheader(f"Cours : {cours['nom']}")
-st.markdown("---")
-
-# ---------------------------------------------------------
-# Boutons en haut
-# ---------------------------------------------------------
-colA, colB = st.columns(2)
-
-with colA:
-    if st.button("➕ Ajouter une séance"):
-        st.switch_page("pages/06_Ajouter_Seance.py")
-
-with colB:
-    if st.button("⬅️ Retour aux cours"):
-        st.switch_page("pages/04_Cours.py")
-
-st.markdown("---")
 
 # ---------------------------------------------------------
 # Filtre : afficher les séances archivées ?
 # ---------------------------------------------------------
 afficher_archives = st.toggle("Afficher les séances archivées", value=False)
-
-# ---------------------------------------------------------
-# Charger les séances selon le filtre
-# ---------------------------------------------------------
-query = (
-    supabase.table("cours_seances")
-    .select("*")
-    .eq("cours_id", cours_id)
-)
 
 if afficher_archives:
     query = query.eq("actif", False)
@@ -98,18 +47,30 @@ seances = query.order("date_seance").execute().data
 # ---------------------------------------------------------
 if not seances:
     if afficher_archives:
-        st.info("Aucune séance archivée pour ce cours.")
+        st.info("Aucune séance archivée pour aujourd'hui.")
     else:
-        st.info("Aucune séance active pour ce cours.")
+        st.info("Aucune séance active pour aujourd'hui.")
     st.stop()
 
 # ---------------------------------------------------------
 # Affichage des séances
 # ---------------------------------------------------------
 for seance in seances:
+
     with st.container():
         statut = "🟢 Active" if seance["actif"] else "📦 Archivée"
         st.write(f"📅 **{seance['date_seance']}** — {statut}")
+
+        # Charger le cours pour afficher son nom
+        cours = (
+            supabase.table("cours")
+            .select("*")
+            .eq("id", seance["cours_id"])
+            .execute()
+            .data[0]
+        )
+
+        st.write(f"📘 **Cours : {cours['nom']}**")
 
         col1, col2, col3, col4 = st.columns(4)
 
