@@ -1,5 +1,4 @@
 import streamlit as st
-from datetime import date
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
 
@@ -16,24 +15,17 @@ hide_streamlit_menu()
 menu_lateral()
 
 st.title("📅 Gestion des séances")
-
 st.markdown("---")
-
-# ---------------------------------------------------------
-# Charger toutes les séances du jour
-# ---------------------------------------------------------
-aujourdhui = date.today().isoformat()
-
-query = (
-    supabase.table("cours_seances")
-    .select("*")
-    .eq("date_seance", aujourdhui)
-)
 
 # ---------------------------------------------------------
 # Filtre : afficher les séances archivées ?
 # ---------------------------------------------------------
 afficher_archives = st.toggle("Afficher les séances archivées", value=False)
+
+# ---------------------------------------------------------
+# Charger TOUTES les séances
+# ---------------------------------------------------------
+query = supabase.table("cours_seances").select("*")
 
 if afficher_archives:
     query = query.eq("actif", False)
@@ -47,9 +39,9 @@ seances = query.order("date_seance").execute().data
 # ---------------------------------------------------------
 if not seances:
     if afficher_archives:
-        st.info("Aucune séance archivée pour aujourd'hui.")
+        st.info("Aucune séance archivée.")
     else:
-        st.info("Aucune séance active pour aujourd'hui.")
+        st.info("Aucune séance active.")
     st.stop()
 
 # ---------------------------------------------------------
