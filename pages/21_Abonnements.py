@@ -81,6 +81,21 @@ if "abo_id" not in st.session_state:
     st.session_state["abo_id"] = None
 
 if abos:
+    # ⭐⭐ AJOUTER LES ENTÊTES ICI ⭐⭐
+    col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 2])
+
+    with col1:
+        st.markdown("**ID**")
+    with col2:
+        st.markdown("**Nom**")
+    with col3:
+        st.markdown("**Prénom**")
+    with col4:
+        st.markdown("**Total**")
+    with col5:
+        st.markdown("**Restant**")
+    with col6:
+        st.markdown("**Actions**")
     for abo in abos:
 
         rest = abo["seances_restantes"]
