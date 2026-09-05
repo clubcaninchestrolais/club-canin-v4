@@ -148,7 +148,7 @@ for ins in inscriptions:
                 cotisation_ok = False
 
         # ---------------------------------------------------------
-        # 2) Vérification abonnement
+        # 2) Vérification abonnement (TA TABLE)
         # ---------------------------------------------------------
         abo = (
             supabase.table("abonnements")
@@ -166,18 +166,15 @@ for ins in inscriptions:
         else:
             abo = abo[0]
 
-            if abo["statut"] != "active":
+            # actif = FALSE → abonnement non valide
+            if not abo["actif"]:
                 st.error("❌ Abonnement non actif.")
                 abonnement_ok = False
 
-            if abo["date_expiration"] and abo["date_expiration"] < date.today().isoformat():
-                st.error("❌ Abonnement expiré.")
+            # seances_restantes = 0 → abonnement épuisé
+            if abo["seances_restantes"] == 0:
+                st.error("❌ Abonnement épuisé : aucune séance restante.")
                 abonnement_ok = False
-
-            if "seances_restantes" in abo:
-                if abo["seances_restantes"] == 0:
-                    st.error("❌ Abonnement épuisé : aucune séance restante.")
-                    abonnement_ok = False
 
         # ---------------------------------------------------------
         # 3) Message visible si problème
@@ -197,13 +194,14 @@ for ins in inscriptions:
         }).execute()
 
         # ---------------------------------------------------------
-        # 5) Décrémenter l'abonnement (si OK)
+        # 5) Décrémenter l'abonnement (TA TABLE)
         # ---------------------------------------------------------
-        if abo and "seances_restantes" in abo:
+        if abo:
 
-            # Ne pas décrémenter bénévoles
+            # Ne pas décrémenter bénévoles (illimité)
             if abo["seances_restantes"] != -1:
 
+                # Décrémentation uniquement si abonnement OK
                 if abonnement_ok:
                     reste = abo["seances_restantes"] - 1
 
