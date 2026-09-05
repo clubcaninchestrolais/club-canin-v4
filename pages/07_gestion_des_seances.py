@@ -15,7 +15,7 @@ hide_streamlit_menu()
 # --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
-st.title("📅 Séances du cours")
+st.title("📅 gestion des seances")
 
 # ---------------------------------------------------------
 # Vérifier si cours_id existe
