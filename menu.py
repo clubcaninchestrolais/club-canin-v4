@@ -69,7 +69,7 @@ def menu_lateral():
     st.sidebar.page_link("pages/03_Membres_archives.py", label="📁 Membres archivés")
     st.sidebar.page_link("pages/04_Chiens_archives.py", label="📁 Chiens archivés")
     st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")
-    st.page_link("pages/gestion_des_seances.py", label="07_gestion des seances", icon="📅")
+    st.page_link("pages/07_gestion_des_seances.py", label="gestion des seances", icon="📅")
 
 
     # --- Cours & Séances ---
