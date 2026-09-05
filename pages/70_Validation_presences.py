@@ -99,9 +99,11 @@ for ins in inscriptions:
 
     chien_nom = chien["nom"] if chien else "(bénévole)"
 
-    st.write(f"### {membre_nom} — 🐶 {chien_nom}")
+    st.write(f"## {membre_nom} — 🐶 {chien_nom}")
 
+    # ---------------------------------------------------------
     # Vérifier si présence déjà validée
+    # ---------------------------------------------------------
     presence = (
         supabase.table("cours_presences")
         .select("*")
@@ -116,74 +118,92 @@ for ins in inscriptions:
         continue
 
     # ---------------------------------------------------------
-    # BOUTON (PLACÉ AU BON ENDROIT)
+    # AFFICHAGE DE LA SITUATION AVANT VALIDATION
+    # ---------------------------------------------------------
+
+    # Cotisation
+    cot = (
+        supabase.table("cotisations")
+        .select("*")
+        .eq("membre_id", membre["id"])
+        .execute()
+        .data
+    )
+
+    cotisation_ok = True
+
+    if not cot:
+        st.error("🟥 **Cotisation : Aucune cotisation trouvée**")
+        cotisation_ok = False
+    else:
+        cot = cot[0]
+
+        if cot["statut"] != "active":
+            st.error("🟥 **Cotisation : NON ACTIVE**")
+            cotisation_ok = False
+
+        elif cot["date_expiration"] and cot["date_expiration"] < date.today().isoformat():
+            st.error(f"🟥 **Cotisation expirée le {cot['date_expiration']}**")
+            cotisation_ok = False
+
+        else:
+            st.success("🟩 Cotisation : OK")
+
+    # Abonnement
+    abo = (
+        supabase.table("abonnements")
+        .select("*")
+        .eq("membre_id", membre["id"])
+        .execute()
+        .data
+    )
+
+    abonnement_ok = True
+
+    if not abo:
+        st.error("🟥 **Abonnement : Aucun abonnement trouvé**")
+        abonnement_ok = False
+    else:
+        abo = abo[0]
+
+        if not abo["actif"]:
+            st.error("🟥 **Abonnement : NON ACTIF**")
+            abonnement_ok = False
+
+        elif abo["seances_restantes"] == 0:
+            st.error("🟥 **Abonnement épuisé — 0 séance restante**")
+            abonnement_ok = False
+
+        elif abo["seances_restantes"] == -1:
+            st.success("🟩 Abonnement : Illimité")
+
+        else:
+            st.success(f"🟩 Abonnement : {abo['seances_restantes']} séances restantes")
+
+    # ---------------------------------------------------------
+    # BOUTON DE VALIDATION
     # ---------------------------------------------------------
     if st.button(f"Valider présence — {membre_nom}"):
 
         # ---------------------------------------------------------
-        # 1) Vérification cotisation
-        # ---------------------------------------------------------
-        cot = (
-            supabase.table("cotisations")
-            .select("*")
-            .eq("membre_id", membre["id"])
-            .execute()
-            .data
-        )
-
-        cotisation_ok = True
-
-        if not cot:
-            st.error("❌ Ce membre n'a pas de cotisation.")
-            cotisation_ok = False
-        else:
-            cot = cot[0]
-
-            if cot["statut"] != "active":
-                st.error("❌ Cotisation non active.")
-                cotisation_ok = False
-
-            if cot["date_expiration"] and cot["date_expiration"] < date.today().isoformat():
-                st.error("❌ Cotisation expirée.")
-                cotisation_ok = False
-
-        # ---------------------------------------------------------
-        # 2) Vérification abonnement (TA TABLE)
-        # ---------------------------------------------------------
-        abo = (
-            supabase.table("abonnements")
-            .select("*")
-            .eq("membre_id", membre["id"])
-            .execute()
-            .data
-        )
-
-        abonnement_ok = True
-
-        if not abo:
-            st.error("❌ Ce membre n'a pas d'abonnement.")
-            abonnement_ok = False
-        else:
-            abo = abo[0]
-
-            # actif = FALSE → abonnement non valide
-            if not abo["actif"]:
-                st.error("❌ Abonnement non actif.")
-                abonnement_ok = False
-
-            # seances_restantes = 0 → abonnement épuisé
-            if abo["seances_restantes"] == 0:
-                st.error("❌ Abonnement épuisé : aucune séance restante.")
-                abonnement_ok = False
-
-        # ---------------------------------------------------------
-        # 3) Message visible si problème
+        # MESSAGE CLAIR SI PROBLÈME
         # ---------------------------------------------------------
         if not cotisation_ok or not abonnement_ok:
-            st.warning("⚠️ Le membre n'est pas en ordre. Le préposé doit vérifier avec lui.")
+            st.error("""
+🟥 **MEMBRE NON EN ORDRE — ACTION REQUISE**
+
+Ce membre n'est pas en ordre d'abonnement ou de cotisation.
+
+👉 **Le préposé doit :**
+- vérifier avec le membre la raison du problème,
+- régulariser l'abonnement ou la cotisation,
+- informer le comité si nécessaire.
+
+⚠️ La présence a été enregistrée, mais **le membre n'est pas en ordre**.
+""")
 
         # ---------------------------------------------------------
-        # 4) Enregistrer présence
+        # ENREGISTRER LA PRÉSENCE
         # ---------------------------------------------------------
         supabase.table("cours_presences").insert({
             "membre_id": membre["id"],
@@ -194,21 +214,14 @@ for ins in inscriptions:
         }).execute()
 
         # ---------------------------------------------------------
-        # 5) Décrémenter l'abonnement (TA TABLE)
+        # DÉCRÉMENTER L'ABONNEMENT SI OK
         # ---------------------------------------------------------
-        if abo:
+        if abo and abo["seances_restantes"] != -1 and abonnement_ok:
+            reste = abo["seances_restantes"] - 1
 
-            # Ne pas décrémenter bénévoles (illimité)
-            if abo["seances_restantes"] != -1:
-
-                # Décrémentation uniquement si abonnement OK
-                if abonnement_ok:
-                    reste = abo["seances_restantes"] - 1
-
-                    supabase.table("abonnements").update({
-                        "seances_restantes": reste,
-                        "actif": reste > 0
-                    }).eq("id", abo["id"]).execute()
+            supabase.table("abonnements").update({
+                "seances_restantes": reste,
+                "actif": reste > 0
+            }).eq("id", abo["id"]).execute()
 
         st.success("Présence validée")
-        st.rerun()
