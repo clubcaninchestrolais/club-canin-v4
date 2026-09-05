@@ -56,8 +56,7 @@ actif = st.checkbox("Séance active", value=seance["actif"])
 if "prefill_done" not in st.session_state:
     st.session_state["prefill_done"] = True
     st.session_state["date_seance"] = seance["date_seance"]
-    st.session_state["heure_debut"] = seance["heure_debut"]
-    st.session_state["heure_fin"] = seance["heure_fin"]
+    
 
 # Boutons
 col1, col2 = st.columns(2)
