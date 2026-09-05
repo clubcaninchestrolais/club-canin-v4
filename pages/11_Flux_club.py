@@ -14,9 +14,8 @@ menu_lateral()
 st.title("❓ Aide — Comprendre les flux du club")
 
 # ---------------------------------------------------------
-# Texte segmenté pour éviter les erreurs de syntaxe
+# Introduction
 # ---------------------------------------------------------
-
 st.markdown("## 🐕 Pourquoi cette page ?")
 st.markdown(
     "Cette page explique le fonctionnement réel du système du club, "
@@ -27,6 +26,9 @@ st.markdown(
 st.markdown("---")
 st.markdown("# 🔄 Vue d’ensemble des flux du club")
 
+# ---------------------------------------------------------
+# FLUX EXTÉRIEUR
+# ---------------------------------------------------------
 st.markdown("### 🟧 Flux extérieur (nouveau visiteur)")
 st.markdown(
     "1. Préinscription extérieure\n"
@@ -36,6 +38,9 @@ st.markdown(
     "5. Nettoyage automatique"
 )
 
+# ---------------------------------------------------------
+# FLUX MEMBRE
+# ---------------------------------------------------------
 st.markdown("### 🟦 Flux membre (membres du club)")
 st.markdown(
     "1. Connexion membre\n"
@@ -48,12 +53,18 @@ st.markdown(
 st.markdown("---")
 st.markdown("## 🟧 Flux extérieur — fonctionnement complet")
 
+# ---------------------------------------------------------
+# Préinscription
+# ---------------------------------------------------------
 st.markdown("### 1️⃣ Préinscription extérieure")
 st.markdown(
     "Un non‑membre remplit un formulaire public. "
     "Cela crée une préinscription dans la base."
 )
 
+# ---------------------------------------------------------
+# Validation
+# ---------------------------------------------------------
 st.markdown("### 2️⃣ Validation (page 60)")
 st.markdown(
     "Le préposé accepte ou refuse la préinscription.\n\n"
@@ -61,16 +72,22 @@ st.markdown(
     "❌ Refusé → supprimé automatiquement"
 )
 
+# ---------------------------------------------------------
+# Transformation
+# ---------------------------------------------------------
 st.markdown("### 3️⃣ Transformation (page 70)")
 st.markdown(
     "La transformation crée automatiquement :\n"
     "- un membre\n"
     "- un chien lié au membre\n"
     "- une cotisation\n"
-    "- un abonnement\n\n"
+    "- un abonnement actif\n\n"
     "La préinscription est ensuite archivée."
 )
 
+# ---------------------------------------------------------
+# Nettoyage
+# ---------------------------------------------------------
 st.markdown("### 4️⃣ Nettoyage automatique")
 st.markdown(
     "Les préinscriptions refusées ou transformées sont supprimées automatiquement "
@@ -80,30 +97,55 @@ st.markdown(
 st.markdown("---")
 st.markdown("## 🟦 Flux membre — fonctionnement complet")
 
+# ---------------------------------------------------------
+# Connexion
+# ---------------------------------------------------------
 st.markdown("### 1️⃣ Connexion membre")
 st.markdown(
     "Le membre se connecte avec son email et son mot de passe. "
     "Il accède à son espace personnel."
 )
 
+# ---------------------------------------------------------
+# Inscription séance
+# ---------------------------------------------------------
 st.markdown("### 2️⃣ Inscription à une séance")
 st.markdown(
     "Le membre choisit une séance disponible. "
     "Une inscription est créée dans la base."
 )
 
+# ---------------------------------------------------------
+# Présence (VERSION CORRIGÉE)
+# ---------------------------------------------------------
 st.markdown("### 3️⃣ Présence")
 st.markdown(
-    "Le jour du cours, le préposé enregistre la présence. "
-    "Chaque présence crée une ligne dans l’historique."
+    "Le jour du cours, le préposé enregistre la présence.\n\n"
+    "**L’application vérifie automatiquement :**\n"
+    "- que le membre possède une **cotisation active payée** (sauf bénévoles)\n"
+    "- qu’un **abonnement actif = TRUE** existe\n"
+    "- que l’abonnement possède des **séances restantes > 0**\n"
+    "- que les anciens abonnements ont été **désactivés automatiquement**\n"
+    "- que les bénévoles disposent d’un abonnement **gratuit illimité**\n\n"
+    "**Si une condition n’est pas remplie → la validation est impossible.**\n\n"
+    "Chaque présence validée crée une ligne dans l’historique."
 )
 
+# ---------------------------------------------------------
+# Décrémentation (VERSION CORRIGÉE)
+# ---------------------------------------------------------
 st.markdown("### 4️⃣ Décrémentation automatique")
 st.markdown(
-    "Si le membre est présent, son abonnement est décrémenté automatiquement. "
-    "Le nouveau solde est mis à jour dans la base."
+    "Lorsqu’une présence est validée :\n"
+    "- l’abonnement est décrémenté automatiquement\n"
+    "- si le solde atteint **0**, l’abonnement passe en **terminé**\n"
+    "- les abonnements gratuits ne sont jamais décrémentés\n"
+    "- aucune manipulation manuelle n’est nécessaire"
 )
 
+# ---------------------------------------------------------
+# Historique
+# ---------------------------------------------------------
 st.markdown("### 5️⃣ Historique")
 st.markdown(
     "Toutes les actions (inscriptions, présences, absences, décrémentations) "
@@ -121,6 +163,9 @@ st.markdown(
 st.markdown("---")
 st.markdown("## 🧭 Résumé final")
 
+# ---------------------------------------------------------
+# Résumé extérieur
+# ---------------------------------------------------------
 st.markdown("### 🟧 Flux extérieur")
 st.markdown(
     "1. Préinscription\n"
@@ -130,12 +175,16 @@ st.markdown(
     "5. Nettoyage automatique"
 )
 
+# ---------------------------------------------------------
+# Résumé membre (VERSION CORRIGÉE)
+# ---------------------------------------------------------
 st.markdown("### 🟦 Flux membre")
 st.markdown(
     "1. Connexion\n"
     "2. Inscription\n"
-    "3. Présence\n"
-    "4. Décrémentation\n"
+    "3. Présence (avec vérification automatique)\n"
+    "4. Décrémentation automatique\n"
     "5. Historique"
 )
+
 
