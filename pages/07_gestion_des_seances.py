@@ -15,6 +15,15 @@ st.title("📅 Gestion des séances")
 st.markdown("---")
 
 # ---------------------------------------------------------
+# Bouton : Ajouter une séance
+# ---------------------------------------------------------
+if st.button("➕ Ajouter une séance"):
+    st.session_state["seance_id"] = None
+    st.switch_page("pages/06_Ajouter_Seance.py")
+
+st.markdown("---")
+
+# ---------------------------------------------------------
 # Filtre : afficher les séances archivées ?
 # ---------------------------------------------------------
 afficher_archives = st.toggle("Afficher les séances archivées", value=False)
