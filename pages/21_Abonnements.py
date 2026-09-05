@@ -319,15 +319,26 @@ else:
                 st.error("❌ Impossible : ce membre n'a pas de cotisation active payée.")
                 st.stop()
 
+        # ---------------------------------------------------------
+        # Désactiver les anciens abonnements du membre
+        # ---------------------------------------------------------
+        supabase.table("abonnements").update({
+            "actif": False,
+            "statut": "termine"
+        }).eq("membre_id", membre_sel["id"]).execute()
+
+        # ---------------------------------------------------------
+        # Créer le nouvel abonnement (CORRIGÉ)
+        # ---------------------------------------------------------
         supabase.table("abonnements").insert({
             "membre_id": membre_sel["id"],
             "seances_total": total,
             "seances_restantes": total,
             "date_achat": datetime.now().date().isoformat(),
             "statut": statut_final,
-            "prix": prix
+            "prix": prix,
+            "actif": True if statut_final != "termine" else False
         }).execute()
 
         st.success("🎉 Abonnement créé avec succès.")
         st.rerun()
-
