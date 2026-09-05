@@ -6,7 +6,7 @@ from menu import hide_streamlit_menu, menu_lateral
 if "connected" not in st.session_state or not st.session_state["connected"]:
     st.switch_page("pages/login.py")
 
-st.set_page_config(page_title="gestion des seances", page_icon="📅")
+st.set_page_config(page_title="Gestion des séances", page_icon="📅")
 
 # --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
@@ -64,7 +64,7 @@ for seance in seances:
 
         st.write(f"📘 **Cours : {cours['nom']}**")
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
 
         # --- Modifier ---
         with col1:
@@ -72,11 +72,11 @@ for seance in seances:
                 st.session_state["seance_id"] = seance["id"]
                 st.switch_page("pages/08_Modifier_Seance.py")
 
-        # --- Inscriptions ---
+        # --- Voir les inscrits (lecture seule) ---
         with col2:
-            if st.button(f"📝 Inscriptions", key=f"inscr_{seance['id']}"):
+            if st.button(f"👥 Voir les inscrits", key=f"inscrits_{seance['id']}"):
                 st.session_state["seance_id"] = seance["id"]
-                st.switch_page("pages/32_Inscription_Seance.py")
+                st.switch_page("pages/32_Liste_Inscrits_Seance.py")
 
         # --- Archiver / Réactiver ---
         with col3:
@@ -88,11 +88,5 @@ for seance in seances:
                 if st.button(f"🔄 Réactiver", key=f"reactive_{seance['id']}"):
                     supabase.table("cours_seances").update({"actif": True}).eq("id", seance["id"]).execute()
                     st.rerun()
-
-        # --- Supprimer ---
-        with col4:
-            if st.button(f"🗑️ Supprimer", key=f"delete_{seance['id']}"):
-                supabase.table("cours_seances").delete().eq("id", seance["id"]).execute()
-                st.rerun()
 
         st.markdown("---")
