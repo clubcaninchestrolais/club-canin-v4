@@ -68,9 +68,12 @@ def menu_lateral():
     st.sidebar.page_link("pages/02_Chiens.py", label="🐶 Chiens")
     st.sidebar.page_link("pages/03_Membres_archives.py", label="📁 Membres archivés")
     st.sidebar.page_link("pages/04_Chiens_archives.py", label="📁 Chiens archivés")
-    st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")
-    st.page_link("pages/07_gestion_des_seances.py", label="gestion des seances", icon="📅")
 
+    # ⭐⭐⭐ AJOUT CORRECT DE LA PAGE GESTION DES SÉANCES ⭐⭐⭐
+    st.sidebar.page_link("pages/07_gestion_des_seances.py", label="📅 Gestion des séances")
+
+    # Page déjà existante
+    st.sidebar.page_link("pages/06_Ajouter_Seance.py", label="➕ Ajouter une séance")
 
     # --- Cours & Séances ---
     if role == "admin":
@@ -130,4 +133,3 @@ def menu_lateral():
         st.sidebar.page_link("pages/90_Audit_Log.py", label="Journal des actions")
 
     st.sidebar.markdown("---")
-
