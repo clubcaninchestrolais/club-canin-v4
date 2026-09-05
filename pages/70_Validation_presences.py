@@ -15,6 +15,12 @@ supabase = create_client(url, key)
 st.title("Validation des présences")
 
 # ---------------------------------------------------------
+# Bouton rafraîchir
+# ---------------------------------------------------------
+if st.button("🔄 Rafraîchir"):
+    st.rerun()
+
+# ---------------------------------------------------------
 # Charger les cours
 # ---------------------------------------------------------
 cours = (
@@ -149,22 +155,26 @@ for ins in inscriptions:
         else:
             st.success("🟩 Cotisation : OK")
 
-    # Abonnement
-    abo = (
+    # ---------------------------------------------------------
+    # Abonnement — trié pour prendre le plus récent
+    # ---------------------------------------------------------
+    abo_list = (
         supabase.table("abonnements")
         .select("*")
         .eq("membre_id", membre["id"])
+        .order("date_achat", desc=True)   # ⭐ TRÈS IMPORTANT
         .execute()
         .data
     )
 
     abonnement_ok = True
 
-    if not abo:
+    if not abo_list:
         st.error("🟥 **Abonnement : Aucun abonnement trouvé**")
         abonnement_ok = False
+        abo = None
     else:
-        abo = abo[0]
+        abo = abo_list[0]   # ⭐ On prend le plus récent
 
         if not abo["actif"]:
             st.error("🟥 **Abonnement : NON ACTIF**")
