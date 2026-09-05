@@ -8,10 +8,7 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
 
 st.set_page_config(page_title="Gestion des séances", page_icon="📅")
 
-# --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
-
-# --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
 st.title("📅 Gestion des séances")
@@ -64,22 +61,16 @@ for seance in seances:
 
         st.write(f"📘 **Cours : {cours['nom']}**")
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
 
-        # --- Modifier ---
+        # --- Voir les inscrits ---
         with col1:
-            if st.button(f"✏️ Modifier", key=f"edit_{seance['id']}"):
-                st.session_state["seance_id"] = seance["id"]
-                st.switch_page("pages/08_Modifier_Seance.py")
-
-        # --- Voir les inscrits (lecture seule) ---
-        with col2:
             if st.button(f"👥 Voir les inscrits", key=f"inscrits_{seance['id']}"):
                 st.session_state["seance_id"] = seance["id"]
                 st.switch_page("pages/32_Liste_Inscrits_Seance.py")
 
         # --- Archiver / Réactiver ---
-        with col3:
+        with col2:
             if seance["actif"]:
                 if st.button(f"📦 Archiver", key=f"archive_{seance['id']}"):
                     supabase.table("cours_seances").update({"actif": False}).eq("id", seance["id"]).execute()
