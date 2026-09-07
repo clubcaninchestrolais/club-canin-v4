@@ -113,21 +113,37 @@ else:
             continue
 
         # ---------------------------------------------------------
-        # AFFICHAGE DU CHIEN + BOUTONS DIRECTS
+        # CODE COULEUR
         # ---------------------------------------------------------
-
-        st.markdown(f"### 🐶 {chien['nom']}")
-        st.write(f"**Statut :** {statut}")
-        st.write(f"**Dernier vaccin :** {dernier['nom_vaccin']} — {dernier['date_vaccin']}")
-
-        if valid_until:
-            st.write(f"**Valide jusqu’au :** {valid_until}")
+        if statut_code == "expire":
+            couleur = "#ffcccc"   # rouge clair
+        elif statut_code == "bientot":
+            couleur = "#ffe6cc"   # orange clair
+        elif statut_code == "ajour":
+            couleur = "#e6ffe6"   # vert clair
         else:
-            st.write("**Valide jusqu’au :** Non défini")
+            couleur = "#f2f2f2"   # gris clair
+
+        # Encadré coloré
+        st.markdown(
+            f"""
+            <div style="padding: 12px; border-radius: 8px; background-color: {couleur};">
+                <b>{chien['nom']}</b><br>
+                Statut : {statut}<br>
+                Dernier vaccin : {dernier['nom_vaccin']} — {dernier['date_vaccin']}<br>
+                Valide jusqu’au : {valid_until if valid_until else "Non défini"}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # ---------------------------------------------------------
+        # BOUTONS DIRECTS
+        # ---------------------------------------------------------
 
         col1, col2 = st.columns(2)
 
-        # --- BOUTON MODIFIER (VISIBLE DIRECTEMENT) ---
+        # --- BOUTON MODIFIER ---
         with col1:
             if st.button("✏️ Modifier le dernier vaccin", key=f"edit_last_{chien_id}"):
                 st.session_state["vaccin_id"] = dernier["id"]
@@ -142,7 +158,7 @@ else:
                 st.rerun()
 
         # ---------------------------------------------------------
-        # HISTORIQUE DES VACCINS (OPTIONNEL)
+        # HISTORIQUE DES VACCINS
         # ---------------------------------------------------------
 
         with st.expander("Historique des vaccins"):
