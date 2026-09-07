@@ -69,20 +69,27 @@ else:
         if valid_until:
             valid_until = date.fromisoformat(valid_until)
         else:
-            valid_until = date_v + timedelta(days=365)
+            valid_until = None
 
         # Statut
         today = date.today()
-        if today > valid_until:
-            statut = "🔴 **Vaccin expiré**"
+
+        if not valid_until:
+            statut = "⚪ Validité inconnue"
+        elif today > valid_until:
+            statut = "🔴 Vaccin expiré"
         elif (valid_until - today).days < 30:
-            statut = "🟠 **Expire bientôt** (< 30 jours)"
+            statut = "🟠 Expire bientôt (< 30 jours)"
         else:
             statut = "🟢 À jour"
 
         st.write(f"**Statut :** {statut}")
         st.write(f"**Dernier vaccin :** {dernier['nom_vaccin']} — {dernier['date_vaccin']}")
-        st.write(f"**Valide jusqu’au :** {valid_until}")
+
+        if valid_until:
+            st.write(f"**Valide jusqu’au :** {valid_until}")
+        else:
+            st.write("**Valide jusqu’au :** Non défini")
 
         # Boutons utiles
         colA, colB = st.columns(2)
@@ -133,7 +140,10 @@ chien_choisi = st.selectbox(
 
 nom_vaccin = st.text_input("Nom du vaccin")
 date_vaccin = st.date_input("Date du vaccin")
-valid_until = st.date_input("Date de fin de validité", date_vaccin + timedelta(days=365))
+
+# Date de validité réelle (pas calcul automatique)
+valid_until = st.date_input("Date de fin de validité")
+
 remarques = st.text_area("Remarques (optionnel)")
 
 if st.button("Ajouter le vaccin"):
