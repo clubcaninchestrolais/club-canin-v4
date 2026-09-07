@@ -2,7 +2,8 @@ import streamlit as st
 
 # --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
-    st.switch_page("pages/login.py")
+    st.switch_page("01_Connexion.py")
+
 
 from supabase_rest import supabase
 from datetime import date
