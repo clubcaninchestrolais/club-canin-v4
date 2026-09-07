@@ -123,7 +123,7 @@ else:
             st.write("**Valide jusqu’au :** Non défini")
 
         # Boutons utiles
-        colA, colB, colC = st.columns(3)
+        colA, colB = st.columns(2)
 
         with colA:
             if st.button("📄 Voir fiche chien", key=f"fiche_{chien_id}"):
@@ -148,12 +148,14 @@ else:
 
                 col1, col2 = st.columns(2)
 
+                # --- BOUTON MODIFIER ---
                 with col1:
                     if st.button("✏️ Modifier", key=f"edit_{v['id']}"):
                         st.session_state["vaccin_id"] = v["id"]
                         st.session_state["vaccin_mode"] = "edit"
                         st.switch_page("pages/32_Modifier_Vaccin.py")
 
+                # --- BOUTON SUPPRIMER ---
                 with col2:
                     if st.button("🗑️ Supprimer", key=f"delete_{v['id']}"):
                         supabase.table("vaccins").delete().eq("id", v["id"]).execute()
