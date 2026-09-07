@@ -183,5 +183,17 @@ if st.button("💾 Enregistrer"):
 
     st.switch_page("pages/02_Chiens.py")
 
+# ---------------------------------------------------------
+# Bouton pour aller à la page vaccins
+# ---------------------------------------------------------
+if not mode_creation:
+    st.markdown("### ")
+    if st.button("💉 Gérer les vaccins de ce chien"):
+        st.session_state["vaccin_chien_id"] = chien_id
+        st.switch_page("pages/vaccins.py")
+
+# ---------------------------------------------------------
+# Retour
+# ---------------------------------------------------------
 if st.button("Retour"):
     st.switch_page("pages/02_Chiens.py")
