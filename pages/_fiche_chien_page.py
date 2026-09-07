@@ -22,6 +22,9 @@ if "chien_id" not in st.session_state or st.session_state["chien_id"] is None:
         "numero_puce": "",
         "numero_carnet": "",
         "identification": "",
+        "vaccins": "",
+        "date_vaccin": None,
+        "activite": "",
         "remarques": "",
         "age": 0,
         "photo_url": "",
@@ -52,12 +55,15 @@ proprietaire = st.selectbox(
     index=index_membre
 )
 
+# ---------------------------------------------------------
+# Informations générales
+# ---------------------------------------------------------
 st.markdown("### Informations générales")
 
 nom = st.text_input("Nom du chien", chien["nom"])
 race = st.text_input("Race", chien["race"])
 
-# --- SEXE : choix Mâle / Femelle ---
+# --- SEXE ---
 sexe_options = ["Mâle", "Femelle"]
 sexe = st.selectbox(
     "Sexe",
@@ -82,16 +88,38 @@ def calcul_age(dn):
 age = calcul_age(date_naissance)
 st.write(f"Âge : {age} ans")
 
+# ---------------------------------------------------------
+# Identification
+# ---------------------------------------------------------
 st.markdown("### Identification")
 
 numero_puce = st.text_input("Numéro de puce", chien["numero_puce"])
 numero_carnet = st.text_input("Numéro de carnet", chien["numero_carnet"])
 identification = st.text_input("Identification", chien["identification"])
 
-st.markdown("### Remarques")
+# ---------------------------------------------------------
+# Santé
+# ---------------------------------------------------------
+st.markdown("### Santé")
 
+vaccins = st.text_input("Vaccins", chien.get("vaccins", ""))
+date_vaccin = (
+    st.date_input("Date du dernier vaccin", chien["date_vaccin"])
+    if chien.get("date_vaccin")
+    else st.date_input("Date du dernier vaccin")
+)
+
+# ---------------------------------------------------------
+# Activité & remarques
+# ---------------------------------------------------------
+st.markdown("### Activité & remarques")
+
+activite = st.text_input("Activité", chien.get("activite", ""))
 remarques = st.text_area("Remarques", chien["remarques"])
 
+# ---------------------------------------------------------
+# Photo
+# ---------------------------------------------------------
 st.markdown("### Photo")
 
 photo_url = st.text_input("URL de la photo", chien["photo_url"])
@@ -119,8 +147,14 @@ if photo_url:
 
 st.markdown("---")
 
+# ---------------------------------------------------------
+# Actif / archive
+# ---------------------------------------------------------
 actif = st.checkbox("Actif", not chien.get("archive", False))
 
+# ---------------------------------------------------------
+# Enregistrer
+# ---------------------------------------------------------
 if st.button("💾 Enregistrer"):
     data = {
         "nom": nom,
@@ -130,6 +164,9 @@ if st.button("💾 Enregistrer"):
         "numero_puce": numero_puce,
         "numero_carnet": numero_carnet,
         "identification": identification,
+        "vaccins": vaccins,
+        "date_vaccin": date_vaccin.isoformat() if date_vaccin else None,
+        "activite": activite,
         "remarques": remarques,
         "age": age,
         "photo_url": photo_url,
