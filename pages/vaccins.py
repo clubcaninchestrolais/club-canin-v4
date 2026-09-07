@@ -4,7 +4,7 @@ securite_admin()
 
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-from datetime import date
+from datetime import date, timedelta
 
 hide_streamlit_menu()
 menu_lateral()
@@ -63,16 +63,26 @@ else:
         # Dernier vaccin
         dernier = liste_vaccins[0]
         date_v = date.fromisoformat(dernier["date_vaccin"])
-        delta = (date.today() - date_v).days
+
+        # Date de fin de validité
+        valid_until = dernier.get("valid_until")
+        if valid_until:
+            valid_until = date.fromisoformat(valid_until)
+        else:
+            valid_until = date_v + timedelta(days=365)
 
         # Statut
-        if delta > 365:
-            statut = "🔴 **À renouveler** (plus de 1 an)"
+        today = date.today()
+        if today > valid_until:
+            statut = "🔴 **Vaccin expiré**"
+        elif (valid_until - today).days < 30:
+            statut = "🟠 **Expire bientôt** (< 30 jours)"
         else:
             statut = "🟢 À jour"
 
         st.write(f"**Statut :** {statut}")
         st.write(f"**Dernier vaccin :** {dernier['nom_vaccin']} — {dernier['date_vaccin']}")
+        st.write(f"**Valide jusqu’au :** {valid_until}")
 
         # Boutons utiles
         colA, colB = st.columns(2)
@@ -94,6 +104,7 @@ else:
             with st.expander(f"{v['nom_vaccin']} — {v['date_vaccin']}"):
                 st.write(f"💉 **Vaccin :** {v['nom_vaccin']}")
                 st.write(f"📅 **Date :** {v['date_vaccin']}")
+                st.write(f"📅 **Valide jusqu’au :** {v.get('valid_until', 'Non défini')}")
                 st.write(f"📝 **Remarques :** {v['remarques']}")
                 st.write(f"🕒 **Créé le :** {v['created_at']}")
 
@@ -122,6 +133,7 @@ chien_choisi = st.selectbox(
 
 nom_vaccin = st.text_input("Nom du vaccin")
 date_vaccin = st.date_input("Date du vaccin")
+valid_until = st.date_input("Date de fin de validité", date_vaccin + timedelta(days=365))
 remarques = st.text_area("Remarques (optionnel)")
 
 if st.button("Ajouter le vaccin"):
@@ -132,6 +144,7 @@ if st.button("Ajouter le vaccin"):
             "chien_id": chien_choisi["id"],
             "nom_vaccin": nom_vaccin,
             "date_vaccin": str(date_vaccin),
+            "valid_until": str(valid_until),
             "remarques": remarques
         }).execute()
 
