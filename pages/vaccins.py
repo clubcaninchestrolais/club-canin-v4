@@ -4,7 +4,7 @@ securite_admin()
 
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
-from datetime import date, timedelta
+from datetime import date
 
 hide_streamlit_menu()
 menu_lateral()
@@ -112,8 +112,11 @@ else:
         if filtre_statut == "Validité inconnue" and statut_code != "inconnu":
             continue
 
-        # Affichage du chien
-        st.markdown(f"## 🐶 {chien['nom']}")
+        # ---------------------------------------------------------
+        # AFFICHAGE DU CHIEN + BOUTONS DIRECTS
+        # ---------------------------------------------------------
+
+        st.markdown(f"### 🐶 {chien['nom']}")
         st.write(f"**Statut :** {statut}")
         st.write(f"**Dernier vaccin :** {dernier['nom_vaccin']} — {dernier['date_vaccin']}")
 
@@ -122,40 +125,38 @@ else:
         else:
             st.write("**Valide jusqu’au :** Non défini")
 
-        # Boutons utiles
-        colA, colB = st.columns(2)
+        col1, col2 = st.columns(2)
 
-        with colA:
-            if st.button("📄 Voir fiche chien", key=f"fiche_{chien_id}"):
-                st.session_state["chien_id"] = chien_id
-                st.switch_page("pages/22_Ajout_Chien.py")
+        # --- BOUTON MODIFIER (VISIBLE DIRECTEMENT) ---
+        with col1:
+            if st.button("✏️ Modifier le dernier vaccin", key=f"edit_last_{chien_id}"):
+                st.session_state["vaccin_id"] = dernier["id"]
+                st.switch_page("pages/modifier_vaccin.py")
 
-        with colB:
+        # --- BOUTON AJOUTER ---
+        with col2:
             if st.button("➕ Ajouter un vaccin", key=f"addv_{chien_id}"):
                 st.session_state["vaccin_chien_id"] = chien_id
                 st.session_state["vaccin_mode"] = "ajout"
                 st.session_state["vaccin_id"] = None
                 st.rerun()
 
-        # Liste des vaccins
-        for v in liste_vaccins:
-            with st.expander(f"{v['nom_vaccin']} — {v['date_vaccin']}"):
-                st.write(f"💉 **Vaccin :** {v['nom_vaccin']}")
-                st.write(f"📅 **Date :** {v['date_vaccin']}")
-                st.write(f"📅 **Valide jusqu’au :** {v.get('valid_until', 'Non défini')}")
-                st.write(f"📝 **Remarques :** {v['remarques']}")
-                st.write(f"🕒 **Créé le :** {v['created_at']}")
+        # ---------------------------------------------------------
+        # HISTORIQUE DES VACCINS (OPTIONNEL)
+        # ---------------------------------------------------------
 
-                col1, col2 = st.columns(2)
+        with st.expander("Historique des vaccins"):
+            for v in liste_vaccins:
+                st.write(f"💉 {v['nom_vaccin']} — {v['date_vaccin']} — Valide jusqu’au : {v.get('valid_until', 'Non défini')}")
 
-                # --- BOUTON MODIFIER ---
-                with col1:
+                colA, colB = st.columns(2)
+
+                with colA:
                     if st.button("✏️ Modifier", key=f"edit_{v['id']}"):
                         st.session_state["vaccin_id"] = v["id"]
                         st.switch_page("pages/modifier_vaccin.py")
 
-                # --- BOUTON SUPPRIMER ---
-                with col2:
+                with colB:
                     if st.button("🗑️ Supprimer", key=f"delete_{v['id']}"):
                         supabase.table("vaccins").delete().eq("id", v["id"]).execute()
                         st.success("Vaccin supprimé.")
