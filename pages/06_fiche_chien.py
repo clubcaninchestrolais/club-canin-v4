@@ -182,7 +182,7 @@ if st.button("💾 Enregistrer"):
         supabase.table("chiens").update(data).eq("id", chien_id).execute()
         st.success("Chien mis à jour.")
 
-    st.switch_page("02_Chiens.py")
+    st.switch_page("Chiens")
 
 # ---------------------------------------------------------
 # Bouton pour aller à la page vaccins
