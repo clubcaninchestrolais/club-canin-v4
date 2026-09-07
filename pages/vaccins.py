@@ -12,10 +12,13 @@ menu_lateral()
 st.title("💉 Gestion des vaccins des chiens")
 
 # ---------------------------------------------------------
-# FILTRE EN HAUT DE PAGE
+# FILTRES EN HAUT DE PAGE
 # ---------------------------------------------------------
-filtre = st.selectbox(
-    "Filtrer les vaccins",
+
+filtre_nom = st.text_input("Filtrer par nom du chien")
+
+filtre_statut = st.selectbox(
+    "Filtrer par statut",
     ["Tous", "À jour", "Expire bientôt", "Expirés", "Validité inconnue"]
 )
 
@@ -68,6 +71,10 @@ else:
         if not chien:
             continue
 
+        # --- FILTRE PAR NOM ---
+        if filtre_nom and filtre_nom.lower() not in chien["nom"].lower():
+            continue
+
         # Dernier vaccin
         dernier = liste_vaccins[0]
         date_v = date.fromisoformat(dernier["date_vaccin"])
@@ -95,14 +102,14 @@ else:
             statut = "À jour"
             statut_code = "ajour"
 
-        # Filtre
-        if filtre == "À jour" and statut_code != "ajour":
+        # --- FILTRE STATUT ---
+        if filtre_statut == "À jour" and statut_code != "ajour":
             continue
-        if filtre == "Expire bientôt" and statut_code != "bientot":
+        if filtre_statut == "Expire bientôt" and statut_code != "bientot":
             continue
-        if filtre == "Expirés" and statut_code != "expire":
+        if filtre_statut == "Expirés" and statut_code != "expire":
             continue
-        if filtre == "Validité inconnue" and statut_code != "inconnu":
+        if filtre_statut == "Validité inconnue" and statut_code != "inconnu":
             continue
 
         # Affichage du chien
@@ -145,7 +152,7 @@ else:
                     if st.button("✏️ Modifier", key=f"edit_{v['id']}"):
                         st.session_state["vaccin_id"] = v["id"]
                         st.session_state["vaccin_mode"] = "edit"
-                        st.rerun()
+                        st.switch_page("pages/32_Modifier_Vaccin.py")
 
                 with col2:
                     if st.button("🗑️ Supprimer", key=f"delete_{v['id']}"):
