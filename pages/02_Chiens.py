@@ -115,7 +115,7 @@ for index, chien in enumerate(chiens):
 
     if cols[4].button("🔍", key=f"fiche_chien_{chien['id']}"):
         st.session_state["chien_id"] = chien["id"]
-        st.switch_page("pages/_fiche_chien_page.py")
+        st.switch_page("pages/06_fiche_chien.py")
 
 st.markdown("---")
 
