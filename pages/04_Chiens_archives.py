@@ -74,6 +74,6 @@ for index, chien in enumerate(chiens):
     # Bouton fiche chien
     if cols[4].button("🔍", key=f"fiche_chien_arch_{chien['id']}"):
         st.session_state["chien_id"] = chien["id"]
-        st.switch_page("06_fiche_chien.py")
+        st.switch_page("page/06_fiche_chien.py")
 
 st.markdown("---")
