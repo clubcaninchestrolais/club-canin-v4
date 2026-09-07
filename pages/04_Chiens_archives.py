@@ -89,7 +89,7 @@ for index, chien in enumerate(chiens):
     # Bouton fiche chien
     if cols[4].button("🔍", key=f"fiche_chien_arch_{chien['id']}"):
         st.session_state["chien_id"] = chien["id"]
-        st.switch_page("pages/22_Fiche_Chien.py")   # <-- À adapter selon ton vrai fichier
+        st.switch_page("pages/22_Fiche_Chien.py")
 
 st.markdown("---")
 
