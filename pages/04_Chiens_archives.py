@@ -2,22 +2,18 @@ import streamlit as st
 
 # --- SÉCURITÉ : accès réservé aux utilisateurs connectés ---
 if "connected" not in st.session_state or not st.session_state["connected"]:
-    st.switch_page("pages/login.py")
+    st.switch_page("01_Connexion.py")
 
 from supabase_rest import supabase
-from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT IMPORTANT
+from menu import hide_streamlit_menu, menu_lateral
 
 st.set_page_config(page_title="Chiens archivés", page_icon="🗃️")
 
-# --- MASQUER LE MENU AUTOMATIQUE ---
-hide_streamlit_menu()   # <-- AJOUT
-
-# --- AFFICHER LE MENU PERSONNALISÉ ---
-menu_lateral()          # <-- AJOUT
+hide_streamlit_menu()
+menu_lateral()
 
 st.title("Chiens archivés")
 
-# Charger uniquement les chiens ARCHIVÉS
 chiens = (
     supabase.table("chiens")
     .select("*")
@@ -28,7 +24,6 @@ chiens = (
 
 st.write("### Chiens archivés")
 
-# Style moderne (alternance de lignes)
 def ligne_style(index):
     return (
         "background-color: #f7f7f7; padding: 6px; border-radius: 4px;"
@@ -36,7 +31,6 @@ def ligne_style(index):
         else "padding: 6px;"
     )
 
-# En-tête du tableau
 header = st.columns([2, 2, 2, 2, 1])
 header[0].markdown("**Nom**")
 header[1].markdown("**Race**")
@@ -46,7 +40,6 @@ header[4].markdown("**Fiche**")
 
 st.markdown("---")
 
-# Affichage ligne par ligne
 for index, chien in enumerate(chiens):
 
     nom = chien.get("nom", "")
@@ -54,7 +47,6 @@ for index, chien in enumerate(chiens):
     naissance = chien.get("date_naissance", "")
     id_membre = chien.get("id_membre", None)
 
-    # Charger le propriétaire
     membre_nom = "Inconnu"
     if id_membre:
         membre = (
@@ -69,26 +61,13 @@ for index, chien in enumerate(chiens):
 
     cols = st.columns([2, 2, 2, 2, 1])
 
-    cols[0].markdown(
-        f"<div style='{ligne_style(index)}'>{nom}</div>",
-        unsafe_allow_html=True
-    )
-    cols[1].markdown(
-        f"<div style='{ligne_style(index)}'>{race}</div>",
-        unsafe_allow_html=True
-    )
-    cols[2].markdown(
-        f"<div style='{ligne_style(index)}'>📅 {naissance}</div>",
-        unsafe_allow_html=True
-    )
-    cols[3].markdown(
-        f"<div style='{ligne_style(index)}'>👤 {membre_nom}</div>",
-        unsafe_allow_html=True
-    )
+    cols[0].markdown(f"<div style='{ligne_style(index)}'>{nom}</div>", unsafe_allow_html=True)
+    cols[1].markdown(f"<div style='{ligne_style(index)}'>{race}</div>", unsafe_allow_html=True)
+    cols[2].markdown(f"<div style='{ligne_style(index)}'>📅 {naissance}</div>", unsafe_allow_html=True)
+    cols[3].markdown(f"<div style='{ligne_style(index)}'>👤 {membre_nom}</div>", unsafe_allow_html=True)
 
-    # Bouton fiche chien — CORRIGÉ
     if cols[4].button("🔍", key=f"fiche_chien_arch_{chien['id']}"):
         st.session_state["chien_id"] = chien["id"]
-        st.switch_page("06_Fiche_Chien.py")   # <-- NOM FINAL DU FICHIER
+        st.switch_page("06_fiche_chien.py")   # <-- CORRECTION FINALE
 
 st.markdown("---")
