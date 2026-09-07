@@ -89,6 +89,6 @@ for index, chien in enumerate(chiens):
     # Bouton fiche chien — CORRIGÉ
     if cols[4].button("🔍", key=f"fiche_chien_arch_{chien['id']}"):
         st.session_state["chien_id"] = chien["id"]
-        st.switch_page("fiche_chien_page.py")   # <-- NOM FINAL DU FICHIER
+        st.switch_page("06_Fiche_Chien.py")   # <-- NOM FINAL DU FICHIER
 
 st.markdown("---")
