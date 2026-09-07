@@ -4,6 +4,7 @@ securite_admin()
 
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
+from datetime import date
 
 hide_streamlit_menu()
 menu_lateral()
@@ -22,8 +23,7 @@ chiens = (
     .data
 )
 
-# Dictionnaire id → nom du chien
-chiens_dict = {c["id"]: c["nom"] for c in chiens}
+chiens_dict = {c["id"]: c for c in chiens}
 
 # ---------------------------------------------------------
 # Charger les vaccins
@@ -42,22 +42,67 @@ st.subheader("Vaccins enregistrés")
 if not vaccins:
     st.info("Aucun vaccin enregistré pour le moment.")
 else:
+
+    # Regrouper les vaccins par chien
+    vaccins_par_chien = {}
     for v in vaccins:
-        chien_nom = chiens_dict.get(v["chien_id"], "Chien inconnu")
+        cid = v["chien_id"]
+        if cid not in vaccins_par_chien:
+            vaccins_par_chien[cid] = []
+        vaccins_par_chien[cid].append(v)
 
-        with st.expander(f"{chien_nom} — {v['nom_vaccin']} ({v['date_vaccin']})"):
-            st.write(f"🐶 **Chien :** {chien_nom}")
-            st.write(f"💉 **Vaccin :** {v['nom_vaccin']}")
-            st.write(f"📅 **Date :** {v['date_vaccin']}")
-            st.write(f"📝 **Remarques :** {v['remarques']}")
-            st.write(f"🕒 **Créé le :** {v['created_at']}")
+    # Affichage regroupé
+    for chien_id, liste_vaccins in vaccins_par_chien.items():
 
-            if st.button("🗑️ Supprimer", key=f"delete_{v['id']}"):
-                supabase.table("vaccins").delete().eq("id", v["id"]).execute()
-                st.success("Vaccin supprimé.")
+        chien = chiens_dict.get(chien_id)
+        if not chien:
+            continue
+
+        st.markdown(f"## 🐶 {chien['nom']}")
+
+        # Dernier vaccin
+        dernier = liste_vaccins[0]
+        date_v = date.fromisoformat(dernier["date_vaccin"])
+        delta = (date.today() - date_v).days
+
+        # Statut
+        if delta > 365:
+            statut = "🔴 **À renouveler** (plus de 1 an)"
+        else:
+            statut = "🟢 À jour"
+
+        st.write(f"**Statut :** {statut}")
+        st.write(f"**Dernier vaccin :** {dernier['nom_vaccin']} — {dernier['date_vaccin']}")
+
+        # Boutons utiles
+        colA, colB = st.columns(2)
+
+        with colA:
+            if st.button("📄 Voir fiche chien", key=f"fiche_{chien_id}"):
+                st.session_state["chien_id"] = chien_id
+                st.switch_page("pages/22_Ajout_Chien.py")
+
+        with colB:
+            if st.button("➕ Ajouter un vaccin", key=f"addv_{chien_id}"):
+                st.session_state["vaccin_chien_id"] = chien_id
+                st.session_state["vaccin_mode"] = "ajout"
+                st.session_state["vaccin_id"] = None
                 st.rerun()
 
-st.markdown("---")
+        # Liste des vaccins
+        for v in liste_vaccins:
+            with st.expander(f"{v['nom_vaccin']} — {v['date_vaccin']}"):
+                st.write(f"💉 **Vaccin :** {v['nom_vaccin']}")
+                st.write(f"📅 **Date :** {v['date_vaccin']}")
+                st.write(f"📝 **Remarques :** {v['remarques']}")
+                st.write(f"🕒 **Créé le :** {v['created_at']}")
+
+                if st.button("🗑️ Supprimer", key=f"delete_{v['id']}"):
+                    supabase.table("vaccins").delete().eq("id", v["id"]).execute()
+                    st.success("Vaccin supprimé.")
+                    st.rerun()
+
+        st.markdown("---")
 
 # ---------------------------------------------------------
 # Ajouter un vaccin
