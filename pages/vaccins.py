@@ -152,8 +152,7 @@ else:
                 with col1:
                     if st.button("✏️ Modifier", key=f"edit_{v['id']}"):
                         st.session_state["vaccin_id"] = v["id"]
-                        st.session_state["vaccin_mode"] = "edit"
-                        st.switch_page("pages/32_Modifier_Vaccin.py")
+                        st.switch_page("pages/modifier_vaccin.py")
 
                 # --- BOUTON SUPPRIMER ---
                 with col2:
