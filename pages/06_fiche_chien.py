@@ -197,4 +197,4 @@ if not mode_creation:
 # Retour
 # ---------------------------------------------------------
 if st.button("Retour"):
-    st.switch_page("02_Chiens.py")
+    st.switch_page("pages/02_Chiens.py")
