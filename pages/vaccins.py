@@ -12,6 +12,16 @@ menu_lateral()
 st.title("💉 Gestion des vaccins des chiens")
 
 # ---------------------------------------------------------
+# FILTRE EN HAUT DE PAGE
+# ---------------------------------------------------------
+filtre = st.selectbox(
+    "Filtrer les vaccins",
+    ["Tous", "À jour", "Expire bientôt", "Expirés", "Validité inconnue"]
+)
+
+st.markdown("---")
+
+# ---------------------------------------------------------
 # Charger les chiens
 # ---------------------------------------------------------
 
@@ -58,13 +68,11 @@ else:
         if not chien:
             continue
 
-        st.markdown(f"## 🐶 {chien['nom']}")
-
         # Dernier vaccin
         dernier = liste_vaccins[0]
         date_v = date.fromisoformat(dernier["date_vaccin"])
 
-        # Date de fin de validité
+        # Date de validité
         valid_until = dernier.get("valid_until")
         if valid_until:
             valid_until = date.fromisoformat(valid_until)
@@ -75,14 +83,30 @@ else:
         today = date.today()
 
         if not valid_until:
-            statut = "⚪ Validité inconnue"
+            statut = "Validité inconnue"
+            statut_code = "inconnu"
         elif today > valid_until:
-            statut = "🔴 Vaccin expiré"
+            statut = "Vaccin expiré"
+            statut_code = "expire"
         elif (valid_until - today).days < 30:
-            statut = "🟠 Expire bientôt (< 30 jours)"
+            statut = "Expire bientôt"
+            statut_code = "bientot"
         else:
-            statut = "🟢 À jour"
+            statut = "À jour"
+            statut_code = "ajour"
 
+        # Filtre
+        if filtre == "À jour" and statut_code != "ajour":
+            continue
+        if filtre == "Expire bientôt" and statut_code != "bientot":
+            continue
+        if filtre == "Expirés" and statut_code != "expire":
+            continue
+        if filtre == "Validité inconnue" and statut_code != "inconnu":
+            continue
+
+        # Affichage du chien
+        st.markdown(f"## 🐶 {chien['nom']}")
         st.write(f"**Statut :** {statut}")
         st.write(f"**Dernier vaccin :** {dernier['nom_vaccin']} — {dernier['date_vaccin']}")
 
@@ -92,7 +116,7 @@ else:
             st.write("**Valide jusqu’au :** Non défini")
 
         # Boutons utiles
-        colA, colB = st.columns(2)
+        colA, colB, colC = st.columns(3)
 
         with colA:
             if st.button("📄 Voir fiche chien", key=f"fiche_{chien_id}"):
@@ -115,10 +139,19 @@ else:
                 st.write(f"📝 **Remarques :** {v['remarques']}")
                 st.write(f"🕒 **Créé le :** {v['created_at']}")
 
-                if st.button("🗑️ Supprimer", key=f"delete_{v['id']}"):
-                    supabase.table("vaccins").delete().eq("id", v["id"]).execute()
-                    st.success("Vaccin supprimé.")
-                    st.rerun()
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("✏️ Modifier", key=f"edit_{v['id']}"):
+                        st.session_state["vaccin_id"] = v["id"]
+                        st.session_state["vaccin_mode"] = "edit"
+                        st.rerun()
+
+                with col2:
+                    if st.button("🗑️ Supprimer", key=f"delete_{v['id']}"):
+                        supabase.table("vaccins").delete().eq("id", v["id"]).execute()
+                        st.success("Vaccin supprimé.")
+                        st.rerun()
 
         st.markdown("---")
 
@@ -140,10 +173,7 @@ chien_choisi = st.selectbox(
 
 nom_vaccin = st.text_input("Nom du vaccin")
 date_vaccin = st.date_input("Date du vaccin")
-
-# Date de validité réelle (pas calcul automatique)
 valid_until = st.date_input("Date de fin de validité")
-
 remarques = st.text_area("Remarques (optionnel)")
 
 if st.button("Ajouter le vaccin"):
