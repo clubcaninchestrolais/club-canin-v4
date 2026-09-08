@@ -11,7 +11,21 @@ st.set_page_config(page_title="Accueil – Logo", page_icon="🏠", layout="cent
 hide_streamlit_menu()
 menu_lateral()
 
-# --- PAGE ACCUEIL AVEC LOGO ---
-st.markdown("<div style='text-align:center; margin-top:80px;'>", unsafe_allow_html=True)
-st.image("logo.png", width=500)   # ← AGRANDI ICI
+# --- PAGE ACCUEIL AVEC LOGO AMÉLIORÉ ---
+st.markdown(
+    """
+    <div style="
+        text-align:center; 
+        margin-top:60px;
+        padding:40px;
+        background: linear-gradient(135deg, #f0f4ff, #ffffff);
+        border-radius:20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    ">
+    """,
+    unsafe_allow_html=True
+)
+
+st.image("logo.png", width=550)  # ← AGRANDI
+
 st.markdown("</div>", unsafe_allow_html=True)
