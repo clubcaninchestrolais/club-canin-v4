@@ -13,5 +13,5 @@ menu_lateral()
 
 # --- PAGE ACCUEIL AVEC LOGO ---
 st.markdown("<div style='text-align:center; margin-top:80px;'>", unsafe_allow_html=True)
-st.image("logo.png", width=350)
+st.image("logo.png", width=500)   # ← AGRANDI ICI
 st.markdown("</div>", unsafe_allow_html=True)
