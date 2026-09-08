@@ -12,22 +12,24 @@ if "connected" not in st.session_state or not st.session_state["connected"]:
 st.set_page_config(page_title="Club Canin – Accueil", page_icon="🏠", layout="centered")
 
 # ---------------------------------------------------------
-# 🎬 ANIMATION SPLASH SCREEN (post-login)
+# 🎬 SPLASH SCREEN ANIMÉ (sans risque)
 # ---------------------------------------------------------
 
+hide_streamlit_menu()
+menu_lateral()
+
 # CSS animation
-fade_css = """
+st.markdown("""
 <style>
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
 }
 .fade-in {
-    animation: fadeIn 2s ease-in-out;
+    animation: fadeIn 1.8s ease-in-out;
 }
 </style>
-"""
-st.markdown(fade_css, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # Splash container
 splash = st.empty()
@@ -36,11 +38,11 @@ with splash.container():
     st.markdown(
         """
         <div class="fade-in" style="text-align:center; margin-top:120px;">
-            <img src="/logo.png" width="300">
-            <h1 style="color:#003366; font-size:36px; margin-top:20px;">
+            <img src="logo.png" width="350">
+            <h1 style="color:#003366; font-size:40px; margin-top:20px;">
                 Club Canin Chestrolais
             </h1>
-            <p style="color:#555; font-size:20px;">
+            <p style="color:#555; font-size:22px;">
                 Chargement du portail interne...
             </p>
         </div>
@@ -48,8 +50,8 @@ with splash.container():
         unsafe_allow_html=True
     )
 
-# Temps d'affichage
-time.sleep(3)
+# Durée d'affichage
+time.sleep(2.5)
 
 # Effacer l'animation
 splash.empty()
