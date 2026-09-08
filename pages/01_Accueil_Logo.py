@@ -12,11 +12,6 @@ hide_streamlit_menu()
 menu_lateral()
 
 # --- PAGE ACCUEIL AVEC LOGO ---
-st.markdown(
-    """
-    <div style="text-align:center; margin-top:80px;">
-        <img src="logo.png" width="350">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("<div style='text-align:center; margin-top:80px;'>", unsafe_allow_html=True)
+st.image("logo.png", width=350)
+st.markdown("</div>", unsafe_allow_html=True)
