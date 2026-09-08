@@ -191,7 +191,7 @@ if not mode_creation:
     st.markdown("### ")
     if st.button("💉 Gérer les vaccins de ce chien"):
         st.session_state["vaccin_chien_id"] = chien_id
-        st.switch_page("vaccins.py")
+        st.switch_page("pages/vaccins.py")
 
 # ---------------------------------------------------------
 # Retour
