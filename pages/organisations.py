@@ -152,6 +152,16 @@ if st.session_state["show_fiche"]:
     nombre = st.number_input("Nombre de réservations", min_value=1, step=1)
 
     if st.button("Ajouter"):
+
+        # 🔥 Correction essentielle : recharger l’activité pour avoir le prix mis à jour
+        act = (
+            supabase.table("activites_speciales")
+            .select("*")
+            .eq("id", act_id)
+            .execute()
+            .data[0]
+        )
+
         total = nombre * act["prix_default"]
 
         supabase.table("inscriptions_speciales").insert({
@@ -279,4 +289,3 @@ if st.session_state["show_fiche"]:
         st.session_state["show_fiche"] = False
         st.session_state["act_id"] = None
         st.rerun()
-
