@@ -9,15 +9,15 @@ import pandas as pd
 from datetime import datetime
 from fpdf import FPDF
 from io import BytesIO
-from menu import hide_streamlit_menu, menu_lateral   # <-- AJOUT
+from menu import hide_streamlit_menu, menu_lateral
 
 st.set_page_config(page_title="Activités Spéciales", page_icon="🎉")
 
 # --- MASQUER LE MENU AUTOMATIQUE ---
-hide_streamlit_menu()   # <-- AJOUT
+hide_streamlit_menu()
 
 # --- AFFICHER LE MENU PERSONNALISÉ ---
-menu_lateral()          # <-- AJOUT
+menu_lateral()
 
 st.title("🎉 Activités Spéciales")
 
@@ -33,10 +33,13 @@ activites = (
 )
 
 # ---------------------------------------------------------
-# État pour fiche activité
+# États internes
 # ---------------------------------------------------------
 if "act_id" not in st.session_state:
     st.session_state["act_id"] = None
+
+if "show_fiche" not in st.session_state:
+    st.session_state["show_fiche"] = False
 
 # ---------------------------------------------------------
 # Création d’une activité
@@ -86,6 +89,7 @@ if activites:
         with col3:
             if st.button("Gérer", key=f"gerer_{act['id']}"):
                 st.session_state["act_id"] = act["id"]
+                st.session_state["show_fiche"] = True
                 st.rerun()
 
 else:
@@ -96,7 +100,7 @@ st.markdown("---")
 # ---------------------------------------------------------
 # FICHE ACTIVITÉ
 # ---------------------------------------------------------
-if st.session_state["act_id"] is not None:
+if st.session_state["show_fiche"]:
 
     act_id = st.session_state["act_id"]
 
@@ -110,9 +114,31 @@ if st.session_state["act_id"] is not None:
 
     st.subheader(f"📄 Détail : {act['nom']}")
 
-    st.write(f"**Date :** {act['date']}")
-    st.write(f"**Prix par personne :** {act['prix_default']} EUR")
-    st.write(f"**Description :** {act['description']}")
+    # ---------------------------------------------------------
+    # Modification de l’activité
+    # ---------------------------------------------------------
+    st.markdown("### ✏️ Modifier l'activité")
+
+    with st.form("form_modif"):
+        new_nom = st.text_input("Nom", act["nom"])
+        new_date = st.date_input("Date", datetime.fromisoformat(act["date"]))
+        new_prix = st.number_input("Prix par personne", min_value=0.0, value=float(act["prix_default"]))
+        new_desc = st.text_area("Description", act["description"] or "")
+        new_aff = st.checkbox("Afficher le choix du chien ?", act["afficher_chien"])
+
+        submit_modif = st.form_submit_button("💾 Enregistrer")
+
+        if submit_modif:
+            supabase.table("activites_speciales").update({
+                "nom": new_nom,
+                "date": new_date.isoformat(),
+                "prix_default": new_prix,
+                "description": new_desc,
+                "afficher_chien": new_aff
+            }).eq("id", act_id).execute()
+
+            st.success("Activité mise à jour.")
+            st.rerun()
 
     st.markdown("---")
 
@@ -163,27 +189,16 @@ if st.session_state["act_id"] is not None:
         pdf.add_page()
         pdf.set_font("Arial", size=12)
 
-        # Titre
         pdf.set_font("Arial", "B", 16)
         titre = f"Liste des inscrits - {act['nom']}"
         titre = titre.encode("latin-1", "replace").decode("latin-1")
         pdf.cell(0, 10, titre, ln=True)
 
         pdf.set_font("Arial", size=12)
-
-        # Date
-        date_txt = f"Date : {act['date']}"
-        date_txt = date_txt.encode("latin-1", "replace").decode("latin-1")
-        pdf.cell(0, 8, date_txt, ln=True)
-
-        # Prix
-        prix_txt = f"Prix par personne : {act['prix_default']} EUR"
-        prix_txt = prix_txt.encode("latin-1", "replace").decode("latin-1")
-        pdf.cell(0, 8, prix_txt, ln=True)
-
+        pdf.cell(0, 8, f"Date : {act['date']}", ln=True)
+        pdf.cell(0, 8, f"Prix par personne : {act['prix_default']} EUR", ln=True)
         pdf.ln(5)
 
-        # En-têtes
         pdf.set_font("Arial", "B", 12)
         pdf.cell(60, 10, "Nom", 1)
         pdf.cell(60, 10, "Prénom", 1)
@@ -191,7 +206,6 @@ if st.session_state["act_id"] is not None:
         pdf.cell(30, 10, "Total (EUR)", 1)
         pdf.ln()
 
-        # Lignes
         pdf.set_font("Arial", size=12)
         for i in inscrits:
             nom = i["nom"].encode("latin-1", "replace").decode("latin-1")
@@ -203,14 +217,10 @@ if st.session_state["act_id"] is not None:
             pdf.cell(30, 10, str(i["total"]), 1)
             pdf.ln()
 
-        # Total général
         total_general = sum(i["total"] for i in inscrits)
         pdf.ln(5)
         pdf.set_font("Arial", "B", 14)
-
-        total_txt = f"Total général : {total_general} EUR"
-        total_txt = total_txt.encode("latin-1", "replace").decode("latin-1")
-        pdf.cell(0, 10, total_txt, ln=True)
+        pdf.cell(0, 10, f"Total général : {total_general} EUR", ln=True)
 
         buffer = BytesIO()
         pdf.output(buffer)
@@ -244,7 +254,6 @@ if st.session_state["act_id"] is not None:
 
         st.markdown(f"### 💰 Total général : **{total_general} EUR**")
 
-        # Export Excel
         df = pd.DataFrame(inscrits)
         st.download_button(
             "📥 Export Excel",
@@ -253,7 +262,6 @@ if st.session_state["act_id"] is not None:
             "text/csv"
         )
 
-        # Export PDF
         pdf_bytes = generate_pdf(inscrits, act)
         st.download_button(
             "📄 Télécharger PDF",
@@ -268,6 +276,7 @@ if st.session_state["act_id"] is not None:
     st.markdown("---")
 
     if st.button("⬅️ Fermer la fiche"):
+        st.session_state["show_fiche"] = False
         st.session_state["act_id"] = None
         st.rerun()
 
