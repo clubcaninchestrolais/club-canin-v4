@@ -16,7 +16,7 @@ def hash_password(password: str) -> str:
 # Si déjà connecté → redirection
 # ---------------------------------------------------------
 if st.session_state.get("connected", False):
-    st.switch_page("pages/00_Accueil.py")
+    st.switch_page("pages/01_Accueil_Logo.py")   # ✔ MODIFIÉ ICI
 
 # ---------------------------------------------------------
 # Formulaire de connexion
@@ -51,9 +51,9 @@ if st.button("Connexion"):
                 st.session_state["uuid"] = user["uuid"]
                 st.session_state["user_id"] = user["uuid"]
 
-
                 st.success("Connexion réussie.")
-                st.switch_page("pages/00_Accueil.py")
+
+                st.switch_page("pages/01_Accueil_Logo.py")   # ✔ MODIFIÉ ICI
             else:
                 st.error("Mot de passe incorrect.")
 
@@ -62,3 +62,4 @@ if st.button("Connexion"):
 # ---------------------------------------------------------
 st.markdown("---")
 st.info("Veuillez entrer vos identifiants pour accéder à l'application.")
+
