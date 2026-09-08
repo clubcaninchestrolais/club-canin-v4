@@ -64,6 +64,7 @@ def menu_lateral():
     st.sidebar.markdown("---")
 
     # --- Gestion du club ---
+    st.sidebar.page_link("pages/01_Accueil_Logo.py", label="ACCUEIL")
     st.sidebar.page_link("pages/01_Membres.py", label="👥 Membres")
     st.sidebar.page_link("pages/02_Chiens.py", label="🐶 Chiens")
     st.sidebar.page_link("pages/03_Membres_archives.py", label="📁 Membres archivés")
