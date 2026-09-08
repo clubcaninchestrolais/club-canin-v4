@@ -16,7 +16,8 @@ def hash_password(password: str) -> str:
 # Si déjà connecté → redirection
 # ---------------------------------------------------------
 if st.session_state.get("connected", False):
-    st.switch_page("pages/01_Accueil_Logo.py")   # ✔ MODIFIÉ ICI
+    st.switch_page("pages/01_Accueil_Logo.py")
+    st.stop()   # ← indispensable
 
 # ---------------------------------------------------------
 # Formulaire de connexion
@@ -53,7 +54,10 @@ if st.button("Connexion"):
 
                 st.success("Connexion réussie.")
 
-                st.switch_page("pages/01_Accueil_Logo.py")   # ✔ MODIFIÉ ICI
+                # Redirection automatique vers la page du logo
+                st.switch_page("pages/01_Accueil_Logo.py")
+                st.stop()   # ← indispensable pour que la redirection fonctionne
+
             else:
                 st.error("Mot de passe incorrect.")
 
