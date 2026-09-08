@@ -22,10 +22,13 @@ st.markdown(
         border-radius:20px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     ">
+        <h2 style="color:#003366; margin-bottom:30px;">
+            Bienvenue dans le programme du Club Canin Chestrolais
+        </h2>
     """,
     unsafe_allow_html=True
 )
 
-st.image("logo.png", width=550)  # ← AGRANDI
+st.image("logo.png", width=550)
 
 st.markdown("</div>", unsafe_allow_html=True)
