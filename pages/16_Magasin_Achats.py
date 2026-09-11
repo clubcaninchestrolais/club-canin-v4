@@ -1,26 +1,14 @@
 import streamlit as st
 from supabase_rest import supabase
 
-# ⭐ Import dynamique du fichier "pages/90 Audit_Log.py"
-import importlib.util
-import sys
-import os
-
-audit_path = os.path.join(os.path.dirname(__file__), "90 Audit_Log.py")
-spec = importlib.util.spec_from_file_location("audit_log", audit_path)
-audit_log = importlib.util.module_from_spec(spec)
-sys.modules["audit_log"] = audit_log
-spec.loader.exec_module(audit_log)
-
-log_action = audit_log.log_action   # ⭐ Fonction disponible
+# ⭐ Import propre du journal des actions
+import pages.Audit_Log_90 as audit
+log_action = audit.log_action
 
 st.set_page_config(page_title="Magasin – Achats", page_icon="📥")
 
 st.title("📥 Réapprovisionnement du magasin")
 
-# ---------------------------------------------------------
-# Charger les produits
-# ---------------------------------------------------------
 def charger_produits():
     return (
         supabase.table("produits")
@@ -36,9 +24,6 @@ if not produits:
     st.warning("Aucun produit disponible. Ajoutez d'abord des produits.")
     st.stop()
 
-# ---------------------------------------------------------
-# Formulaire d'achat
-# ---------------------------------------------------------
 st.subheader("➕ Ajouter un achat (réapprovisionnement)")
 
 with st.form("form_achat"):
@@ -53,7 +38,6 @@ with st.form("form_achat"):
     submitted = st.form_submit_button("Enregistrer l'achat")
 
     if submitted:
-        # Enregistrer l'achat
         supabase.table("achats_magasin").insert({
             "produit_id": produit["id"],
             "quantite": quantite,
@@ -61,38 +45,15 @@ with st.form("form_achat"):
             "fournisseur": fournisseur
         }).execute()
 
-        # Mise à jour du stock
         nouveau_stock = produit["stock"] + quantite
 
         supabase.table("produits").update({
             "stock": nouveau_stock
         }).eq("id", produit["id"]).execute()
 
-        # ⭐ Journal des actions
         log_action(
             "Achat magasin",
             f"Produit : {produit['nom']} | Quantité : {quantite} | Prix achat : {prix_achat_unitaire} € | Utilisateur : {st.session_state.get('username')}"
         )
 
         st.success(f"Achat enregistré. Nouveau stock de {produit['nom']} : {nouveau_stock}")
-
-# ---------------------------------------------------------
-# Affichage du stock actuel
-# ---------------------------------------------------------
-st.subheader("📦 Stock actuel")
-
-for p in produits:
-    st.markdown(f"""
-    <div style="
-        padding: 12px;
-        margin-bottom: 10px;
-        border-radius: 10px;
-        background-color: #f7f9fc;
-        border: 1px solid #dce3f0;
-    ">
-        <b>{p['nom']}</b> — {p['categorie']}<br>
-        Stock actuel : <b>{p['stock']}</b><br>
-        Prix d'achat : {p['prix_achat']} €<br>
-        Prix de vente : {p['prix_vente']} €
-    </div>
-    """, unsafe_allow_html=True)
