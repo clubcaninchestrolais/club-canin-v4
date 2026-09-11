@@ -1,6 +1,6 @@
 import streamlit as st
 from supabase_rest import supabase
-from audit import log_action   # ⭐ Journal des actions
+from pages.90_Audit_Log import log_action   # ⭐ Import correct
 
 st.set_page_config(page_title="Magasin – Achats", page_icon="📥")
 
