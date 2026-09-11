@@ -1,6 +1,10 @@
 import streamlit as st
 from supabase_rest import supabase, log_action   # ⭐ Import correct
 
+from menu_lateral import menu_lateral, hide_streamlit_menu
+menu_lateral()
+hide_streamlit_menu()
+
 st.set_page_config(page_title="Magasin – Achats", page_icon="📥")
 
 st.title("📥 Réapprovisionnement du magasin")
@@ -62,3 +66,24 @@ with st.form("form_achat"):
         )
 
         st.success(f"Achat enregistré. Nouveau stock de {produit['nom']} : {nouveau_stock}")
+
+# ---------------------------------------------------------
+# Affichage du stock actuel
+# ---------------------------------------------------------
+st.subheader("📦 Stock actuel")
+
+for p in produits:
+    st.markdown(f"""
+    <div style="
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        background-color: #f7f9fc;
+        border: 1px solid #dce3f0;
+    ">
+        <b>{p['nom']}</b> — {p['categorie']}<br>
+        Stock actuel : <b>{p['stock']}</b><br>
+        Prix d'achat : {p['prix_achat']} €<br>
+        Prix de vente : {p['prix_vente']} €
+    </div>
+    """, unsafe_allow_html=True)
