@@ -1,6 +1,27 @@
 import streamlit as st
+from securite import securite_admin
+securite_admin()
 
-st.title("📘 Documentation du Club Canin Chestrolais")
+from datetime import date
+from supabase_rest import supabase, log_action
+
+from fpdf import FPDF
+import io
+
+from menu import hide_streamlit_menu, menu_lateral
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Documentation du club", page_icon="📚", layout="wide")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+st.title("📚 Documentation du club")
+st.write("Consulter, télécharger et gérer les documents internes du club.")
+
 
 html = """
 <h1 style='text-align:center;'>Documentation Technique — Club Canin Chestrolais</h1>
