@@ -66,7 +66,7 @@ with col1:
 with col2:
     st.metric("Bénéfice total réalisé", f"{benefice_total:.2f} €")
 # ---------------------------------------------------------
-# Export PDF des statistiques du magasin (version compatible FPDF)
+# Export PDF des statistiques du magasin (compatible FPDF 1.x)
 # ---------------------------------------------------------
 from fpdf import FPDF
 import io
@@ -131,7 +131,10 @@ if st.button("Générer le PDF"):
         ), ln=True)
         pdf.ln(2)
 
-    pdf_bytes = pdf.output(dest="S").encode("latin-1")
+    # Création du buffer compatible Streamlit
+    buffer = io.BytesIO()
+    pdf.output(buffer)  # version compatible FPDF 1.x
+    pdf_bytes = buffer.getvalue()
 
     st.download_button(
         label="📥 Télécharger le PDF",
@@ -139,7 +142,6 @@ if st.button("Générer le PDF"):
         file_name="statistiques_magasin.pdf",
         mime="application/pdf"
     )
-
 
 
 
