@@ -33,9 +33,6 @@ produits = charger_produits()
 achats = charger_achats()
 ventes = charger_ventes()
 
-# ---------------------------------------------------------
-# Vérification minimale
-# ---------------------------------------------------------
 if produits is None or len(produits) == 0:
     st.warning("Aucun produit enregistré dans le magasin.")
     st.stop()
@@ -47,11 +44,9 @@ df_produits = pd.DataFrame(produits)
 df_achats = pd.DataFrame(achats) if achats else pd.DataFrame()
 df_ventes = pd.DataFrame(ventes) if ventes else pd.DataFrame()
 
-# Valeur du stock
 df_produits["valeur_stock"] = df_produits["stock"] * df_produits["prix_achat"]
 valeur_stock_totale = df_produits["valeur_stock"].sum()
 
-# Bénéfice total
 benefice_total = 0
 if not df_ventes.empty:
     for _, vente in df_ventes.iterrows():
@@ -72,7 +67,7 @@ with col2:
     st.metric("Bénéfice total réalisé", f"{benefice_total:.2f} €")
 
 # ---------------------------------------------------------
-# 📤 Export des statistiques du magasin (VISIBLE)
+# 📤 Export des statistiques du magasin (PLACÉ ICI)
 # ---------------------------------------------------------
 st.subheader("📤 Exporter les statistiques du magasin")
 
