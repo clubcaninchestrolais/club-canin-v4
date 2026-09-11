@@ -65,38 +65,57 @@ with col1:
 
 with col2:
     st.metric("Bénéfice total réalisé", f"{benefice_total:.2f} €")
-
 # ---------------------------------------------------------
-# 📤 Export des statistiques du magasin (PLACÉ ICI)
+# Export PDF des statistiques du magasin
 # ---------------------------------------------------------
-st.subheader("📤 Exporter les statistiques du magasin")
+from fpdf import FPDF
+import io
 
-export_data = []
+st.subheader("📄 Exporter les statistiques en PDF")
 
-for _, p in df_produits.iterrows():
-    benefice_produit = 0
-    if not df_ventes.empty:
+if st.button("Générer le PDF"):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Titre
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(200, 10, txt="Statistiques du magasin du club", ln=True, align="C")
+    pdf.ln(10)
+
+    # Indicateurs principaux
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(200, 10, txt="Indicateurs principaux :", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 8, txt=f"Valeur totale du stock : {valeur_stock_totale:.2f} €", ln=True)
+    pdf.cell(200, 8, txt=f"Bénéfice total réalisé : {benefice_total:.2f} €", ln=True)
+    pdf.ln(5)
+
+    # Détail par produit
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(200, 10, txt="Détail par produit :", ln=True)
+    pdf.set_font("Arial", size=12)
+
+    for _, p in df_produits.iterrows():
+        benefice_produit = 0
         ventes_p = df_ventes[df_ventes["produit_id"] == p["id"]]
         for _, v in ventes_p.iterrows():
             benefice_produit += (v["prix_vente_unitaire"] - p["prix_achat"]) * v["quantite"]
 
-    export_data.append({
-        "Nom": p["nom"],
-        "Catégorie": p["categorie"],
-        "Stock": p["stock"],
-        "Valeur du stock (€)": p["valeur_stock"],
-        "Bénéfice réalisé (€)": benefice_produit
-    })
+        pdf.cell(200, 8, txt=f"- {p['nom']} ({p['categorie']})", ln=True)
+        pdf.cell(200, 8, txt=f"   Stock : {p['stock']} | Valeur : {p['valeur_stock']:.2f} € | Bénéfice : {benefice_produit:.2f} €", ln=True)
+        pdf.ln(2)
 
-df_export = pd.DataFrame(export_data)
-csv = df_export.to_csv(index=False).encode("utf-8")
+    # Génération du PDF
+    pdf_bytes = pdf.output(dest="S").encode("latin-1")
 
-st.download_button(
-    label="📥 Télécharger les statistiques (CSV)",
-    data=csv,
-    file_name="statistiques_magasin.csv",
-    mime="text/csv"
-)
+    st.download_button(
+        label="📥 Télécharger le PDF",
+        data=pdf_bytes,
+        file_name="statistiques_magasin.pdf",
+        mime="application/pdf"
+    )
+
 
 # ---------------------------------------------------------
 # Détail par produit
