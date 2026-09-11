@@ -1,11 +1,18 @@
 import streamlit as st
-from supabase_rest import supabase, log_action   # ⭐ Import correct
+from securite import securite_user
+securite_user()
 
-from menu_lateral import menu_lateral, hide_streamlit_menu
-menu_lateral()
+from supabase_rest import supabase, log_action
+from menu import hide_streamlit_menu, menu_lateral
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Magasin – Achats", page_icon="📥", layout="wide")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
 
-st.set_page_config(page_title="Magasin – Achats", page_icon="📥")
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
 
 st.title("📥 Réapprovisionnement du magasin")
 
@@ -44,7 +51,6 @@ with st.form("form_achat"):
     submitted = st.form_submit_button("Enregistrer l'achat")
 
     if submitted:
-        # Enregistrer l'achat
         supabase.table("achats_magasin").insert({
             "produit_id": produit["id"],
             "quantite": quantite,
@@ -52,14 +58,12 @@ with st.form("form_achat"):
             "fournisseur": fournisseur
         }).execute()
 
-        # Mise à jour du stock
         nouveau_stock = produit["stock"] + quantite
 
         supabase.table("produits").update({
             "stock": nouveau_stock
         }).eq("id", produit["id"]).execute()
 
-        # ⭐ Journal des actions
         log_action(
             "Achat magasin",
             f"Produit : {produit['nom']} | Quantité : {quantite} | Prix achat : {prix_achat_unitaire} € | Utilisateur : {st.session_state.get('username')}"
