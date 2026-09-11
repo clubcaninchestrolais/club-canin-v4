@@ -5,9 +5,20 @@ securite_admin()
 from datetime import datetime
 from supabase_rest import supabase
 
-st.title("📢 Gestion des notifications internes")
+from menu import hide_streamlit_menu, menu_lateral
 
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Notifications internes", page_icon="📢", layout="wide")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+st.title("📢 Gestion des notifications internes")
 st.write("Cette page permet à l’administrateur de créer et gérer les notifications visibles par les utilisateurs du club.")
+
 
 # ---------------------------------------------------------
 # Formulaire de création
