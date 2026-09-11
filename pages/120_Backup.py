@@ -39,7 +39,7 @@ tables = [
     "depenses",
     "finances",
     "clotures",
-    "Magasin_Produits",
+    "15_Magasin_Produits",
     "Magasin_Achats",
     "Magasin_Ventes",
     "Magasin_Stats",
