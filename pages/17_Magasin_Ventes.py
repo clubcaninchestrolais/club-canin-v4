@@ -1,5 +1,6 @@
 import streamlit as st
 from supabase_rest import supabase
+from audit import log_action   # ⭐ Journal des actions
 
 st.set_page_config(page_title="Magasin – Ventes", page_icon="💰")
 
@@ -33,7 +34,7 @@ produits = charger_produits()
 membres = charger_membres()
 
 if not produits:
-    st.warning("Aucun produit disponible. Ajoutez d'abord des produits.")
+    st.warning("Aucun produit disponible.")
     st.stop()
 
 if not membres:
@@ -46,12 +47,10 @@ if not membres:
 st.subheader("➖ Enregistrer une vente")
 
 with st.form("form_vente"):
-    # Sélection du produit
     noms_produits = {p["nom"]: p for p in produits}
     choix_nom = st.selectbox("Produit vendu", list(noms_produits.keys()))
     produit = noms_produits[choix_nom]
 
-    # Sélection du membre
     noms_membres = {f"{m['prenom']} {m['nom']}": m for m in membres}
     choix_membre = st.selectbox("Membre acheteur", list(noms_membres.keys()))
     membre = noms_membres[choix_membre]
@@ -88,9 +87,13 @@ with st.form("form_vente"):
             "stock": nouveau_stock
         }).eq("id", produit["id"]).execute()
 
-        st.success(
-            f"Vente enregistrée. Nouveau stock de {produit['nom']} : {nouveau_stock}"
+        # ⭐ Journal des actions
+        log_action(
+            "Vente magasin",
+            f"Produit : {produit['nom']} | Quantité : {quantite} | Prix vente : {prix_vente_unitaire} € | Membre : {choix_membre} | Utilisateur : {st.session_state.get('username')}"
         )
+
+        st.success(f"Vente enregistrée. Nouveau stock de {produit['nom']} : {nouveau_stock}")
 
 # ---------------------------------------------------------
 # Affichage du stock actuel
