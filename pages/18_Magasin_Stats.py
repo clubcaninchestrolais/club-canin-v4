@@ -15,7 +15,7 @@ hide_streamlit_menu()
 # --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
-st.title("📊 Statistiques du club")
+st.title("📊 Statistiques magasin du club")
 
 # ---------------------------------------------------------
 # TON CODE STATISTIQUES EXISTANT ICI
