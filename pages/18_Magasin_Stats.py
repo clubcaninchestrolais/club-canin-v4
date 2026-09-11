@@ -125,3 +125,36 @@ if df_ventes.empty:
     st.info("Aucune vente enregistrée.")
 else:
     st.dataframe(df_ventes)
+# ---------------------------------------------------------
+# Export des statistiques du magasin
+# ---------------------------------------------------------
+st.subheader("📤 Exporter les statistiques du magasin")
+
+# Construction du DataFrame d'export
+export_data = []
+
+for _, p in df_produits.iterrows():
+    benefice_produit = 0
+    if not df_ventes.empty:
+        ventes_p = df_ventes[df_ventes["produit_id"] == p["id"]]
+        for _, v in ventes_p.iterrows():
+            benefice_produit += (v["prix_vente_unitaire"] - p["prix_achat"]) * v["quantite"]
+
+    export_data.append({
+        "Nom": p["nom"],
+        "Catégorie": p["categorie"],
+        "Stock": p["stock"],
+        "Valeur du stock (€)": p["valeur_stock"],
+        "Bénéfice réalisé (€)": benefice_produit
+    })
+
+df_export = pd.DataFrame(export_data)
+
+csv = df_export.to_csv(index=False).encode("utf-8")
+
+st.download_button(
+    label="📥 Télécharger les statistiques (CSV)",
+    data=csv,
+    file_name="statistiques_magasin.csv",
+    mime="text/csv"
+)
