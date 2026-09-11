@@ -66,12 +66,35 @@ with col1:
 with col2:
     st.metric("Bénéfice total réalisé", f"{benefice_total:.2f} €")
 # ---------------------------------------------------------
-# Export PDF des statistiques du magasin
+# Export PDF des statistiques du magasin (version compatible FPDF)
 # ---------------------------------------------------------
 from fpdf import FPDF
 import io
 
 st.subheader("📄 Exporter les statistiques en PDF")
+
+def safe_text(txt):
+    """Remplace les caractères non compatibles FPDF."""
+    replacements = {
+        "€": "EUR",
+        "é": "e",
+        "è": "e",
+        "ê": "e",
+        "à": "a",
+        "ç": "c",
+        "ô": "o",
+        "ù": "u",
+        "î": "i",
+        "ï": "i",
+        "É": "E",
+        "È": "E",
+        "Ç": "C",
+        "—": "-",
+        "…": "...",
+    }
+    for bad, good in replacements.items():
+        txt = txt.replace(bad, good)
+    return txt
 
 if st.button("Générer le PDF"):
     pdf = FPDF()
@@ -80,20 +103,20 @@ if st.button("Générer le PDF"):
 
     # Titre
     pdf.set_font("Arial", "B", 16)
-    pdf.cell(200, 10, txt="Statistiques du magasin du club", ln=True, align="C")
+    pdf.cell(200, 10, txt=safe_text("Statistiques du magasin du club"), ln=True, align="C")
     pdf.ln(10)
 
-    # Indicateurs principaux
+    # Indicateurs
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(200, 10, txt="Indicateurs principaux :", ln=True)
+    pdf.cell(200, 10, txt=safe_text("Indicateurs principaux :"), ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 8, txt=f"Valeur totale du stock : {valeur_stock_totale:.2f} €", ln=True)
-    pdf.cell(200, 8, txt=f"Bénéfice total réalisé : {benefice_total:.2f} €", ln=True)
+    pdf.cell(200, 8, txt=safe_text(f"Valeur totale du stock : {valeur_stock_totale:.2f} EUR"), ln=True)
+    pdf.cell(200, 8, txt=safe_text(f"Benefice total realise : {benefice_total:.2f} EUR"), ln=True)
     pdf.ln(5)
 
     # Détail par produit
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(200, 10, txt="Détail par produit :", ln=True)
+    pdf.cell(200, 10, txt=safe_text("Detail par produit :"), ln=True)
     pdf.set_font("Arial", size=12)
 
     for _, p in df_produits.iterrows():
@@ -102,11 +125,12 @@ if st.button("Générer le PDF"):
         for _, v in ventes_p.iterrows():
             benefice_produit += (v["prix_vente_unitaire"] - p["prix_achat"]) * v["quantite"]
 
-        pdf.cell(200, 8, txt=f"- {p['nom']} ({p['categorie']})", ln=True)
-        pdf.cell(200, 8, txt=f"   Stock : {p['stock']} | Valeur : {p['valeur_stock']:.2f} € | Bénéfice : {benefice_produit:.2f} €", ln=True)
+        pdf.cell(200, 8, txt=safe_text(f"- {p['nom']} ({p['categorie']})"), ln=True)
+        pdf.cell(200, 8, txt=safe_text(
+            f"   Stock : {p['stock']} | Valeur : {p['valeur_stock']:.2f} EUR | Benefice : {benefice_produit:.2f} EUR"
+        ), ln=True)
         pdf.ln(2)
 
-    # Génération du PDF
     pdf_bytes = pdf.output(dest="S").encode("latin-1")
 
     st.download_button(
@@ -115,6 +139,9 @@ if st.button("Générer le PDF"):
         file_name="statistiques_magasin.pdf",
         mime="application/pdf"
     )
+
+
+
 
 
 # ---------------------------------------------------------
