@@ -6,6 +6,8 @@ from datetime import datetime
 from supabase_rest import supabase
 import pandas as pd
 import altair as alt
+from fpdf import FPDF
+import io
 
 from menu import hide_streamlit_menu, menu_lateral
 
@@ -13,16 +15,11 @@ from menu import hide_streamlit_menu, menu_lateral
 # CONFIGURATION
 # ---------------------------------------------------------
 st.set_page_config(page_title="📊 Rapport du Club", page_icon="📊", layout="wide")
-
-# --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
-
-# --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
 st.title("📊 Rapport du Club – Vue d’ensemble")
 st.write("Aperçu général des activités du club canin.")
-
 
 # ---------------------------------------------------------
 # FONCTION DE SÉCURITÉ POUR LES COMPTAGES
@@ -136,6 +133,29 @@ with col3:
 st.markdown("---")
 
 # ---------------------------------------------------------
+# 💰 SYNTHÈSE FINANCIÈRE
+# ---------------------------------------------------------
+st.subheader("💰 Synthèse financière")
+
+try:
+    recettes_data = supabase.table("recettes").select("montant").execute().data
+    depenses_data = supabase.table("depenses").select("montant").execute().data
+
+    total_recettes = sum([r["montant"] for r in recettes_data]) if recettes_data else 0
+    total_depenses = sum([d["montant"] for d in depenses_data]) if depenses_data else 0
+    solde = total_recettes - total_depenses
+
+    colA, colB, colC = st.columns(3)
+    colA.metric("Total des recettes", f"{total_recettes:.2f} €")
+    colB.metric("Total des dépenses", f"{total_depenses:.2f} €")
+    colC.metric("Solde du club", f"{solde:.2f} €")
+
+except Exception:
+    st.warning("Impossible de calculer la synthèse financière.")
+
+st.markdown("---")
+
+# ---------------------------------------------------------
 # 📈 GRAPHIQUES
 # ---------------------------------------------------------
 st.subheader("📈 Graphiques et tendances")
@@ -147,24 +167,15 @@ try:
     membres_data = supabase.table("membres").select("*").execute().data
     df_membres = pd.DataFrame(membres_data)
 
-    if "created_at" in df_membres.columns:
-        df_membres["date"] = pd.to_datetime(df_membres["created_at"])
-    elif "date_inscription" in df_membres.columns:
-        df_membres["date"] = pd.to_datetime(df_membres["date_inscription"])
-    else:
-        raise Exception("Aucune colonne date trouvée")
-
+    df_membres["date"] = pd.to_datetime(df_membres.get("created_at", df_membres.get("date_inscription")))
     df_membres["mois"] = df_membres["date"].dt.to_period("M").astype(str)
+
     membres_par_mois = df_membres.groupby("mois").size().reset_index(name="nouveaux_membres")
 
     chart_membres = (
         alt.Chart(membres_par_mois)
         .mark_line(point=True)
-        .encode(
-            x="mois",
-            y="nouveaux_membres",
-            tooltip=["mois", "nouveaux_membres"]
-        )
+        .encode(x="mois", y="nouveaux_membres", tooltip=["mois", "nouveaux_membres"])
         .properties(title="Évolution des nouveaux membres par mois", height=300)
     )
 
@@ -180,9 +191,6 @@ try:
     chiens_data = supabase.table("chiens").select("*").execute().data
     df_chiens = pd.DataFrame(chiens_data)
 
-    if "groupe" not in df_chiens.columns:
-        df_chiens["groupe"] = "Non défini"
-
     df_chiens["groupe"] = df_chiens["groupe"].fillna("Non défini")
 
     repartition_chiens = df_chiens.groupby("groupe").size().reset_index(name="total")
@@ -190,11 +198,7 @@ try:
     chart_chiens = (
         alt.Chart(repartition_chiens)
         .mark_arc()
-        .encode(
-            theta="total",
-            color="groupe",
-            tooltip=["groupe", "total"]
-        )
+        .encode(theta="total", color="groupe", tooltip=["groupe", "total"])
         .properties(title="Répartition des chiens par groupe", height=300)
     )
 
@@ -204,43 +208,39 @@ except Exception:
     st.warning("Impossible d'afficher le graphique des chiens.")
 
 # ---------------------------------------------------------
-# 3) Recettes vs Dépenses
+# 3) Présences par mois
 # ---------------------------------------------------------
+st.subheader("📅 Présences par mois")
+
 try:
-    recettes_data = supabase.table("recettes").select("id").execute().data
-    depenses_data = supabase.table("depenses").select("id").execute().data
+    pres_data = supabase.table("presences").select("created_at").execute().data
+    df_pres = pd.DataFrame(pres_data)
 
-    df_finances = pd.DataFrame({
-        "Type": ["Recettes", "Dépenses"],
-        "Total": [len(recettes_data), len(depenses_data)]
-    })
+    df_pres["date"] = pd.to_datetime(df_pres["created_at"])
+    df_pres["mois"] = df_pres["date"].dt.to_period("M").astype(str)
 
-    chart_finances = (
-        alt.Chart(df_finances)
-        .mark_bar()
-        .encode(
-            x="Type",
-            y="Total",
-            color="Type",
-            tooltip=["Type", "Total"]
-        )
-        .properties(title="Comparaison Recettes / Dépenses", height=300)
+    pres_par_mois = df_pres.groupby("mois").size().reset_index(name="total")
+
+    chart_pres_mois = (
+        alt.Chart(pres_par_mois)
+        .mark_line(point=True)
+        .encode(x="mois", y="total", tooltip=["mois", "total"])
+        .properties(title="Évolution des présences par mois", height=300)
     )
 
-    st.altair_chart(chart_finances, use_container_width=True)
+    st.altair_chart(chart_pres_mois, use_container_width=True)
 
 except Exception:
-    st.warning("Impossible d'afficher le graphique des finances.")
+    st.warning("Impossible d'afficher les présences mensuelles.")
 
 # ---------------------------------------------------------
-# 4) Présences du jour (VERSION CORRIGÉE)
+# 4) Présences du jour
 # ---------------------------------------------------------
 st.subheader("👣 Présences du jour")
 
 try:
     today = datetime.now().strftime("%Y-%m-%d")
 
-    # 1) Récupérer les séances du jour
     seances = (
         supabase.table("cours_seances")
         .select("id", "date_seance")
@@ -254,7 +254,6 @@ try:
     else:
         seance_ids = [s["id"] for s in seances]
 
-        # 2) Récupérer les présences liées à ces séances
         presences = (
             supabase.table("presences")
             .select("id", "seance_id")
@@ -274,12 +273,7 @@ try:
             chart_presences = (
                 alt.Chart(presences_par_seance)
                 .mark_bar()
-                .encode(
-                    x="seance_id",
-                    y="total",
-                    tooltip=["seance_id", "total"],
-                    color="total"
-                )
+                .encode(x="seance_id", y="total", tooltip=["seance_id", "total"], color="total")
                 .properties(title="Présences du jour par séance", height=300)
             )
 
@@ -289,15 +283,62 @@ except Exception:
     st.warning("Impossible d'afficher le graphique des présences du jour.")
 
 # ---------------------------------------------------------
+# 📄 EXPORT PDF DU RAPPORT
+# ---------------------------------------------------------
+st.markdown("---")
+st.subheader("📄 Export PDF du rapport")
+
+def safe_text(txt):
+    """Remplace les caractères non compatibles FPDF."""
+    replacements = {
+        "€": "EUR", "é": "e", "è": "e", "ê": "e", "à": "a", "ç": "c",
+        "ô": "o", "ù": "u", "î": "i", "ï": "i", "É": "E", "È": "E",
+        "Ç": "C", "—": "-", "…": "..."
+    }
+    for bad, good in replacements.items():
+        txt = txt.replace(bad, good)
+    return txt
+
+if st.button("Générer le PDF du rapport"):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(200, 10, txt=safe_text("Rapport du club canin"), ln=True, align="C")
+    pdf.ln(10)
+
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(200, 10, txt=safe_text("Indicateurs principaux :"), ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 8, txt=safe_text(f"Membres actifs : {nb_membres}"), ln=True)
+    pdf.cell(200, 8, txt=safe_text(f"Chiens enregistres : {nb_chiens}"), ln=True)
+    pdf.cell(200, 8, txt=safe_text(f"Preinscriptions exterieures : {nb_exterieurs}"), ln=True)
+    pdf.cell(200, 8, txt=safe_text(f"Cotisations actives : {nb_cotisations}"), ln=True)
+    pdf.cell(200, 8, txt=safe_text(f"Abonnements actifs : {nb_abonnements}"), ln=True)
+    pdf.ln(5)
+
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(200, 10, txt=safe_text("Synthese financiere :"), ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 8, txt=safe_text(f"Total recettes : {total_recettes:.2f} EUR"), ln=True)
+    pdf.cell(200, 8, txt=safe_text(f"Total depenses : {total_depenses:.2f} EUR"), ln=True)
+    pdf.cell(200, 8, txt=safe_text(f"Solde du club : {solde:.2f} EUR"), ln=True)
+
+    buffer = io.BytesIO()
+    pdf.output(buffer)
+    pdf_bytes = buffer.getvalue()
+
+    st.download_button(
+        label="📥 Télécharger le PDF",
+        data=pdf_bytes,
+        file_name="rapport_club.pdf",
+        mime="application/pdf"
+    )
+
+# ---------------------------------------------------------
 # INFOS COMPLÉMENTAIRES
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("ℹ️ Informations complémentaires")
-
 st.write(f"📅 Rapport généré le : **{datetime.now().strftime('%d/%m/%Y à %H:%M')}**")
-
-st.info(
-    "Ce tableau de bord modernisé peut être enrichi avec des tendances mensuelles, "
-    "des analyses de présences, des graphiques financiers détaillés, "
-    "et des statistiques avancées pour les moniteurs."
-)
