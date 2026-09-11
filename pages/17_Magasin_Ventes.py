@@ -1,10 +1,20 @@
 import streamlit as st
-from supabase_rest import supabase, log_action   # ⭐ Import correct
+from securite import securite_user
+securite_user()
 
-st.set_page_config(page_title="Magasin – Ventes", page_icon="💰")
+from supabase_rest import supabase, log_action
+from menu import hide_streamlit_menu, menu_lateral
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Magasin – Ventes", page_icon="💰", layout="wide")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
 
 st.title("💰 Vente de produits du magasin")
-
 
 # ---------------------------------------------------------
 # Charger les produits
@@ -67,12 +77,10 @@ with st.form("form_vente"):
     submitted = st.form_submit_button("Enregistrer la vente")
 
     if submitted:
-        # Vérification du stock
         if quantite > produit["stock"]:
             st.error(f"Stock insuffisant ! Stock actuel : {produit['stock']}")
             st.stop()
 
-        # Enregistrer la vente
         supabase.table("ventes_magasin").insert({
             "produit_id": produit["id"],
             "quantite": quantite,
@@ -80,17 +88,36 @@ with st.form("form_vente"):
             "id_membre": membre["id"]
         }).execute()
 
-        # Mise à jour du stock
         nouveau_stock = produit["stock"] - quantite
 
         supabase.table("produits").update({
             "stock": nouveau_stock
         }).eq("id", produit["id"]).execute()
 
-        # ⭐ Journal des actions
         log_action(
             "Vente magasin",
             f"Produit : {produit['nom']} | Quantité : {quantite} | Prix vente : {prix_vente_unitaire} € | Membre : {choix_membre} | Utilisateur : {st.session_state.get('username')}"
         )
 
         st.success(f"Vente enregistrée. Nouveau stock de {produit['nom']} : {nouveau_stock}")
+
+# ---------------------------------------------------------
+# Affichage du stock actuel
+# ---------------------------------------------------------
+st.subheader("📦 Stock actuel")
+
+for p in produits:
+    st.markdown(f"""
+    <div style="
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        background-color: #f7f9fc;
+        border: 1px solid #dce3f0;
+    ">
+        <b>{p['nom']}</b> — {p['categorie']}<br>
+        Stock actuel : <b>{p['stock']}</b><br>
+        Prix d'achat : {p['prix_achat']} €<br>
+        Prix de vente : {p['prix_vente']} €
+    </div>
+    """, unsafe_allow_html=True)
