@@ -1,14 +1,13 @@
 import streamlit as st
-from supabase_rest import supabase
-
-# ⭐ Import propre du journal des actions
-import pages.Audit_Log_90 as audit
-log_action = audit.log_action
+from supabase_rest import supabase, log_action   # ⭐ Import correct
 
 st.set_page_config(page_title="Magasin – Achats", page_icon="📥")
 
 st.title("📥 Réapprovisionnement du magasin")
 
+# ---------------------------------------------------------
+# Charger les produits
+# ---------------------------------------------------------
 def charger_produits():
     return (
         supabase.table("produits")
@@ -24,6 +23,9 @@ if not produits:
     st.warning("Aucun produit disponible. Ajoutez d'abord des produits.")
     st.stop()
 
+# ---------------------------------------------------------
+# Formulaire d'achat
+# ---------------------------------------------------------
 st.subheader("➕ Ajouter un achat (réapprovisionnement)")
 
 with st.form("form_achat"):
@@ -38,6 +40,7 @@ with st.form("form_achat"):
     submitted = st.form_submit_button("Enregistrer l'achat")
 
     if submitted:
+        # Enregistrer l'achat
         supabase.table("achats_magasin").insert({
             "produit_id": produit["id"],
             "quantite": quantite,
@@ -45,12 +48,14 @@ with st.form("form_achat"):
             "fournisseur": fournisseur
         }).execute()
 
+        # Mise à jour du stock
         nouveau_stock = produit["stock"] + quantite
 
         supabase.table("produits").update({
             "stock": nouveau_stock
         }).eq("id", produit["id"]).execute()
 
+        # ⭐ Journal des actions
         log_action(
             "Achat magasin",
             f"Produit : {produit['nom']} | Quantité : {quantite} | Prix achat : {prix_achat_unitaire} € | Utilisateur : {st.session_state.get('username')}"
