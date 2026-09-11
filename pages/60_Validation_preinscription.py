@@ -2,9 +2,26 @@ import streamlit as st
 from securite import securite_admin
 securite_admin()
 
+# --- SUPABASE (ancienne méthode, comme dans cette page) ---
 from supabase import create_client, Client
-from supabase_rest import supabase
+
+# --- MENU PERSONNALISÉ ---
 from menu import hide_streamlit_menu, menu_lateral
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Validation préinscription", page_icon="📝", layout="wide")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+# --- SUPABASE CLIENT ---
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(url, key)
+
 
 
 # Connexion Supabase
