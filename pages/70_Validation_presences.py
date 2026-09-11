@@ -2,8 +2,22 @@ import streamlit as st
 from securite import securite_user
 securite_user()
 
-from supabase import create_client
+from supabase_rest import supabase   # ⭐ cohérent avec toutes les autres pages
 from datetime import date
+
+from menu import hide_streamlit_menu, menu_lateral   # ⭐ menu correct
+
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Validation des présences", page_icon="📋", layout="wide")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+st.title("📋 Validation des présences du jour")
+
 
 # ---------------------------------------------------------
 # Connexion Supabase
