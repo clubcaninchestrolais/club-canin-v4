@@ -1,7 +1,7 @@
 import streamlit as st
 from supabase_rest import supabase
 
-# ⭐ Import dynamique du fichier "90 Audit_Log.py"
+# ⭐ Import dynamique du fichier "pages/90 Audit_Log.py"
 import importlib.util
 import sys
 import os
