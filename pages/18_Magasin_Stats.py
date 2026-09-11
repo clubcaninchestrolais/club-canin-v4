@@ -1,10 +1,29 @@
 import streamlit as st
+from securite import securite_user
+securite_user()
+
 from supabase_rest import supabase
-import pandas as pd
+from menu import hide_streamlit_menu, menu_lateral
 
-st.set_page_config(page_title="Magasin – Statistiques", page_icon="📊")
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Statistiques", page_icon="📊", layout="wide")
 
-st.title("📊 Statistiques du magasin")
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+st.title("📊 Statistiques du club")
+
+# ---------------------------------------------------------
+# TON CODE STATISTIQUES EXISTANT ICI
+# ---------------------------------------------------------
+
+# Exemple :
+# st.subheader("Fréquentation des cours")
+# ...
+
 
 # ---------------------------------------------------------
 # Charger les données
