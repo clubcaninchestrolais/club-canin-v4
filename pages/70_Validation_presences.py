@@ -2,10 +2,10 @@ import streamlit as st
 from securite import securite_user
 securite_user()
 
-from supabase_rest import supabase   # ⭐ cohérent avec toutes les autres pages
+from supabase import create_client          # ✅ on garde create_client ici
 from datetime import date
 
-from menu import hide_streamlit_menu, menu_lateral   # ⭐ menu correct
+from menu import hide_streamlit_menu, menu_lateral
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Validation des présences", page_icon="📋", layout="wide")
@@ -16,7 +16,10 @@ hide_streamlit_menu()
 # --- AFFICHER LE MENU PERSONNALISÉ ---
 menu_lateral()
 
-st.title("📋 Validation des présences du jour")
+# --- SUPABASE CLIENT (comme avant) ---
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+supabase = create_client(url, key)          # ✅ maintenant create_client existe
 
 
 # ---------------------------------------------------------
