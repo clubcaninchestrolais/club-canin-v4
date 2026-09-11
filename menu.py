@@ -94,6 +94,13 @@ def menu_lateral():
         st.sidebar.page_link("pages/23_Depenses.py", label="🧾 Dépenses")
         st.sidebar.page_link("pages/09_Finances.py", label="💼 Finances globales")
 
+    # --- Magasin ---
+    st.sidebar.markdown("### 🛒 Magasin du club")
+    st.sidebar.page_link("pages/15_Magasin_Produits.py", label="📦 Produits")
+    st.sidebar.page_link("pages/16_Magasin_Achats.py", label="📥 Achats (réapprovisionnement)")
+    st.sidebar.page_link("pages/17_Magasin_Ventes.py", label="💰 Ventes")
+    st.sidebar.page_link("pages/18_Magasin_Stats.py", label="📊 Statistiques du magasin")
+
     # --- Flux extérieurs ---
     st.sidebar.markdown("### 🔄 Flux")
     st.sidebar.page_link("pages/50_Inscription_En_Ligne.py", label="🌐 Préinscription publique")
