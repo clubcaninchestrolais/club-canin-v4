@@ -8,8 +8,18 @@ from supabase_rest import supabase, log_action
 from fpdf import FPDF
 import io
 
-st.title("📄 PV des réunions")
+from menu import hide_streamlit_menu, menu_lateral
 
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="PV des réunions", page_icon="📄", layout="wide")
+
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
+st.title("📄 PV des réunions")
 st.write("Créer, consulter, télécharger et archiver les PV des réunions du comité.")
 
 # ---------------------------------------------------------
