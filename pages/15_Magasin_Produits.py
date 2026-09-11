@@ -89,3 +89,39 @@ with st.form("form_produit"):
 
         st.success(f"Produit {nom} ajouté avec succès.")
         st.rerun()
+# ---------------------------------------------------------
+# Modifier un produit existant
+# ---------------------------------------------------------
+st.subheader("✏️ Modifier un produit")
+
+# Liste des produits par nom
+noms_produits = {p["nom"]: p for p in produits}
+choix_modif = st.selectbox("Sélectionner un produit à modifier", list(noms_produits.keys()))
+
+produit_modif = noms_produits[choix_modif]
+
+with st.form("form_modif_produit"):
+    nom = st.text_input("Nom du produit", value=produit_modif["nom"])
+    categorie = st.text_input("Catégorie", value=produit_modif["categorie"])
+    prix_achat = st.number_input("Prix d'achat (€)", min_value=0.0, step=0.1, value=float(produit_modif["prix_achat"]))
+    prix_vente = st.number_input("Prix de vente (€)", min_value=0.0, step=0.1, value=float(produit_modif["prix_vente"]))
+    stock = st.number_input("Stock actuel", min_value=0, step=1, value=int(produit_modif["stock"]))
+
+    submitted_modif = st.form_submit_button("Enregistrer les modifications")
+
+    if submitted_modif:
+        supabase.table("produits").update({
+            "nom": nom,
+            "categorie": categorie,
+            "prix_achat": prix_achat,
+            "prix_vente": prix_vente,
+            "stock": stock
+        }).eq("id", produit_modif["id"]).execute()
+
+        log_action(
+            "Modification produit",
+            f"Produit modifié : {nom} | Catégorie : {categorie} | Stock : {stock} | Utilisateur : {st.session_state.get('username')}"
+        )
+
+        st.success(f"Produit {nom} modifié avec succès.")
+        st.rerun()
