@@ -1,6 +1,18 @@
 import streamlit as st
 from supabase_rest import supabase
-from pages.90_Audit_Log import log_action   # ⭐ Import correct
+
+# ⭐ Import dynamique du fichier "90 Audit_Log.py"
+import importlib.util
+import sys
+import os
+
+audit_path = os.path.join(os.path.dirname(__file__), "90 Audit_Log.py")
+spec = importlib.util.spec_from_file_location("audit_log", audit_path)
+audit_log = importlib.util.module_from_spec(spec)
+sys.modules["audit_log"] = audit_log
+spec.loader.exec_module(audit_log)
+
+log_action = audit_log.log_action   # ⭐ Fonction disponible
 
 st.set_page_config(page_title="Magasin – Achats", page_icon="📥")
 
