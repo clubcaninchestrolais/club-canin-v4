@@ -1,13 +1,13 @@
 import streamlit as st
 from securite import securite_user
 securite_user()
-import pandas as pd
 
+import pandas as pd
 from supabase_rest import supabase
 from menu import hide_streamlit_menu, menu_lateral
 
 # --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Statistiques", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Statistiques magasin", page_icon="📊", layout="wide")
 
 # --- MASQUER LE MENU AUTOMATIQUE ---
 hide_streamlit_menu()
@@ -16,15 +16,6 @@ hide_streamlit_menu()
 menu_lateral()
 
 st.title("📊 Statistiques magasin du club")
-
-# ---------------------------------------------------------
-# TON CODE STATISTIQUES EXISTANT ICI
-# ---------------------------------------------------------
-
-# Exemple :
-# st.subheader("Fréquentation des cours")
-# ...
-
 
 # ---------------------------------------------------------
 # Charger les données
@@ -42,8 +33,11 @@ produits = charger_produits()
 achats = charger_achats()
 ventes = charger_ventes()
 
-if not produits:
-    st.warning("Aucun produit enregistré.")
+# ---------------------------------------------------------
+# Vérification minimale
+# ---------------------------------------------------------
+if produits is None or len(produits) == 0:
+    st.warning("Aucun produit enregistré dans le magasin.")
     st.stop()
 
 # ---------------------------------------------------------
@@ -59,7 +53,6 @@ valeur_stock_totale = df_produits["valeur_stock"].sum()
 
 # Bénéfice total
 benefice_total = 0
-
 if not df_ventes.empty:
     for _, vente in df_ventes.iterrows():
         produit = df_produits[df_produits["id"] == vente["produit_id"]].iloc[0]
@@ -79,12 +72,43 @@ with col2:
     st.metric("Bénéfice total réalisé", f"{benefice_total:.2f} €")
 
 # ---------------------------------------------------------
+# 📤 Export des statistiques du magasin (VISIBLE)
+# ---------------------------------------------------------
+st.subheader("📤 Exporter les statistiques du magasin")
+
+export_data = []
+
+for _, p in df_produits.iterrows():
+    benefice_produit = 0
+    if not df_ventes.empty:
+        ventes_p = df_ventes[df_ventes["produit_id"] == p["id"]]
+        for _, v in ventes_p.iterrows():
+            benefice_produit += (v["prix_vente_unitaire"] - p["prix_achat"]) * v["quantite"]
+
+    export_data.append({
+        "Nom": p["nom"],
+        "Catégorie": p["categorie"],
+        "Stock": p["stock"],
+        "Valeur du stock (€)": p["valeur_stock"],
+        "Bénéfice réalisé (€)": benefice_produit
+    })
+
+df_export = pd.DataFrame(export_data)
+csv = df_export.to_csv(index=False).encode("utf-8")
+
+st.download_button(
+    label="📥 Télécharger les statistiques (CSV)",
+    data=csv,
+    file_name="statistiques_magasin.csv",
+    mime="text/csv"
+)
+
+# ---------------------------------------------------------
 # Détail par produit
 # ---------------------------------------------------------
 st.subheader("📦 Détail par produit")
 
 for _, p in df_produits.iterrows():
-    # Calcul du bénéfice par produit
     benefice_produit = 0
     if not df_ventes.empty:
         ventes_p = df_ventes[df_ventes["produit_id"] == p["id"]]
@@ -125,36 +149,3 @@ if df_ventes.empty:
     st.info("Aucune vente enregistrée.")
 else:
     st.dataframe(df_ventes)
-# ---------------------------------------------------------
-# Export des statistiques du magasin
-# ---------------------------------------------------------
-st.subheader("📤 Exporter les statistiques du magasin")
-
-# Construction du DataFrame d'export
-export_data = []
-
-for _, p in df_produits.iterrows():
-    benefice_produit = 0
-    if not df_ventes.empty:
-        ventes_p = df_ventes[df_ventes["produit_id"] == p["id"]]
-        for _, v in ventes_p.iterrows():
-            benefice_produit += (v["prix_vente_unitaire"] - p["prix_achat"]) * v["quantite"]
-
-    export_data.append({
-        "Nom": p["nom"],
-        "Catégorie": p["categorie"],
-        "Stock": p["stock"],
-        "Valeur du stock (€)": p["valeur_stock"],
-        "Bénéfice réalisé (€)": benefice_produit
-    })
-
-df_export = pd.DataFrame(export_data)
-
-csv = df_export.to_csv(index=False).encode("utf-8")
-
-st.download_button(
-    label="📥 Télécharger les statistiques (CSV)",
-    data=csv,
-    file_name="statistiques_magasin.csv",
-    mime="text/csv"
-)
