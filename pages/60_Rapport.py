@@ -7,13 +7,22 @@ from supabase_rest import supabase
 import pandas as pd
 import altair as alt
 
+from menu import hide_streamlit_menu, menu_lateral
+
 # ---------------------------------------------------------
 # CONFIGURATION
 # ---------------------------------------------------------
 st.set_page_config(page_title="📊 Rapport du Club", page_icon="📊", layout="wide")
 
+# --- MASQUER LE MENU AUTOMATIQUE ---
+hide_streamlit_menu()
+
+# --- AFFICHER LE MENU PERSONNALISÉ ---
+menu_lateral()
+
 st.title("📊 Rapport du Club – Vue d’ensemble")
 st.write("Aperçu général des activités du club canin.")
+
 
 # ---------------------------------------------------------
 # FONCTION DE SÉCURITÉ POUR LES COMPTAGES
