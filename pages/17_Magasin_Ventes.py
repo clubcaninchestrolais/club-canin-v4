@@ -4,8 +4,7 @@ from supabase_rest import supabase, log_action   # ⭐ Import correct
 st.set_page_config(page_title="Magasin – Ventes", page_icon="💰")
 
 st.title("💰 Vente de produits du magasin")
-from menu_lateral import menu_lateral
-menu_lateral()
+
 
 # ---------------------------------------------------------
 # Charger les produits
