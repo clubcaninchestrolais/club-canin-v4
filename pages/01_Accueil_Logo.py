@@ -25,6 +25,7 @@ st.markdown(
         <h2 style="color:#003366; margin-bottom:30px;">
             Bienvenue dans le programme du Club Canin Chestrolais
         </h2>
+    </div>
     """,
     unsafe_allow_html=True
 )
@@ -32,9 +33,19 @@ st.markdown(
 # Logo
 st.image("logo.png", width=550)
 
-# ⭐ AJOUT : lien cliquable vers ton site
+# ⭐ Lien cliquable vers ton site
 st.markdown(
     """
-    <p style="text-align:center; color:#555; font-size:18px; margin-top:25px;">
-        Découvrez mes projets sur :
-        <br>
+    <div style="text-align:center; margin-top:20px;">
+        <p style="color:#555; font-size:18px;">
+            Découvrez mes projets sur :
+            <br>
+            <a href="https://jmhussonodoocom.odoo.com/" target="_blank"
+               style="color:#003366; font-weight:bold; text-decoration:none;">
+                jmhussonodoocom.odoo.com
+            </a>
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
