@@ -29,19 +29,27 @@ with splash.container():
             <p style="color:#555; font-size:20px;">
                 Portail interne — Version 2026
             </p>
-
-            <p style="color:#555; font-size:18px;">
-                Découvrez mes projets sur :
-                <br>
-                <strong>https://jmhussonodoocom.odoo.com/</strong>
-            </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-time.sleep(3)
+time.sleep(2)
 splash.empty()
+
+# ⭐ Texte affiché comme le mot de bienvenue (100% fiable)
+st.markdown(
+    """
+    <div style="text-align:center; margin-top:10px;">
+        <p style="color:#555; font-size:18px;">
+            Découvrez mes projets sur :
+            <br>
+            <strong>https://jmhussonodoocom.odoo.com/</strong>
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.title("🔐 Connexion")
 st.write("Veuillez vous connecter pour accéder au portail interne.")
