@@ -29,18 +29,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Logo
 st.image("logo.png", width=550)
 
-# ⭐ AJOUT : ton texte vers ton site
+# ⭐ AJOUT : lien cliquable vers ton site
 st.markdown(
     """
-    <p style="text-align:center; color:#555; font-size:18px; margin-top:20px;">
+    <p style="text-align:center; color:#555; font-size:18px; margin-top:25px;">
         Découvrez mes projets sur :
         <br>
-        <strong>https://jmhussonodoocom.odoo.com/</strong>
-    </p>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown("</div>", unsafe_allow_html=True)
