@@ -38,13 +38,7 @@ def afficher_notifications():
 def menu_lateral():
     role = st.session_state.get("role", "user")
 
-    # --- Logo du club en haut du menu ---
-    st.sidebar.image("images/logoJMH.jpg", use_column_width=True)
-
     st.sidebar.markdown("## 🐶 Menu Club Canin")
-
-
-
 
     # --- Notifications internes ---
     afficher_notifications()
