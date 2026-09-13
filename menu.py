@@ -39,17 +39,11 @@ def menu_lateral():
     role = st.session_state.get("role", "user")
 
     # --- Logo du club en haut du menu ---
-    st.sidebar.markdown(
-        """
-        <div style="text-align: center; margin-bottom: 15px;">
-            <img src="images/logoJMH.jpg" style="width: 120px; border-radius: 10px;">
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.sidebar.image("images/logoJMH.jpg", use_column_width=True)
 
     st.sidebar.markdown("## 🐶 Menu Club Canin")
+
+
 
 
     # --- Notifications internes ---
