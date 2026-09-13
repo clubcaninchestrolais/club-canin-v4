@@ -42,7 +42,8 @@ def menu_lateral():
     st.sidebar.markdown(
         """
         <div style="text-align: center; margin-bottom: 15px;">
-            <img src="logoJMH.jpg" style="width: 120px; border-radius: 10px;">
+            <img src="images/logoJMH.jpg" style="width: 120px; border-radius: 10px;">
+
         </div>
         """,
         unsafe_allow_html=True
