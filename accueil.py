@@ -25,6 +25,7 @@ with splash.container():
             <h1 style="color:#003366; font-size:36px; margin-top:20px;">
                 Club Canin Chestrolais
             </h1>
+
             <p style="color:#555; font-size:20px;">
                 Portail interne — Version 2026
             </p>
@@ -41,7 +42,8 @@ with splash.container():
         unsafe_allow_html=True
     )
 
-time.sleep(2)
+# On laisse le splash affiché un peu plus longtemps
+time.sleep(3)
 
 splash.empty()
 
