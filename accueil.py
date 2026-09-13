@@ -30,19 +30,21 @@ with splash.container():
                 Portail interne — Version 2026
             </p>
 
-            <p style="color:#444; font-size:18px; margin-top:30px;">
-                Découvrez mes projets sur 
-                <a href="https://jmhussonodoocom.odoo.com/" target="_blank" 
-                   style="color:#0066cc; text-decoration:none;">
-                    jmhussonodoocom.odoo.com
-                </a>
+            <p style="color:#555; font-size:18px;">
+                Découvrez mes projets sur : 
+                <br>
+                <strong>
+                    <a href="https://jmhussonodoocom.odoo.com/" target="_blank" style="color:#003366;">
+                        jmhussonodoocom.odoo.com
+                    </a>
+                </strong>
             </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-# On laisse le splash affiché un peu plus longtemps
+# On laisse le splash affiché assez longtemps pour que tout soit visible
 time.sleep(3)
 
 splash.empty()
