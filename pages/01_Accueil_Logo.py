@@ -31,4 +31,16 @@ st.markdown(
 
 st.image("logo.png", width=550)
 
+# ⭐ AJOUT : ton texte vers ton site
+st.markdown(
+    """
+    <p style="text-align:center; color:#555; font-size:18px; margin-top:20px;">
+        Découvrez mes projets sur :
+        <br>
+        <strong>https://jmhussonodoocom.odoo.com/</strong>
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown("</div>", unsafe_allow_html=True)
