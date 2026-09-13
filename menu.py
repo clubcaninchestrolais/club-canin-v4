@@ -1,42 +1,9 @@
-from securite import securite_globale
-securite_globale()
-
-import streamlit as st
-from supabase_rest import supabase
-
-def hide_streamlit_menu():
-    css = """
-    <style>
-    [data-testid="stSidebarNav"] {
-        display: none !important;
-    }
-    </style>
-    """
-    st.markdown(css, unsafe_allow_html=True)
-
-
-def afficher_notifications():
-    """Affiche les notifications actives selon le rôle."""
-    role = st.session_state.get("role", "user")
-
-    try:
-        notifs = (
-            supabase.table("notifications")
-            .select("*")
-            .eq("actif", True)
-            .execute()
-            .data
-        )
-    except Exception:
-        return
-
-    for n in notifs:
-        if n["role"] in ["all", role]:
-            st.sidebar.info(f"📢 {n['titre']} — {n['message']}")
-
-
 def menu_lateral():
     role = st.session_state.get("role", "user")
+
+    # --- LOGO DU CLUB ---
+    with st.sidebar:
+        st.image("images/logoJMH.jpg", width=120)
 
     st.sidebar.markdown("## 🐶 Menu Club Canin")
 
