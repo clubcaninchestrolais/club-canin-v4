@@ -28,6 +28,14 @@ with splash.container():
             <p style="color:#555; font-size:20px;">
                 Portail interne — Version 2026
             </p>
+
+            <p style="color:#444; font-size:18px; margin-top:30px;">
+                Découvrez mes projets sur 
+                <a href="https://jmhussonodoocom.odoo.com/" target="_blank" 
+                   style="color:#0066cc; text-decoration:none;">
+                    jmhussonodoocom.odoo.com
+                </a>
+            </p>
         </div>
         """,
         unsafe_allow_html=True
