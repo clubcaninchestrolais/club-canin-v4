@@ -22,7 +22,6 @@ st.markdown(fade_css, unsafe_allow_html=True)
 splash = st.empty()
 
 with splash.container():
-    # Animation container
     st.markdown(
         """
         <div class="fade-in" style="text-align:center; margin-top:120px;">
@@ -30,10 +29,9 @@ with splash.container():
         unsafe_allow_html=True
     )
 
-    # --- LOGO STREAMLIT (fiable) ---
+    # --- TON LOGO JMH ---
     st.image("images/logoJMH.jpg", width=300)
 
-    # Texte sous le logo
     st.markdown(
         """
             <h1 style="color:#003366; font-size:36px; margin-top:20px;">
@@ -55,3 +53,4 @@ splash.empty()
 
 st.title("🔐 Connexion")
 st.write("Veuillez vous connecter pour accéder au portail interne.")
+
