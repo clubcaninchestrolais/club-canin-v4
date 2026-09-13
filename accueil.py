@@ -31,22 +31,16 @@ with splash.container():
             </p>
 
             <p style="color:#555; font-size:18px;">
-                Découvrez mes projets sur : 
+                Découvrez mes projets sur :
                 <br>
-                <strong>
-                    <a href="https://jmhussonodoocom.odoo.com/" target="_blank" style="color:#003366;">
-                        jmhussonodoocom.odoo.com
-                    </a>
-                </strong>
+                <strong>https://jmhussonodoocom.odoo.com/</strong>
             </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-# On laisse le splash affiché assez longtemps pour que tout soit visible
 time.sleep(3)
-
 splash.empty()
 
 st.title("🔐 Connexion")
